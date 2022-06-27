@@ -1,0 +1,8 @@
+step;el;title;description;position;is_id
+1;sidebar-main;Sidebar-Menu;Use the sidebar menu to navigate through the analyses;right-center;T
+2;MENU_databank;Data Bank;Use the Data Bank menu to create and inspect Datalists;right-center;T
+3;bank_button;Create Datalist;iMESC requires at least one datalist to open the analysis panels. Use this button to create datalists using the upload dialog panel.;right;T
+4;upload_mod2;Upload Dialog;This is the upload dialog for creating Datalists...;right;T
+5;.example_data;Upload or use example data;...;bottom;F
+6;.datalist_str;Upload;If you choose upload you must upload at least two files: Data-Attribute and Factor-Attribute;right;F
+7;.example_data;Example data;In this tutorial we create a Datalist using the example data option;bottom;F

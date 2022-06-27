@@ -1,0 +1,6 @@
+step;el;title;description;position;is_id
+1;bank_button;Create Datalist;iMESC requires at least one datalist to open the analysis panels. Use this button to create datalists using the upload dialog panel.;right;T
+2;bank_input; Datalist selector;Use this menu to switch the Datalist;bottom;T
+3;view_datalist;Datalist tools;Use these buttons to inspect the attributes from the Datalist;bottom;T
+4;trash_datalist;Delete;Delete the selected Datalist;bottom;T
+5;.datalist_tools;Data-tools;Use these buttons to download or merge Attributes;bottom;F
