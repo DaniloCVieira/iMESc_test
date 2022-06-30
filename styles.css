@@ -641,33 +641,7 @@ margin: 5;
 
 #upload_tools .glyphicon-triangle-bottom:before{
   display: none;}
-#change_head0{
-   border: none;
-   padding: 0px;
-   margin: 0px;
-}
-  #change_head{
-  z-index: 99999;
-  position: absolute;
-  right:0px;
-  top: 24px;
-  padding: 0px;
-   margin: 0px;
- border: none;
-}
 
-  .tool_title0{
-     border: none;
-  height: 40px;
-
- background: Grey;
-position: absolute;
-z-index: 999995;
-right: 5px;
-  width: 400px;
-  padding-left: 0px;
-  box-shadow: 0 2px 1px 1px #f0eeeeff
-}
   
 .tool_title{
   border: none;
@@ -682,28 +656,6 @@ padding-left: 5px;
 }
 
 
-.tools_content{
-
-background-color: transparent;
-padding: 0px;
-  margin: 0px;
-padding-left: 5px;
-
-
-}
-
-
-#tog_tools{
-border: none;
-    width: 400px;
-  position: absolute;
-    padding: 0px;
-    padding-left: 5px;
-       padding-right: 5px;
-  margin: 0px;
-margin-top: 75px;
-right: 5px;
-border-radius: 0px 0px 0px 0px;}
 
 
 .btn-button_change {
@@ -723,6 +675,38 @@ color: #05668D;
 .change_active:focus{
   background: red;
 }
+#change_head0{
+   border: none;
+   padding: 0px;
+   margin: 0px;
+}
+  #change_head{
+  z-index: 9999;
+  position: absolute;
+  right:0px;
+  top: 24px;
+  padding: 0px;
+   margin: 0px;
+ border: none;
+}
+
+  .tool_title0{
+     border: none;
+  height: 40px;
+
+ background: Grey;
+position: absolute;
+z-index: 10000;
+right: 5px;
+  width: 400px;
+  padding-left: 0px;
+  box-shadow: 0 2px 1px 1px #f0eeeeff
+}
+
+
+
+
+
 .data_change0{
   padding: 0px;
   height: 40px;
@@ -730,7 +714,7 @@ line-height: 40px;
 max-height: 40px;
 min-height: 40px;
 position: absolute;
-z-index: 999996;
+z-index: 10001;
 right: 5px;
 height: 30px;
 }
@@ -738,8 +722,33 @@ height: 30px;
   display: block;
 width: 250px;
   background-color: Grey;
+  z-index: 99999999;
 
 }
+
+.tools_content{
+
+background-color: transparent;
+padding: 0px;
+  margin: 0px;
+padding-left: 5px;
+
+
+}
+#tog_tools{
+border: none;
+    width: 400px;
+    z-index: 9999;
+  position: absolute;
+    padding: 0px;
+    padding-left: 5px;
+       padding-right: 5px;
+  margin: 0px;
+margin-top: 75px;
+right: 5px;
+border-radius: 0px 0px 0px 0px;}
+
+
 #data_change .btn:focus{
   bakground-color: transparent;
   color:black;
@@ -757,6 +766,7 @@ width: 250px;
   border-radius: 0px 0px 0px 0px;
    background-color: #f7f7f7ff;
 -webkit-box-shadow: inset 0px 2px 1px Grey;
+  z-index: 9999999;
 
 }
 #data_change .dropdown-menu {
@@ -765,7 +775,7 @@ border-radius: 0px 0px 0px 0px;
 padding: 0px;
 font-size: 13px;
 width: 150px;
-z-index:99999;
+  z-index: 9999999;
 }
 #data_change .dropdown-menu span {width: 150px; white-space: normal;padding: 0px;font-size: 13px;}
 #data_change .div-menu {
@@ -799,13 +809,7 @@ border: none;
 #tool_savepoint  .form-control,#tool_savepoint  .btn{
   min-height: 60px;
 }
-#tools_drop2 .sw-dropdown-content{left: -45px;}
-#tools_drop3 .sw-dropdown-content{left: -90px;}
-#tools_drop4 .sw-dropdown-content{left: -135px;}
-#tools_drop5 .sw-dropdown-content{left: -180px;}
-#tools_drop6 .sw-dropdown-content{left: -225px;}
-#tools_drop7 .sw-dropdown-content{left: -270px;}
-#tools_drop9 .sw-dropdown-content{left: -360px;}
+
 
 
 @keyframes change_anim {
@@ -880,10 +884,6 @@ background-color: transparent;
 
 
 
-#tool1 ,#tool2 ,#tool3 ,#tool4 ,#tool5 ,#tool6, #tool9 {
-  z-index: 999999;
-background-color: #f0eeeeff;
-}
 
 .track_change{
 

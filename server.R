@@ -13896,9 +13896,9 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   ## DOWNLOAD FUNCTION
   
   
- # mybooks_teste<-readRDS('vals.rds')
-#  for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
- # updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
+  #mybooks_teste<-readRDS('vals.rds')
+  #for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
+  #updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
   
   
   
