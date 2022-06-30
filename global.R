@@ -5,6 +5,12 @@ version<-strong("Version: 2.1.0.1")
 last_update<-"08-04-2022"
 last_update<-format(Sys.Date(),"%d-%m-%Y")
 
+TESTE<- reactive({
+  mybooks_teste<-readRDS('vals.rds')
+  for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
+  updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
+  
+})
 list.of.packages <- c('shinydashboard','shinydashboardPlus','shinyjs','shiny',"e1071",'readxl','vegan',"party",'caret','viridisLite','aweSOM','sp','raster','Rcpp','rgdal','gstat','ggspatial','ggplot2','sf','class','shinyWidgets', 'randomForestExplainer','data.table',"ggpubr", "shinyBS","terra","purrr","NbClust", "colorRamps","DBI","shinyBS","wesanderson","colorspace","gplots","dendextend","kohonen","shinypanels","writexl","DT","gbRd", 'segRDA',"shinyjqui","mboost","partykit","Metrics", "shinybusy", "shinycssloaders","plot3D","imputeMissings","geodist","ggrepel",'pdp',"sortable","colourpicker",'oceanmap',"rgl",'cicerone',"rintrojs","beepr",'shinyTree',"hablar")
 
 
@@ -269,5 +275,9 @@ guide3 <- {Cicerone$
     )
 
 }
+js_getid<-paste0("$(document).on('click', '.needed', function () {debugger;
+           Shiny.onInputChange('", 'last_btn', "', this.id);
+        });")
+
 
 

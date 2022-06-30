@@ -141,12 +141,18 @@ dashboardBody(
     fluidRow(id="header_app",
              class='myClass',' An Interactive Machine Learning App for Environmental Science')
   ),
-  
+  tags$head(tags$script(HTML(js_getid))),
+  tags$head(tags$script(HTML('
+        $(document).on("keydown", function (e) {
+        Shiny.onInputChange("lastkeypresscode", e.keyCode);
+        });
+        '))),
 
-  uiOutput("change_head"),
   uiOutput('tools_upload'),
+  uiOutput("change_head"),
   uiOutput("change_background"),
   div(id="main_panel",class="needed",
+   
 
            includeCSS("styles.css"),
     tags$style(".pretty.p-default input:checked~.state label:after {background-color: SeaGreen !important;}"),
@@ -173,7 +179,7 @@ fluidPage(
   add_busy_spinner(spin = "hollow-dots",height="20px", color="yellow",width="20px", margins = c(20, 100)),
 
 
-  div(id="teste",
+  div(id="teste",class="needed",
     style = "margin-left: -15px; margin-right:-15px;",
     uiOutput("menutitle"),
     tabsetPanel(

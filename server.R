@@ -1,33 +1,34 @@
 
 
 server <- function(input, output, session) {
+  
   options(shiny.maxRequestSize=100*1024^3)
-
-
-
+  
+  
+  
   palette=c(
     "matlab.like2",'viridis', 'plasma',"Rushmore1","FantasticFox1",'Grays',"heat",'Purples',"Blues",'Greens',"black","gray","royalblue", "firebrick","forestGreen",'goldenrod3',"white"
   )
   symbols<-c("pch1","pch2","pch3","pch4")
-
+  
   dfcolors <- data.frame(
     val = palette
   )
-
-
+  
+  
   for(i in 1:length(palette))  {
     palette1<-base64enc::dataURI(file = paste0('meta/palette',i,".png"),
                                  mime = "image/png")
     dfcolors$img[i]<- sprintf(paste0(
       img(src = palette1, height = '20',width = '70',
           style="margin-top:-40px;margin-bottom:-40px;margin-left:-20px;margin-right:-20px;") ))}
-
-
-
+  
+  
+  
   #colors_solid<-reactiveValues(df=dfcolors[c(11:17),])
   #colors_gradient<-reactiveValues(df=dfcolors[c(1:10),])
-
-
+  
+  
   myBookmarks<-vals<-reactiveValues(
     temp_path=paste0(if(!length(grep("connect/apps",getwd()))>0){(getwd())} else{"/srv/shiny-server/MyShinyApp"},'/mybooks.rds'),
     map_data_raster=NULL,
@@ -38,8 +39,7 @@ server <- function(input, output, session) {
     saved_layer_shape=0,
     saved_model=NULL,
     saved_kdataWSS=NULL,
-    saved_kdataaccRF=NULL,
-    saved_kmodelaccRF=NULL,
+    
     saved_kmodelWSS=NULL,
     saved_kcustom=NULL,
     saved_kmodelvotes=NULL,
@@ -47,24 +47,24 @@ server <- function(input, output, session) {
     saved_maps=NULL,
     saved_divset_value=0,
     som_unsaved=0,
-
+    
     # data
     rf_sigs=0,
-
-
-
+    
+    
+    
     bmu_p_symbol_size=1,
     bmu_symbol_size=1,
     bmu_p_bg_transp=0.3,
     bmu_bg_transp=0.3,
     bmu_p_factors=1,
-
+    
     bmu_insertx=0,
     bmu_inserty=0,
     bmu_ncol=1,
     bmu_leg_transp=0,
     bmu_cexvar=1,
-   
+    
     
     shptool="upload",
     bmu_points=T,
@@ -83,21 +83,21 @@ server <- function(input, output, session) {
     bag_rf_data=0,
     bag_user_bp=NULL,
     bagHC=0,
-
+    
     # hands
     hand_plot=0,
     hand_save=0,
     hand_save2=NULL,
     hand_save3=NULL,
     hand_down=0,
-
+    
     #results
     bmu_p_results=0,
     cm_rf=0,
     conf_rf=0,
     som_results=NULL,
     pcorr_results=0,
-
+    
     map_data_disc=NULL,
     map_data_interp=NULL,
     map_fac_disc=NULL,
@@ -108,7 +108,7 @@ server <- function(input, output, session) {
     RF_results=NULL,
     rf_unsaved=0,
     map_res=0,
-
+    
     ##plot
     conf_som=0,
     bmus_pred_plot=0,
@@ -123,7 +123,7 @@ server <- function(input, output, session) {
     ppca_plot=0,
     pdend_plot=0,
     ptree_plot=0,
-
+    
     #internal
     new_facts=NULL,
     selall=NULL,
@@ -147,7 +147,7 @@ server <- function(input, output, session) {
       "firebrick" = colorRampPalette("firebrick"),
       "forestGreen" = colorRampPalette("forestGreen"),
       "goldenrod3" =  colorRampPalette("goldenrod3"),
-
+      
       "Rushmore1"=colorRampPalette(wes_palette("Rushmore1",100,type ="continuous")),
       "FantasticFox1"=colorRampPalette(wes_palette("FantasticFox1",100,type ="continuous")),
       "Blues"=colorRampPalette(RColorBrewer::brewer.pal(9,"Blues")),
@@ -155,11 +155,11 @@ server <- function(input, output, session) {
       "Purples"=colorRampPalette(RColorBrewer::brewer.pal(9,"Purples")),
       "Greens"=colorRampPalette(RColorBrewer::brewer.pal(9,"Greens")),
       "Grays"=colorRampPalette(c("gray90","gray10"))
-
+      
     )
   )
-
-
+  
+  
   getsolid_col<-reactive({
     res<-lapply(vals$newcolhabs, function(x) x(2))
     res1<-unlist(lapply(res, function(x) x[1]==x[2]))
@@ -174,8 +174,8 @@ server <- function(input, output, session) {
     pic<-which(vals$colors_img$val%in%grad)
     pic
   })
-
-
+  
+  
   symbols<-c("pch1","pch2","pch3","pch4",'pch5','pch6','pch7',"pch8")
   df_symbol <- data.frame(
     val = c(16,15,17,18,8,1,5,3)
@@ -183,10 +183,10 @@ server <- function(input, output, session) {
   for(i in 1:length(symbols))
   {
     symbol1<-base64enc::dataURI(file = paste0('meta/pch',i,".png"), mime = "image/png")
-
+    
     df_symbol$img[i]<- sprintf(paste0(img(src = symbol1, width = '10')))}
-
-
+  
+  
   bmu_p_bgpalette<-reactiveValues(df=dfcolors$val[16])
   bmu_bgpalette<-reactiveValues(df=dfcolors$val[16])
   bmu_p_training<-reactiveValues(df=dfcolors$val[1])
@@ -216,8 +216,8 @@ server <- function(input, output, session) {
   observeEvent(input$choices_map,{
     vals$cur_choices_map=input$choices_map
   })
-
-
+  
+  
   observeEvent(input$data_bank,{
     vals$cur_data<-input$data_bank
   })
@@ -239,9 +239,9 @@ server <- function(input, output, session) {
   observeEvent(input$data_hc,{
     vals$cur_data=input$data_hc
   })
-
-
-
+  
+  
+  
   output$menu_nb_out<-renderUI({module_ui_nb("module_nb")})
   mod1 <- callModule(module_server_nb, "module_nb",  vals=vals, df_colors=vals$colors_img,newcolhabs=newcolhabs)
   output$menu_svm_out<-renderUI({module_ui_svm("module_svm") })
@@ -257,16 +257,16 @@ server <- function(input, output, session) {
                       uiOutput("automap")
                )
       ),
-
+      
       uiOutput("map_part2")
-
+      
     )
-
+    
   })
   output$automap<-renderUI({
     req(input$saved_maps=='new map'|isTRUE(input$stack_map))
     column(12,
-
+           
            span("+ Auto-refresh",
                 inline(
                   switchInput(
@@ -294,7 +294,7 @@ server <- function(input, output, session) {
   observeEvent(input$gomap,{
     stopmap$df<-F
     stopbigmap$df<-F
-
+    
   })
   observeEvent(input$order_stack,{
     showModal(
@@ -325,12 +325,12 @@ server <- function(input, output, session) {
   })
   reac_stack_order<-reactiveValues(df=0)
   observeEvent(input$run_order_stack,{
-
+    
     vals$saved_maps<-vals$saved_maps[input$rank_list_3]
     removeModal()
     reac_stack_order$df<-T
-
-
+    
+    
   })
   get_stacklist<-reactive({
     #req(input$saved_maps!='new map')
@@ -347,10 +347,10 @@ server <- function(input, output, session) {
     if(isTRUE(input$edit_map)){
       updateButton(session,"edit_map",value=F)
     }
-
+    
   })
   observeEvent(input$cmap,{
-
+    
     vals$cur_cmap<-input$cmap
   })
   upload_bag<-reactiveValues(df=0, df0=0)
@@ -373,15 +373,15 @@ server <- function(input, output, session) {
   output$add_map<-renderUI({
     req(input$saved_maps!='new map')
     inline(bsButton("add_map",tipify(icon("fas fa-plus"),"create a new map"), style="button_active"))
-
+    
   })
   output$show_saved_maps<-renderUI({
     pickerInput("saved_maps",NULL, choices=c("new map",names(vals$saved_maps)), width="150px")
-
+    
   })
   output$save_map<-renderUI({
     req(input$saved_maps=='new map'|isTRUE(input$edit_map))
-
+    
     bsButton('save_map',tipify(icon("fas fa-save"),"Save Map"), style="button_active")
   })
   output$mantel_map<-renderUI({
@@ -411,12 +411,12 @@ server <- function(input, output, session) {
       stopmap$df<-F
       warbigmap$df<-F
     }
-
+    
   })
   observeEvent(stopbigmap$df,{
     if(isTRUE(stopbigmap$df)){
       updateSwitchInput(session,"automap",value=F)
-
+      
     }
   })
   output$scatter_3d<-renderUI({
@@ -424,7 +424,7 @@ server <- function(input, output, session) {
     req(input$choices_map=="Data-Attribute")
     inline(tipify(bsButton("scatter_3d",icon("fas fa-cube"), style="button_active", type="toggle"),"3D mode"))})
   output$stack_scatter_3d<-renderUI({
-
+    
     req(input$cmap=='discrete')
     # req(input$choices_map=="Data-Attribute")
     inline(tipify(bsButton("stack_scatter_3d",icon("fas fa-layer-group"), style="button_active", type="toggle"),"3D stack"))
@@ -464,7 +464,7 @@ server <- function(input, output, session) {
   output$stack_map<-renderUI({
     req(input$cmap=='interpolation'|input$cmap=='raster')
     #req(!isTRUE(input$edit_map))
-
+    
     if(!length(vals$saved_maps)>1){
       tags$div(datatitle="Create stacked raster map. Requires more than one saved interpolated map.",style="z-index:100;  delay:0",bsButton('stack_map',icon("fas fa-layer-group"), style="button_active", type="toggle", disabled = T))
     } else {
@@ -475,12 +475,12 @@ server <- function(input, output, session) {
         tags$div(datatitle="Create stacked raster map. Requires more than one saved interpolated map.",style="z-index:100;  delay:0",bsButton('stack_map',icon("fas fa-layer-group"), style="button_active", type="toggle", disabled = T))
       }
     }
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
   })
   output$rgl_map<-renderUI({
     req(input$saved_maps!='new map')
@@ -499,20 +499,20 @@ server <- function(input, output, session) {
   })
   observeEvent(input$sr_rgl,{
     delay(100,
-
+          
           if(isTRUE(input$sr_rgl)){
             updateButton(session,'sr_rgl',value=F)
           }
-
+          
     )
   })
   observeEvent(input$ss_rgl,{
     delay(100,
-
+          
           if(isTRUE(input$ss_rgl)){
             updateButton(session,'ss_rgl',value=F)
           }
-
+          
     )
   })
   output$map_ssrgl<-renderUI({
@@ -530,14 +530,14 @@ server <- function(input, output, session) {
     )
   })
   output$srrgl_out<-renderRglwidget({
-
+    
     req(isTRUE(input$sr_rgl))
-
+    
     res_list<-get_stacklist()[input$stack_layers]
     validate(need(length(res_list)>1,"Requires at least two layers"))
     data<-getdata_map()
     coords<-attr(getdata_map(),"coords")
-
+    
     zs<-c()
     co<-c()
     labs<-list()
@@ -548,17 +548,17 @@ server <- function(input, output, session) {
       co[i]<-input[[paste0("stack_co",i)]]
       showlab[i]<-input[[paste0("stack_lab",i)]]
       labs[[i]]<-attr(getdata_map(),"factors")[rownames(coords), input[[paste0("stack_labels",i)]]]
-
-
+      
+      
     }
     layer_shape=if(isTRUE(input$srmap_layer)){
       attr(data,"layer_shape") } else{ NULL}
     srcol_layer=adjustcolor(getcolhabs(vals$newcolhabs,input$srlayer_col,1), input$srlayer_lighten)
-
-
+    
+    
     #options(rgl.useNULL = TRUE)
     rgl.bg(color=c('white','white'))
-
+    
     anim_stack1(res_list,
                 zvalue=zs,
                 xlim=c(input$srlong_xmin,input$srlong_xmax),
@@ -578,13 +578,13 @@ server <- function(input, output, session) {
                 show_labels=showlab,
                 texmipmap=F,texmagfilter="nearest",texminfilter="nearest.mipmap.nearest",texenvmap=F,size=1,point_antialias=F,line_antialias=F,depth_mask=F,lit =F,top=F
     )
-
-
-
-
+    
+    
+    
+    
   })
   output$ssrgl_out<-renderRglwidget({
-
+    
     req(isTRUE(input$ss_rgl))
     data=ss_map$df
     coords=  attr(ss_map$df,"coords")
@@ -594,14 +594,14 @@ server <- function(input, output, session) {
       attr(data,"layer_shape") } else{ NULL}
     sscol_layer=adjustcolor(getcolhabs(vals$newcolhabs,input$sslayer_col,1), input$sslayer_lighten)
     sscol_base=adjustcolor(getcolhabs(vals$newcolhabs,input$ssbase_col,1), input$ssbase_lighten)
-
+    
     pal<-c()
     cex<-c()
     zs<-c()
     co<-c()
     labs<-list()
     showlab<-c()
-
+    
     for(i in 1:length(ss_map$df))
     {
       pal[i]<-input[[paste0("pt_palette",i)]]
@@ -610,13 +610,13 @@ server <- function(input, output, session) {
       labs[[i]]<-attr(getdata_map(),"factors")[rownames(coords), input[[paste0("ss_labels",i)]]]
       co[i]<-input[[paste0("ss_co",i)]]
       showlab[i]<-input[[paste0("ss_lab",i)]]
-
+      
     }
-
-
+    
+    
     #options(rgl.useNULL = TRUE)
     rgl.bg(color=c('white','white'))
-
+    
     stack_scatter_rgl(data,coords,base_shape,layer_shape,
                       col.palette=pal,
                       newcolhabs=vals$newcolhabs,
@@ -653,10 +653,10 @@ server <- function(input, output, session) {
                       show_coords=co,
                       show_labels=showlab,
                       texmipmap=F,texmagfilter="nearest",texminfilter="nearest.mipmap.nearest",texenvmap=F,front="filled", back="points",size=1,point_antialias=F,line_antialias=F,depth_mask=F,lit =F,top=F)
-
-
-
-
+    
+    
+    
+    
   })
   observeEvent(input$save_map,{
     if(input$saved_maps!='new map'|isTRUE(input$edit_map)){
@@ -689,13 +689,13 @@ server <- function(input, output, session) {
   })
   output$map_part1<-renderUI({
     req(input$saved_maps=="new map"|isTRUE(input$edit_map))
-
+    
     column(12,
            span(
              inline(pickerInput("data_map",
                                 "Y Datalist",
                                 choices =    names(vals$saved_data),
-
+                                
                                 selected=vals$cur_data, width="200px")),
              inline(
                pickerInput(
@@ -757,16 +757,16 @@ server <- function(input, output, session) {
         updateButton(session,"stack_map",value=T)} else{
           updateButton(session,"stack_map",value=F)
         }
-
+      
       updateButton(session,"surface_map", value=F)
-
+      
     }
   })
   observeEvent(input$stack_map,{
     if(input$stack_map %% 2){
       updatePickerInput(session,'saved_maps',choices=c(names(vals$saved_maps)))
     }
-
+    
   })
   map_new<-reactiveValues(df=F)
   ##map part
@@ -774,25 +774,25 @@ server <- function(input, output, session) {
     div(
       uiOutput("side_map00"),
       uiOutput("side_map0_stack"),
-
+      
       column(8,
              column(12,uiOutput("map_options")),
              column(12,  withSpinner(type=8,color="SeaGreen",uiOutput("map_out")))),
-
-
-
+      
+      
+      
     )
   })
   get_mapdisc<-reactive({
-
+    
     res_list<-lapply(vals$saved_maps,function(x) attr(x,"my_rst"))
     nuls<-which(unlist(lapply(res_list, function (x)
       is.null(x))))
     res_list<-res_list[nuls]
     names(res_list)<-names(vals$saved_maps)[nuls]
     res_list
-
-
+    
+    
   })
   output$side_map0_stack<-renderUI({
     req(isTRUE(input$stack_map))
@@ -807,7 +807,7 @@ server <- function(input, output, session) {
                              class="well2",
                              uiOutput("stack_zlim")
                            )),
-
+                    
                     column(12,
                            fluidRow(
                              class="well2",
@@ -843,11 +843,11 @@ server <- function(input, output, session) {
                                                '+ Title pos:',inline(numericInput("stack_legtitle.pos",NULL, 0.3, width="75px",step=.1))),
                                         column(12,tipify(icon("fas fa-question-circle",style="color: gray"),"Adjustment of the labels along the y-axis:", placement = "bottom", options=list(container="body")),
                                                '+ Label pos:',inline(numericInput("stack_leglab.pos",NULL, 0.3, width="75px",step=.1)))
-
+                                        
                                     ))
                     ),
                     uiOutput("sr_3dcontrol")
-
+                    
            )
     )
   })
@@ -880,8 +880,8 @@ server <- function(input, output, session) {
                            div(tipify(icon("fas fa-question-circle",style="color: gray"),"Transparency of the layers", placement = "bottom", options=list(container="body")),
                                '+ Transparency:',
                                inline(numericInput("stack_alpha",NULL, 0, width="75px",step=1, max=1, min=0)))
-
-
+                           
+                           
                     )))
   })
   output$sr_label_options<-renderUI({
@@ -908,7 +908,7 @@ server <- function(input, output, session) {
     base_shape=attr(getdata_map(),"base_shape")
     layer_shape=attr(getdata_map(),"layer_shape")
     limits<-get_limits(limits=NULL,base_shape, layer_shape, coords = attr(getdata_map(),"coords"))
-
+    
     div(div(span("+ Limits:",style="color: #05668D"),
             div(style="margin-top: -20px;border-bottom: 1px solid SeaGreen",
                 div(span("Long",style="margin-left: 70px"),span("Lat",style="margin-left: 60px")),
@@ -920,13 +920,13 @@ server <- function(input, output, session) {
                   splitLayout("+ max:",cellWidths = c("50px",'90px',"90px"),
                               numericInput("srlong_xmax",NULL, value=limits[2,1], width="87px", step=0.01),
                               numericInput("srlat_xmax",NULL, limits[2,2], width="87px", step=0.01)))
-
-
+                
+                
             )))
   })
   output$srmap_layer<-renderUI({
     req(length(attr(getdata_map(),"layer_shape"))>0)
-
+    
     column(12,
            fluidRow(
              class="well2",
@@ -941,8 +941,8 @@ server <- function(input, output, session) {
                       numericInput("srlayer_lighten",NULL,value=0.6, width="50px", min=0, max=1, step=0.1)
                  )
                )
-
-
+               
+               
              )
            ))
   })
@@ -982,7 +982,7 @@ server <- function(input, output, session) {
         )
       )
     }
-
+    
     checkboxGroupInput("stack_layers",NULL, choiceValues =names(get_stacklist()),choiceNames=res,selected=names(get_stacklist()), width="75px")
   })
   output$show_map_coords_stack<-renderUI({
@@ -1006,7 +1006,7 @@ server <- function(input, output, session) {
     showlab<-c()
     for(i in 1:length(names(get_stacklist())))
     {showlab[i]<-input[[paste0("stack_lab",i)]]}
-
+    
     req(any(showlab))
     column(12,
            fluidRow(
@@ -1023,15 +1023,15 @@ server <- function(input, output, session) {
                  )
              )
            ))
-
-
+    
+    
   })
   sidebarPanel()
   output$side_map00<-renderUI({
     req(input$saved_maps=="new map"|isTRUE(input$surface_map)|isTRUE(input$mantel_map)|isTRUE(input$edit_map))
     column(4,id="sidebar_map",class="well2", style="margin-bottom: 150px",
-
-
+           
+           
            uiOutput("cmap"),
            uiOutput("side_map"),
            uiOutput("side_disc_stack")
@@ -1052,18 +1052,18 @@ server <- function(input, output, session) {
   })
   output$side_disc_stack<-renderUI({
     req(isTRUE(input$stack_scatter_3d))
-
+    
     fluidRow(class="map_control_style",
-
+             
              column(12,
                     fluidRow(class="well2",
                              uiOutput('added_scatter_stack')
                     ))
              ,
-
+             
              uiOutput('ss_war'),
              uiOutput("ssmap_control")
-
+             
     )
   })
   output$ssmap_control<-renderUI({
@@ -1073,7 +1073,7 @@ server <- function(input, output, session) {
     base_shape=attr(getdata_map(),"base_shape")
     layer_shape=attr(getdata_map(),"layer_shape")
     limits<-get_limits(limits=NULL,base_shape, layer_shape, coords = attr(getdata_map(),"coords"))
-
+    
     div(
       uiOutput('ss_3dcontrol'),
       column(12,
@@ -1094,20 +1094,20 @@ server <- function(input, output, session) {
              fluidRow(class="well2",
                       uiOutput("ssmap_leg")
              )),
-
+      
       column(12,
              fluidRow(class="well2",
                       uiOutput("ssmap_base")
              )),
-
-
-
+      
+      
+      
       column(12,
              fluidRow(class="well2",
                       uiOutput("ssmap_layer")
              )),
-
-
+      
+      
       column(12,
              fluidRow(class="well2",
                       div(span("+ Limits:",style="color: #05668D"),
@@ -1121,11 +1121,11 @@ server <- function(input, output, session) {
                                 splitLayout("+ max:",cellWidths = c("50px",'90px',"90px"),
                                             numericInput("sslong_xmax",NULL, value=limits[2,1], width="87px", step=0.01),
                                             numericInput("sslat_xmax",NULL, limits[2,2], width="87px", step=0.01)))
-
-
+                              
+                              
                           ))
              ))
-
+      
     )})
   output$ss_3dcontrol<-renderUI({
     column(12,
@@ -1160,16 +1160,16 @@ server <- function(input, output, session) {
       column(12,"+ Legend adustment",
              column(12,tipify(icon("fas fa-question-circle",style="color: gray"),"Number of breaks for continuous values", placement = "bottom", options=list(container="body")),
                     '+ Breaks:',inline(numericInput("ss_breaks",NULL, 4, width="75px",step=1))),
-
+             
              column(12,tipify(icon("fas fa-question-circle",style="color: gray"),"Adjustment of the titles along the y-axis:", placement = "bottom", options=list(container="body")),
                     '+ Title y-pos:',inline(numericInput("ss_legtitle.posy",NULL, 1.15, width="75px",step=.1))),
              column(12,tipify(icon("fas fa-question-circle",style="color: gray"),"Adjustment of the titles along the x-axis:", placement = "bottom", options=list(container="body")),
                     '+ Title x-pos:',inline(numericInput("ss_legtitle.posx",NULL, 1, width="75px",step=.1))),
-
-
+             
+             
              column(12,tipify(icon("fas fa-question-circle",style="color: gray"),"Adjustment of the labels along the y-axis:", placement = "bottom", options=list(container="body")),
                     '+ Label pos:',inline(numericInput("ss_leglab.pos",NULL, 0.85, width="75px",step=.1)))
-
+             
       ))
   })
   output$ssmap_zlim<-renderUI({
@@ -1177,9 +1177,9 @@ server <- function(input, output, session) {
     for(i in 1:length(ss_map$df))
     {
       zs[i]<-input[[paste0("ss_z",i)]]
-
+      
     }
-
+    
     fluidRow(
       column(12,tipify(icon("fas fa-question-circle",style="color: gray"),"Z limits", placement = "bottom", options=list(container="body")),
              span("+ zmin:",
@@ -1227,7 +1227,7 @@ server <- function(input, output, session) {
     showlab<-c()
     for(i in 1:length(ss_map$df))
     {showlab[i]<-input[[paste0("ss_lab",i)]]}
-
+    
     req(any(showlab))
     column(12,
            fluidRow(
@@ -1244,8 +1244,8 @@ server <- function(input, output, session) {
                  )
              )
            ))
-
-
+    
+    
   })
   added_ss3d<-reactiveValues(df=NULL)
   ss1<-reactiveValues(df=NULL)
@@ -1263,7 +1263,7 @@ server <- function(input, output, session) {
   observeEvent(ss_map$df, {
     delay(10,
           added_ss3d$df<- added_ss3d$df[names(ss_map$df)]
-
+          
     )
   })
   ss_map<-reactiveValues(df=NULL)
@@ -1278,7 +1278,7 @@ server <- function(input, output, session) {
         name1<-paste(name0,bag)
         if(!name1%in%names(ss_map$df)) break
       }
-
+      
     }
     paste(name0,bag)
   })
@@ -1288,9 +1288,9 @@ server <- function(input, output, session) {
     } else{
       ss<-attr(getdata_map(),"factors")[filtermap(),input$var_map, drop=F]
     }
-
-
-
+    
+    
+    
     coords<-attr(getdata_map(),"coords")
     attr(ss,"name")<-bag_name_ss()
     ss_map$df[[bag_name_ss()]] <- ss
@@ -1300,7 +1300,7 @@ server <- function(input, output, session) {
   })
   observeEvent(input$add_scatter_stack,{
     ss3d_add()
-
+    
   } )
   observeEvent(input$add_scatter_stack,{
     lapply(ss_map$df,function(x){
@@ -1331,17 +1331,17 @@ server <- function(input, output, session) {
                         })
                       )
                  )),
-
+          
           actionLink(paste0("ss_del",attr(x,"name")),icon("far fa-trash-alt"))
-
+          
         )
       )
     }
-
+    
     )
   })
   output$ssmap_base<-renderUI({
-
+    
     req(!is.null(attr(getdata_map(),"base_shape")))
     column(12,
            fluidRow(
@@ -1363,15 +1363,15 @@ server <- function(input, output, session) {
   output$map_extra_layer<-renderUI({
     shp<-attr(vals$saved_data[[input$data_map]],"extra_shape")
     shapes<-names(shp)
-
+    
     req(length(shapes)>0)
-
+    
     res<-list()
-
-
+    
+    
     for(i in 1:length(shapes)){
       atributos_shp<-attributes(shp[[i]])$names
-
+      
       res[[i]]<-list(
         span(
           span(
@@ -1388,8 +1388,8 @@ server <- function(input, output, session) {
             span("+ Transp:",
                  numericInput(paste0("ssextra_layer_lighten",i),NULL,value=0.6, width="50px", min=0, max=1, step=0.1)
             )
-
-
+            
+            
           ),
           div(
             span("+", paste("Label",i), inline(
@@ -1400,7 +1400,7 @@ server <- function(input, output, session) {
         )
       )
     }
-
+    
     column(12,
            fluidRow(
              class="well2",
@@ -1425,7 +1425,7 @@ server <- function(input, output, session) {
   })
   output$ssmap_layer<-renderUI({
     req(length(attr(getdata_map(),"layer_shape"))>0)
-
+    
     column(12,
            fluidRow(
              class="well2",
@@ -1440,19 +1440,19 @@ server <- function(input, output, session) {
                       numericInput("sslayer_lighten",NULL,value=0.6, width="50px", min=0, max=1, step=0.1)
                  )
                )
-
-
+               
+               
              )
            ))
   })
   ss3d_out<-reactiveValues(df=0)
   output$ss3d<-renderUI({
-
+    
     req(isTRUE(input$stack_scatter_3d))
     validate(need(length(ss_map$df)>1,"Add at least two variables to generate the plot"))
-
-
-
+    
+    
+    
     data=ss_map$df
     coords=  attr(ss_map$df,"coords")
     base_shape=if(isTRUE(input$ssmap_base)){
@@ -1461,7 +1461,7 @@ server <- function(input, output, session) {
       attr(data,"layer_shape") } else{ NULL}
     sscol_layer=adjustcolor(getcolhabs(vals$newcolhabs,input$sslayer_col,1), input$sslayer_lighten)
     sscol_base=adjustcolor(getcolhabs(vals$newcolhabs,input$ssbase_col,1), input$ssbase_lighten)
-
+    
     pal<-c()
     cex<-c()
     zs<-c()
@@ -1477,11 +1477,11 @@ server <- function(input, output, session) {
       co[i]<-input[[paste0("ss_co",i)]]
       showlab[i]<-input[[paste0("ss_lab",i)]]
     }
-
+    
     #data<-do.call(cbind,data)
     div(
-
-
+      
+      
       renderPlot({
         stack_scatter3D(data,coords,base_shape,layer_shape,
                         col.palette=pal,
@@ -1521,7 +1521,7 @@ server <- function(input, output, session) {
         ss3d_out$df<-recordPlot()
       })
     )
-
+    
   })
   output$cmap<-renderUI({
     req(!isTRUE(input$mantel_map))
@@ -1550,8 +1550,8 @@ server <- function(input, output, session) {
     req(!isTRUE(input$surface_map))
     req(!isTRUE(input$mantel_map))
     fluidRow(id="map_side01",
-
-
+             
+             
              uiOutput("map_1b_discrete"),
              column(12,uiOutput("scatter_colorby")),
              conditionalPanel("input.cmap=='interpolation'",{
@@ -1560,7 +1560,7 @@ server <- function(input, output, session) {
                           fluidRow(
                             column(12,"+ Model"),
                             column(12,
-
+                                   
                                    uiOutput("map_1c_grid"),
                                    uiOutput("map_1d_idw"),
                                    uiOutput("map_1d_knn")
@@ -1574,9 +1574,9 @@ server <- function(input, output, session) {
              column(12,uiOutput("map_extra_layer")),
              uiOutput("map_1f_layer"),
              uiOutput("map_1e_limits")
-
-
-
+             
+             
+             
     )
   })
   observeEvent(input$cmap,{
@@ -1596,7 +1596,7 @@ server <- function(input, output, session) {
       column(12,
              span("+ z-colors:",style="vertical-align: top;",
                   uiOutput("show_z_colors", inline = T)),
-
+             
              column(12,tipify(icon("fas fa-question-circle",style="color: gray"),"a expansion factor applied to the z coordinates. Often used with 0 < expand < 1 to shrink the plotting box in the z direction", placement = "bottom", options=list(container="body")),
                     '+ exp:',
                     inline(numericInput("surf_exp",NULL, 0.3, width="75px", step=.1))
@@ -1619,12 +1619,12 @@ server <- function(input, output, session) {
                     inline(numericInput("surf_d",NULL, 1, width="50px"))
              ),
              uiOutput("leg_surface")
-
-
+             
+             
       )
     )
-
-
+    
+    
   })
   output$leg_surface<-renderUI({
     req(isTRUE(input$surface_map))
@@ -1642,19 +1642,19 @@ server <- function(input, output, session) {
     div(class="well2",
         fluidRow(
           column(12,
-
+                 
                  span("+",checkboxInput("showfactors","Labels", F, width="75px")),uiOutput("show_map_labels")
           )
         )
     )
-
+    
   })
   output$map_coords<-renderUI({
     req(!isTRUE(input$mantel_map))
     div(class="well2",
         fluidRow(
           column(12,
-
+                 
                  span("+",checkboxInput("showcoords","Coords", F, width="75px")),uiOutput("show_map_coords")
           )
         )
@@ -1664,9 +1664,9 @@ server <- function(input, output, session) {
     div(class="well2",
         fluidRow(
           column(12,span("+",checkboxInput("showguides","Guides", F, width="75px"))),
-
+          
           uiOutput("show_guides_options"),
-
+          
           uiOutput("show_map_axes")
         )
     )
@@ -1696,15 +1696,15 @@ server <- function(input, output, session) {
                   '+ Width:',
                   inline(numericInput("lwd_guides",NULL, 1, width="75px",step=0.5))
            )
-
+           
     )
   })
   output$show_map_axes<-renderUI({
     #req(!isTRUE(input$surface_map))
     div(
-
-
-
+      
+      
+      
       column(12,' +	Axes:',
              column(12,
                     '+ Size:',
@@ -1729,7 +1729,7 @@ server <- function(input, output, session) {
     my<-my[which(my>min(vector))]
     my<-my[which(my<max(vector))]
     div(
-
+      
       tipify(icon("fas fa-question-circle",style="color: gray"),"Enter a vector of breaks (comma delimited, within the data range)", options=list(container="body")),
       "+ breaks",
       textInput('breaks_map', NULL, paste(my, collapse = ", "), width="200px")
@@ -1770,11 +1770,11 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
 
            )))
     )
-
-
+    
+    
   })
   output$map_1a_base<-renderUI({
-
+    
     req(!is.null(attr(getdata_map(),"base_shape")))
     column(12,
            div(
@@ -1794,16 +1794,16 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                    )
                  })
                )
-
+               
              )
            ))
   })
   output$map_1b_discrete<-renderUI({
-
+    
     req(input$cmap=="discrete")
     #req(isFALSE(input$surface_map)|is.null(input$surface_map))
     column(12,
-
+           
            div(class="well2",
                " + Points:",
                column(12,' + Shape:',
@@ -1811,7 +1811,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                                   label = NULL,
                                   choices = df_symbol$val,
                                   choicesOpt = list(content = df_symbol$img), inline=T, width="75px")),
-
+               
                column(12,
                       '+ Size::',inline(uiOutput("map_pt_range"))),
                if(input$choices_map=='Data-Attribute' & isFALSE(input$scatter_3d)){
@@ -1822,17 +1822,17 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                                  uiOutput("scalesize_size"),
                                  uiOutput("scalesize_color")
                           )
-
+                          
                    ),
-
+                   
                    column(12,"+",checkboxInput("colored_map","Color by:", F, width="75px"),
                           uiOutput("mapfac",inline=T))
                  )
                }
-
+               
            ))
-
-
+    
+    
   })
   output$map_pt_range<-renderUI({
     if(input$choices_map=="Data-Attribute"){
@@ -1841,26 +1841,26 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
         inline(numericInput("pt_points_min",NULL, 0, width="45px", min=0, step=0.1)),
         "max:",
         inline(numericInput("pt_points",NULL, 1, width="45px"))
-
+        
       )} else{
         inline(numericInput("pt_points",NULL, 1, width="45px"))
       }
   })
   output$map_1c_grid<-renderUI({
-
+    
     req(input$cmap=="interpolation")
     #req(isFALSE(input$surface_map)|is.null(input$surface_map))
-
+    
     column(12," + Grid",
            column(12,tipify(icon("fas fa-question-circle",style="color: gray")," sample size for sampling point locations within the map area", placement = "bottom", options=list(container="body")),
                   ' + resolution:',
                   inline(uiOutput("res_map"))
            )
-
-
+           
+           
     )
-
-
+    
+    
   })
   res_map_cur<-reactiveValues(df=20000)
   output$res_map<-renderUI({
@@ -1883,7 +1883,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(!isTRUE(input$mantel_map))
     req(input$saved_maps=="new map")
     req(length(attr(getdata_map(),"layer_shape"))>0)
-
+    
     column(12,
            div(
              class="well2",
@@ -1898,8 +1898,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                       numericInput("layer_lighten",NULL,value=0.6, width="50px", min=0, max=1, step=0.1)
                  )
                )
-
-
+               
+               
              )
            ))
   })
@@ -1909,7 +1909,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     limits<-get_limits(limits=NULL,base_shape, layer_shape, coords = attr(getdata_map(),"coords"))
     column(12,
            div(class="well2",
-
+               
                span("+ Limits:",style="color: #05668D"),
                div(style="margin-top: -20px;",
                    div(span("Long",style="margin-left: 70px"),span("Lat",style="margin-left: 60px")),
@@ -1921,19 +1921,19 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                      splitLayout("+ max:",cellWidths = c("50px",'90px',"90px"),
                                  numericInput("long_xmax",NULL, value=limits[2,1], width="87px", step=0.01),
                                  numericInput("lat_xmax",NULL, limits[2,2], width="87px", step=0.01)))
-
-
+                   
+                   
                )
            ))
   })
   output$show_z_coords<-renderUI({
     req(isTRUE(input$surface_map))
     my_rst<-attr(vals$saved_maps[[input$saved_maps]],'my_rst')
-
+    
     z<-max(my_rst@data@values, na.rm=T)
     column(12,
            span("+ z: ",numericInput("z_coords",NULL, z, width="75px")))
-
+    
   })
   output$show_z_colors<-renderUI({
     req(length(names(vals$saved_maps))>0)
@@ -1959,7 +1959,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
            column(12,' + Factor:',
                   pickerInput("labels_coords",NULL, choices=colnames( attr(getdata_map(),"factors")),options=list(container="body"), width="75px", inline=T)),
            #
-
+           
            column(12,' + Color:',
                   pickerInput(inputId = "col_factor",
                               label = NULL,
@@ -2025,8 +2025,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                     "nmax", NULL, 4, min = 0, width="75px"
                   )
            ))
-
-
+    
+    
   })
   output$mapfac<-renderUI({
     req(input$colored_map %% 2)
@@ -2062,7 +2062,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   output$map_options<-renderUI({
     fluidRow(
       inline(div(style="margin-top:10px",uiOutput("add_map", inline=T))),
-
+      
       inline(div(style="margin-top:10px",uiOutput("show_saved_maps", inline=T))),
       inline(div(style="margin-top:10px",uiOutput("mantel_map", inline=T))),
       inline(div(style="margin-top:10px",uiOutput("edit_map", inline=T))),
@@ -2078,7 +2078,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       bsButton('downp_map',tipify(icon("fas fa-download"),"Download plot"), style="button_active"),
       inline(uiOutput("down_raster_btn")),
       inline(div(style="margin-top:10px",uiOutput("stop_map", inline=T))),
-
+      
     )
   })
   output$down_raster_btn<-renderUI({
@@ -2091,9 +2091,9 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       raster::writeRaster(attr(vals$map_res,"my_rst"), file,format="GTiff")
     }
   )
-
-
-
+  
+  
+  
   automap_war<-reactive({
     renderUI({
       div(em(icon("fas fa-hand-point-left"),"Click to apply input changes"))
@@ -2183,8 +2183,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(input$choices_map)
     req(input$cmap)
     req(isFALSE(stopbigmap$df))
-
-
+    
+    
     if(input$choices_map=="Data-Attribute"){
       if(input$cmap=='discrete'){
         disc_data_map()
@@ -2198,8 +2198,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       if(input$cmap=='discrete'){disc_fac_map()}
       if(input$cmap=='interpolation'){interp_fac_map()}
     }
-
-
+    
+    
     if(input$cmap=='raster'){
       validate(need(input$choices_map=="Data-Attribute","Raster tool currently only available for the Data-Attribute"))}
     fluidRow(
@@ -2222,17 +2222,17 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
         "input.cmap=='interpolation'& input.choices_map=='Data-Attribute'",{
           div(renderPlot(vals$map_data_interp))
         }),
-
+      
       conditionalPanel(
         "input.cmap=='interpolation'& input.choices_map=='Factor-Attribute'",{
           div(renderPlot(vals$map_fac_interp))
         }),
-
+      
       conditionalPanel(
         "input.cmap=='discrete'& input.choices_map=='Data-Attribute'",{
           div(renderPlot(suppressWarnings(print(vals$map_data_disc))))
         }),
-
+      
       conditionalPanel(
         "input.cmap=='discrete'& input.choices_map=='Factor-Attribute'",{
           div(renderPlot(vals$map_fac_disc))
@@ -2240,7 +2240,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       conditionalPanel(
         "input.cmap=='raster'& input.choices_map=='Data-Attribute'",{
           div(
-
+            
             renderPlot(vals$map_data_raster))
         })
     )
@@ -2250,8 +2250,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     span("+",
          checkboxInput("scatter_4D"," 4D::", F, width="50px"),inline(uiOutput("colorzby")),
          uiOutput("scatter_4D"))
-
-
+    
+    
   })
   output$colorzby<-renderUI({
     req(isTRUE(input$scatter_4D))
@@ -2286,7 +2286,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     layer_shape=if(isTRUE(input$map_1f_layer)){
       attr(data,"layer_shape") } else{ NULL}
     z<-data[,input$var_map]
-
+    
     if(isTRUE(input$scatter_4D)){
       data<-vals$saved_data[[input$scatter_datalistz]]
       leg<-input$scatter_colorz
@@ -2297,23 +2297,23 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
         factors[,input$scatter_colorz]
       }
     } else{ leg=input$var_map}
-
+    
     z00<-z0<-if(isTRUE(input$scatter_4D)){
       colvar} else{z}
     col= getcolhabs(vals$newcolhabs,input$pt_palette,n=100)
     z0<-scales::rescale(as.numeric(z0),c(1,100))
     pt_col<-col[cut(z0, breaks=max(z0))]
-
+    
     if(is.factor(z00)){
       lab=levels(z00)
       at=1:length(lab)
-
+      
     } else{
       lab=pretty(z00)
       at=pretty(z00)
     }
     at=scales::rescale(as.numeric(at),c(.3,.8))
-
+    
     col_layer=adjustcolor(getcolhabs(vals$newcolhabs,input$layer_col,1), input$layer_lighten)
     col_base=adjustcolor(getcolhabs(vals$newcolhabs,input$base_col,1), input$base_lighten)
     div(
@@ -2361,13 +2361,13 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(!isTRUE(input$stack_map))
     req(!isTRUE(input$mantel_map))
     renderPlot(vals$saved_maps[[input$saved_maps]])
-
+    
   })
   output$map02<-renderUI({
     req(!isTRUE(input$mantel_map))
     req(isTRUE(input$surface_map))
     req(!isTRUE(input$rgl_map))
-
+    
     column(12,
            uiOutput("coarser"),
            uiOutput("persp_out"))
@@ -2379,15 +2379,15 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       input$saved_maps
     } else{
       input$saved_maps2
-
+      
     }
     p(strong("Warning:", style="color: red"),"The selected rasters have different resolutions and were united to the coarser resolution (",coa,")")
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
   })
   output$map03<-renderUI({
     req(!isTRUE(input$mantel_map))
@@ -2398,11 +2398,11 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   output$map04<-renderUI({
     req(!isTRUE(input$mantel_map))
     req(isTRUE(input$stack_map))
-
+    
     rlist<-get_stacklist()[input$stack_layers]
-
+    
     div(
-
+      
       plotOutput("stack_out")
     )
   })
@@ -2420,14 +2420,14 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(length(input$var_map)>0)
     zvalues<-getdata_map()[,input$var_map]
     coords<-attr(getdata_map(),"coords")
-
+    
     colnames(coords) <- c ("x", "y")
     geo.dist<-geodist(x=coords, paired=T, measure="geodesic")
-
+    
     dist.mat<-dist(zvalues)
     correlog<-mantel.correlog(dist.mat, geo.dist, n.class=input$mantel_nclass, break.pts=NULL,cutoff=input$mantel_cutoff, r.type=input$mantel_r.type, nperm=input$mantel_nperm, mult="holm", progressive=TRUE )
-
-
+    
+    
     # Comparing
     fluidRow(
       switch(input$spatial_stats,
@@ -2437,13 +2437,13 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
              }),
              'mantel.res'=renderPrint(correlog$mantel.res),
              'break.pts'=renderPrint(data.frame(breaks=correlog$break.pts))
-
-
+             
+             
       )
     )
   })
   output$package_refs<-renderPrint({
-
+    
     packlist<-list()
     for(i in 1:length(list.of.packages))
     {
@@ -2455,7 +2455,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       packlist[i]<-d
     }
     packlist
-
+    
   })
   introjs_exit <- function(){
     runjs("introJs().exit()")
@@ -2468,7 +2468,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(input$guide1_cicerone_next$highlighted=='menu_data')
     updateTabItems(session, "tabs", "menu_upload")
     delay(500,{   guide1$highlight("menu_data")$init()$start(step = 3)})
-
+    
   })
   observeEvent(input$guide1_cicerone_next,{
     #renderPrint(reactiveValuesToList(input))
@@ -2478,15 +2478,15 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     if(input$guide1_cicerone_next$highlighted=='bank_button'){
       showModal(upload_modal())
       up_open$df<-T
-
+      
       #introjs(session, options=list(steps=steps))
       delay(800,{
         guide1$highlight(".modal",is_id=F)$init()$start(step = 4)
       })
       #runjs("Shiny.setInputValue('guide1_cicerone_next', 'upload_mod2');")
     }
-
-
+    
+    
   })
   observeEvent(input$guide1_cicerone_next,{
     req(length(input$guide1_cicerone_next$highlighted)>0)
@@ -2507,9 +2507,9 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     rea$df<-T
   })
   output$tour_cur<-renderUI({
-
+    
     div(
-
+      
       splitLayout(
         renderPrint(input$guide2_cicerone_previous),
         renderPrint(input$guide2_cicerone_next)
@@ -2527,7 +2527,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(input$guide1_cicerone_previous$highlighted=="example_data")
     # runjs("Shiny.setInputValue('guide1_cicerone_previous', NULL);")
     showModal(upload_modal())
-
+    
     #delay(500,  runjs("Shiny.setInputValue('next_upload', false);"))
     updateRadioButtons(session,"up_or_ex", selected="use example data")
     guide1$move_forward()
@@ -2543,7 +2543,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     {
       #showModal(upload_modal())
       delay(800,  guide1$clone()$init()$start(step = 7))
-
+      
     }
   })
   observeEvent(input$guide2_cicerone_previous$highlighted,{
@@ -2552,7 +2552,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     delay(800,{
       guide1$highlight(".modal",is_id=F)$init()$start(step = 4)
     })
-
+    
   })
   observe({
     req(isTRUE(input$next_upload))
@@ -2560,21 +2560,28 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(length(input$upload_insert)>0)
     delay(800, guide2$init()$start())
   })
+  
   observeEvent(input$guide2_cicerone_next$highlighted,{
     req(input$guide2_cicerone_next$highlighted=="upload_insert")
     runjs("Shiny.setInputValue('upload_insert', true);")
-
+    
   })
   observeEvent(input$help_databank,{
     guide3$init()$start()
   })
-  output$menutitle<-renderUI({column(12,gettitle())})
+  output$menutitle<-renderUI({
+    
+    column(12,
+           
+           
+           gettitle())
+  })
   observe(vals$saved_divset_value<-isolate(length(vals$saved_data)+1))
   getdata_hc <- reactive({
     req(input$data_hc)
     data=vals$saved_data[[input$data_hc]]
     validate(need(length(data)>0,"no data found"))
-
+    
     data
   })
   getdata_map <- reactive({
@@ -2604,7 +2611,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   getdata_div<-reactive({
     req(input$data_div)
     data=vals$saved_data[[input$data_div]]
-
+    
     data
   })
   observeEvent(input$bmu_p_bgpalette,
@@ -2664,8 +2671,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   gettitle<-reactive({
     div(style="color: #05668D", id="menu-title",
-
-
+        
+        
         switch(input$tabs,
                "menu_intro"={
                  h4(strong("Introduction"))
@@ -2680,11 +2687,11 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                },
                'menu_nb'={
                  h4(strong("Naive Bayes", pophelp(NULL,"classification technique based on Bayes Theorem with an assumption of independence among predictors")))
-
+                 
                },
                'menu_svm'={
                  h4(strong("Support Vector Machine", pophelp(NULL," Support vector machine methods can handle both linear and non-linear class boundaries")))
-
+                 
                },
                'menu_som'={
                  h4(strong("Self-Organizing Maps"),
@@ -2710,18 +2717,18 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                'menu_down'={
                  h4(strong("Download Center"))
                }
-
+               
         )
-
+        
     )
   })
   output$upload_example<-renderUI({
     radioButtons("up_or_ex",NULL,choiceValues  = list("upload", "use example data"),choiceNames   = list(tipify(div("upload"),"upload your own data",placement = "top", options=list(container="body")), tipify(div("use example data"),"Use Nematode datasets from Araca Bay as example",placement = "top", options=list(container="body"))),selected = "upload", inline = T)
   })
   upload_modal <- reactive({
-
+    
     res<-tags$div(class="upload_modal",modalDialog(
-
+      
       div(id="upload_mod2",
           h3("Upload Panel",
              popify(actionLink("uphelp0",tipify(icon("fas fa-question-circle"),"click for help")),"Data bank structure",as.character(paste0(
@@ -2730,17 +2737,17 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
           div(style = "background: white; height:500px",
               br(),
               uiOutput("upload_input")
-
-
+              
+              
           )
-
+          
       ),
-
+      
       footer =  uiOutput("upload_control"),
       size = "l",
       easyClose = TRUE
     ))
-
+    
     res
   })
   output$upload_control<-renderUI({
@@ -2755,7 +2762,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       tags$div(class="upload_modal",
                modalDialog(
                  easyClose = T,
-
+                 
                  div(
                    h3("Insert Datalist"),
                    column(12,uiOutput("data_list")),
@@ -2765,20 +2772,20 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                             inline(
                               div(class='upload_insert',actionButton("upload_insert","Insert datalist", width="125px"))
                             )
-
+                            
                           )
                    )
-
-
+                   
+                   
                  ),
                  footer = br(),
                )
       )
-
-
+      
+      
     )
     delay(1000,  guide1$init()$start(step = 8))
-
+    
   })
   observeEvent(input$back_upload, {
     showModal(
@@ -2789,7 +2796,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   output$menu_upload_out<-renderUI({
     div(uiOutput("upload_selection"),
         uiOutput("panel_main"))
-
+    
   })
   observeEvent(input$desc_options,{
     vals$cur_desc_options<-input$desc_options
@@ -2798,14 +2805,14 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     if(sum(vals$bagdata==c(T,T))==2){col="gray"} else{ col="#0093fcff"}
     change_alert<-paste0("#data_upload {border-color:",col,";border-width: 2px;}")
     column(12,
-      tags$style(change_alert),
-      pickerInput("data_upload0",NULL,choices=names(vals$saved_data),  selected=vals$cur_data, options=list(container="body","style-base" = "form-control", style = "")))
-
+           tags$style(change_alert),
+           pickerInput("data_upload0",NULL,choices=names(vals$saved_data),  selected=vals$cur_data, options=list(container="body","style-base" = "form-control", style = "")))
+    
   })
   observeEvent(input$tools_drop7,{
-
-
-
+    
+    
+    
   })
   cur_tag<-reactiveValues(df=1)
   observeEvent(input$tag_edit,{
@@ -2815,15 +2822,15 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   observeEvent(input$tag_fun,{
     cur_tag_fun$df<-input$tag_fun
   })
-
+  
   output$tag_edit_level<-renderUI({
     factors<-attr(getdata_upload(),"factors")
-   inline(div(class="tool6_1", pickerInput('tag_edit_level',"Level:",levels(factors[,input$tag_edit]), width="125px")))
+    inline(div(class="tool6_1", pickerInput('tag_edit_level',"Level:",levels(factors[,input$tag_edit]), width="125px")))
   })
   output$tag_edit_newlevel<-renderUI({
     textInput('tag_edit_newlevel',"New label:",placeholder="Text a new label", width="125px")
   })
-
+  
   output$na_warning<-renderUI({
     req(input$na_method=='bagImpute')
     div(
@@ -2845,12 +2852,12 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     hidden(
       column(12, id="na_help_text", style="background: white; white-space: normal;",
              h4("Imputation methods",style="border-bottom: 1px solid SeaGreen;",actionLink("naclose",icon('fas fa-window-close'))),
-
+             
              div(
                strong("median/mode:"),
                p('Data-Attribute columns are imputed with the median;'),
                p('Factor-Attribute columns are imputed with the mode')
-
+               
              ),
              div(
                strong("Knn"),
@@ -2861,7 +2868,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
              div(
                strong("medianImpute"),
                p('Only available for the Data-Attribute. Imputation via medians takes the median of each predictor in the training set, and uses them to fill missing values. This method is simple, fast, and accepts missing values, but treats each predictor independently, and may be inaccurate.'))
-
+             
       )
     )
   })
@@ -2888,28 +2895,28 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     inline(
       span(id='tools_drop8',
            inline(
-             actionButton("tools_save", icon("fas fa-save"),style  = if(sum(vals$bagdata==c(T,T))==2){"button_change"} else{"animation: glowing2 1000ms infinite;"})
+             
            )
       )
     )
   })
-
-
-
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
+  
+  
+  
   observeEvent(input$match,{
     if(!input$match %% 2)
       updateSelectInput(session,"filter_data", selected="none")
   })
-
+  
   output$tools_split<-renderUI({
     validate(need(sum(vals$bagdata==c(T,T))==2,"You have unsaved changes. Save the changes to perform the split"))
-
+    
   })
   observeEvent(input$addpart,{
     vals$hand_save<-"add partition"
@@ -2923,22 +2930,23 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   output$menu_bank_out<-renderUI({
     column(12, class="databank_page",style="margin-left: 5px",
            uiOutput("bank_tools"),
-       
+           
            uiOutput("view_out"))
   })
   
   output$datalist_cogs<-renderUI({
+    req(length(vals$saved_data)>0)
     div(id="dcogs",
         div(class="dcogs0",span(icon("fas fa-cog"),style="padding-left: 7px")),
         div(class='dlinks_all',
             div(class="dlinks",
-              actionLink("dcogs1","Rename")
+                actionLink("dcogs1","Rename")
             ),
             div(class="dlinks",
-              actionLink("dcogs2","Merge Datalists")
+                actionLink("dcogs2","Merge Datalists")
             ),
             div(class="dlinks",
-              actionLink("dcogs3","Import variables")
+                actionLink("dcogs3","Import variables")
             ),
             div(class="dlinks",
                 actionLink("dcogs4","Remove factors")
@@ -2953,35 +2961,38 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     column(12,id="bank_tools",
            inline(
              fluidRow(id="bank_tools_in",
-                 div(
-                   inline(
-                     div(class="create_datalist",
-                         popify(actionButton("bank_button", icon("fas fa-plus")),"Data Input",textinput(),options=list(container="body"))
-                     )
-                   ),
-                
-                   span(
-                     inline(
-                       uiOutput("bank_input")
-                     ),
-                     span(inline(    uiOutput("datalist_cogs"))),
-                     inline(
-                       uiOutput("tools_bank")
-                     )
-                   )
-                   
-                   
-                   
-                   
-                 ))
+                      div(
+                        inline(
+                          div(class="create_datalist",
+                              popify(actionButton("bank_button", icon("fas fa-plus")),"Data Input",textinput(),options=list(container="body"))
+                          )
+                        ),
+                        
+                        span(
+                          inline(
+                            uiOutput("bank_input")
+                          ),
+                          span(inline(    uiOutput("datalist_cogs"))),
+                          inline(
+                            uiOutput("tools_bank")
+                          )
+                        )
+                        
+                        
+                        
+                        
+                      ))
            ))
   })
   output$bank_input<-renderUI({
     if(length(vals$saved_data)<1) {
-      column(12,
-             p(style="margin-top: 0px;",
-               icon("fas fa-hand-point-left", style="font-size: 30px; color: SeaGreen"),em("Get started by creating a Datalist")
-             ))
+      div(style="margin-top: 5px;",
+          div(
+            style="margin-top: 5px;margin-left: 5px",
+            icon("fas fa-hand-point-left", style="font-size: 30px; color: SeaGreen"),em("Get started by creating a Datalist")
+            
+          )
+      )
     } else {
       div(
         pickerInput("data_bank",NULL,choices=names(vals$saved_data), selected=vals$cur_data, width="200px")
@@ -3003,7 +3014,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   }
   output$tools_bank<-renderUI({
     data<-getdata_bank()
-
+    
     choices<-list(
       "data","factors","coords",
       "extra_shape",
@@ -3012,7 +3023,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       if(check_model(data,"nb")){"nb"},
       if(check_model(data,"svm")){"svm"}
     )
-
+    
     attributes<-list(
       div(id="001",icon("fas fa-archive")),
       div(id="c002",icon("fas fa-boxes")),
@@ -3023,32 +3034,32 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       if(check_model(data,"nb")) { div(id="008", img(src=nb_icon2,height='20',width='20'))},
       if(check_model(data,"svm")) { div(id="009", img(src=svm_icon2,height='20',width='20'))}
     )
-
-
+    
+    
     attributes<-attributes[which(unlist(lapply(attributes, function(x) !is.null(x))))]
     choices<-choices[which(unlist(lapply(choices, function(x) !is.null(x))))]
-if(is.null(vals$curview_databank)){vals$curview_databank<-"data"}
+    if(is.null(vals$curview_databank)){vals$curview_databank<-"data"}
     div(
-
-           # renderPrint(names(attr(data,"rf"))),
-           inline(
-             radioGroupButtons(
-               "view_datalist",NULL,
-               choiceNames =attributes,
-               choiceValues =choices,status="view_datalist",selected = vals$curview_databank
-
-             )
-           ),
-    bsPopover("001",NULL,paste0(span("Data-Attribute", style="color: red"))),
-    bsPopover("c002",NULL,"Factor-Attribute"),
-    bsPopover("003",NULL,"Coords-Attribute"),
-    bsPopover("004",NULL,"Shapes-Attribute"),
-    bsPopover("006",NULL,"Som-Attribute"),
-    bsPopover("007",NULL,"RF-Attribute"),
-    bsPopover("008",NULL,"NB-Attribute"),
-    bsPopover("009",NULL,"SVM-Attribute"),
+      
+      # renderPrint(names(attr(data,"rf"))),
+      inline(
+        radioGroupButtons(
+          "view_datalist",NULL,
+          choiceNames =attributes,
+          choiceValues =choices,status="view_datalist",selected = vals$curview_databank
+          
+        )
+      ),
+      bsPopover("001",NULL,paste0(span("Data-Attribute", style="color: red"))),
+      bsPopover("c002",NULL,"Factor-Attribute"),
+      bsPopover("003",NULL,"Coords-Attribute"),
+      bsPopover("004",NULL,"Shapes-Attribute"),
+      bsPopover("006",NULL,"Som-Attribute"),
+      bsPopover("007",NULL,"RF-Attribute"),
+      bsPopover("008",NULL,"NB-Attribute"),
+      bsPopover("009",NULL,"SVM-Attribute"),
     )
-
+    
   })
   output$viewsom<-renderUI({
     fluidRow(
@@ -3069,7 +3080,7 @@ if(is.null(vals$curview_databank)){vals$curview_databank<-"data"}
         )
       ),
       renderTable(combsom(), rownames = T,striped=T, spacing ="xs")
-
+      
     )
   })
   combsom<-reactive({
@@ -3084,29 +3095,29 @@ if(is.null(vals$curview_databank)){vals$curview_databank<-"data"}
   })
   observeEvent(input$view_datalist,
                {vals$curview_databank<-input$view_datalist})
-
+  
   output$merge_button<-renderUI({
- 
+    
     
     req(length(input$merge_datalist_in)>1)
     div( validate(need(length(input$merge_datalist_in)>1,"Select at least two Datalists to merge")),
-      actionButton("merge_datalist_go",icon('fas fa-compress-alt')),"Click to the merge"
+         actionButton("merge_datalist_go",icon('fas fa-compress-alt')),"Click to the merge"
     )
   })
   remove_factors<- reactive({
-      modalDialog(size="m",easyClose = T,
-                  title="Remove a factor:",
-                  div(
-                    div(strong("Datalist:"), em(input$data_bank,style="color: SeaGreen")),
-                    checkboxGroupInput("remove_factor", "select a factor", choices=colnames(attr(vals$saved_data[[input$data_bank]],"factors"))),
-                    tipify(actionButton("delete_factor_yes",icon("fas fa-trash-alt")),"Click to remove")
-                  )
-                  
-      )
-    })
+    modalDialog(size="m",easyClose = T,
+                title="Remove a factor:",
+                div(
+                  div(strong("Datalist:"), em(input$data_bank,style="color: SeaGreen")),
+                  checkboxGroupInput("remove_factor", "select a factor", choices=colnames(attr(vals$saved_data[[input$data_bank]],"factors"))),
+                  tipify(actionButton("delete_factor_yes",icon("fas fa-trash-alt")),"Click to remove")
+                )
+                
+    )
+  })
   observeEvent(input$dcogs4,{
     showModal(
-    remove_factors()  
+      remove_factors()  
     )
   })
   observeEvent(input$dfcogs3,{
@@ -3118,10 +3129,10 @@ if(is.null(vals$curview_databank)){vals$curview_databank<-"data"}
     showModal(
       modalDialog(size="s",easyClose = T,
                   title=strong("Are you sure?"),
-        div(
-          column(12,strong("Remove Datalist", style="color: red"),em(input$data_bank, col="gray20",style="height: 150px")),
-          column(12,style="margin-top: 20px; margin-bottom: 20px", bsButton("delete_datalist",icon=icon("far fa-trash-alt"),"Delete", style="button_active", block=T, value=F))
-        )
+                  div(
+                    column(12,strong("Remove Datalist", style="color: red"),em(input$data_bank, col="gray20",style="height: 150px")),
+                    column(12,style="margin-top: 20px; margin-bottom: 20px", bsButton("delete_datalist",icon=icon("far fa-trash-alt"),"Delete", style="button_active", block=T, value=F))
+                  )
       )
     )
     
@@ -3141,56 +3152,56 @@ if(is.null(vals$curview_databank)){vals$curview_databank<-"data"}
       )
     )
   })
- output$ddcogs1_pick<-renderUI({
+  output$ddcogs1_pick<-renderUI({
     pickerInput("ddcogs1_pick", div("Select a variable"),choices=colnames(vals$saved_data[[input$data_bank]]), selected=vals$ddcogs1_pick, width="200px")
   })
- observeEvent(input$ddcogs1_pick,{
-   vals$ddcogs1_pick<-input$ddcogs1_pick
- })
- observeEvent(input$dfcogs1_pick,{
-   vals$dfcogs1_pick<-input$dfcogs1_pick
- })
- output$dfcogs1_pick<-renderUI({
-   pickerInput("dfcogs1_pick", div("Select a factor"),choices=colnames(attr(vals$saved_data[[input$data_bank]],"factors")), selected=vals$dfcogs1_pick, width="200px")
- })
- output$ddcogs3_pick<-renderUI({
- span(strong("Datalist:"),em(input$data_bank,style='color: SeaGreen'))
- })
- output$ddcogs3_edit<-renderUI({
-   pickerInput("ddcogs3_edit", div("Edit Changes:"),colnames(attr(vals$saved_data[[input$data_bank]],"transf")),width="200px", selected=vals$ddcogs3_edit)
- })
- observeEvent(input$ddcogs3_edit,{
-  vals$ddcogs3_edit<-input$ddcogs3_edit
- })
- observeEvent(input$ddcogs3,{
-
-   showModal(
-     removechange()
-   ) 
- })
- removechange<-reactive({
-
-   modalDialog(size="m",easyClose = T,footer =NULL,
-               div(
-                 inline(uiOutput(
-                   'ddcogs3_pick'
-                 )),
-                 span(
-                   inline(uiOutput('ddcogs3_edit')),
-                   bsButton("ddcogs1_rename_remove",icon("fas fa-trash-alt")), modalButton("Dismiss")
-                 ),
-                 div(
-                   renderPrint(attr(vals$saved_data[[input$data_bank]],"transf"))
-                 )
-               )
-   )
- })
- 
- observeEvent(input$ddcogs1_rename_remove,{
-   #pic<-colnames(attr(vals$saved_data[[input$data_bank]],"transf"))==input$ddcogs3_edit
-   attr(vals$saved_data[[input$data_bank]],"transf")<-data.frame(attr(vals$saved_data[[input$data_bank]],"transf"))
-attr(vals$saved_data[[input$data_bank]],"transf")[input$ddcogs3_edit]<-NULL
- })
+  observeEvent(input$ddcogs1_pick,{
+    vals$ddcogs1_pick<-input$ddcogs1_pick
+  })
+  observeEvent(input$dfcogs1_pick,{
+    vals$dfcogs1_pick<-input$dfcogs1_pick
+  })
+  output$dfcogs1_pick<-renderUI({
+    pickerInput("dfcogs1_pick", div("Select a factor"),choices=colnames(attr(vals$saved_data[[input$data_bank]],"factors")), selected=vals$dfcogs1_pick, width="200px")
+  })
+  output$ddcogs3_pick<-renderUI({
+    span(strong("Datalist:"),em(input$data_bank,style='color: SeaGreen'))
+  })
+  output$ddcogs3_edit<-renderUI({
+    pickerInput("ddcogs3_edit", div("Edit Changes:"),colnames(attr(vals$saved_data[[input$data_bank]],"transf")),width="200px", selected=vals$ddcogs3_edit)
+  })
+  observeEvent(input$ddcogs3_edit,{
+    vals$ddcogs3_edit<-input$ddcogs3_edit
+  })
+  observeEvent(input$ddcogs3,{
+    
+    showModal(
+      removechange()
+    ) 
+  })
+  removechange<-reactive({
+    
+    modalDialog(size="m",easyClose = T,footer =NULL,
+                div(
+                  inline(uiOutput(
+                    'ddcogs3_pick'
+                  )),
+                  span(
+                    inline(uiOutput('ddcogs3_edit')),
+                    bsButton("ddcogs1_rename_remove",icon("fas fa-trash-alt")), modalButton("Dismiss")
+                  ),
+                  div(
+                    renderPrint(attr(vals$saved_data[[input$data_bank]],"transf"))
+                  )
+                )
+    )
+  })
+  
+  observeEvent(input$ddcogs1_rename_remove,{
+    #pic<-colnames(attr(vals$saved_data[[input$data_bank]],"transf"))==input$ddcogs3_edit
+    attr(vals$saved_data[[input$data_bank]],"transf")<-data.frame(attr(vals$saved_data[[input$data_bank]],"transf"))
+    attr(vals$saved_data[[input$data_bank]],"transf")[input$ddcogs3_edit]<-NULL
+  })
   observeEvent(input$ddcogs1,{
     showModal(
       modalDialog(size="m",easyClose = T,footer =NULL,
@@ -3224,8 +3235,8 @@ attr(vals$saved_data[[input$data_bank]],"transf")[input$ddcogs3_edit]<-NULL
   })
   observeEvent(input$ddcogs1_rename_go,{
     req(input$ddcogs1_rename!="")
-  pic<- which( colnames(vals$saved_data[[input$data_bank]])==input$ddcogs1_pick)
-  colnames(vals$saved_data[[input$data_bank]])[pic]<-input$ddcogs1_rename
+    pic<- which( colnames(vals$saved_data[[input$data_bank]])==input$ddcogs1_pick)
+    colnames(vals$saved_data[[input$data_bank]])[pic]<-input$ddcogs1_rename
   })
   observeEvent(input$dfcogs1_rename_go,{
     req(input$dfcogs1_rename!="")
@@ -3238,8 +3249,8 @@ attr(vals$saved_data[[input$data_bank]],"transf")[input$ddcogs3_edit]<-NULL
   observeEvent(input$dcogs1_rename_go,{
     req(input$dcogs1_rename!="")
     names(vals$saved_data)[which(names(vals$saved_data)==input$data_bank)]<-input$dcogs1_rename
-vals$cur_data<-input$dcogs1_rename
-removeModal()
+    vals$cur_data<-input$dcogs1_rename
+    removeModal()
   })
   output$target_import_var<-renderUI({
     div(strong("Target:"),em(input$data_bank,"::",input$import_attr, style="color: SeaGreen"))
@@ -3249,10 +3260,10 @@ removeModal()
       modalDialog(size="m",easyClose = T,footer =NULL,
                   div(style="background-color:#E8E8E8; border: 1px solid SeaGreen",
                       div(strong("Merge Data-Attribute from"),"(select two at least)",strong(":")),
-                         div(style="overflow-y: scroll;height: 150px",
-                             checkboxGroupInput("merge_datalist_in", NULL,choices=names(vals$saved_data))
-                         ),
-                         uiOutput("merge_button")
+                      div(style="overflow-y: scroll;height: 150px",
+                          checkboxGroupInput("merge_datalist_in", NULL,choices=names(vals$saved_data))
+                      ),
+                      uiOutput("merge_button")
                   )
       )
     )
@@ -3262,27 +3273,27 @@ removeModal()
       modalDialog(size="m",easyClose = T,
                   title="Import variable",
                   div(style="color: Grey",
-                   
-                    uiOutput("target_import_var"),
-                    inline(
-                      div(
-                        div(strong("Select a Datalist:")),
-                        pickerInput("import_datalist", NULL, choices=names(vals$saved_data)[names(vals$saved_data)!=input$data_bank], width="200px")
+                      
+                      uiOutput("target_import_var"),
+                      inline(
+                        div(
+                          div(strong("Select a Datalist:")),
+                          pickerInput("import_datalist", NULL, choices=names(vals$saved_data)[names(vals$saved_data)!=input$data_bank], width="200px")
+                        )
+                      ),
+                      inline(
+                        div(
+                          div(strong("Attribute:")),
+                          pickerInput("import_attr", NULL, choices=c("Factor-Attribute","Data-Attribute"), width="150px"))
+                      ),
+                      inline(
+                        uiOutput("import_factor")
+                      ),
+                      inline(
+                        tipify(actionButton("add_factor",icon("fas fa-plus")),"Click to the add the factor to the current Datalist")
                       )
-                    ),
-                    inline(
-                      div(
-                        div(strong("Attribute:")),
-                        pickerInput("import_attr", NULL, choices=c("Factor-Attribute","Data-Attribute"), width="150px"))
-                    ),
-                    inline(
-                      uiOutput("import_factor")
-                    ),
-                    inline(
-                      tipify(actionButton("add_factor",icon("fas fa-plus")),"Click to the add the factor to the current Datalist")
-                    )
                   )
-                  )
+      )
     )
   })
   output$ddcogs3<-renderUI({
@@ -3292,56 +3303,9 @@ removeModal()
     )
   })
   
-
-  observeEvent(input$data_bank,{
-    data=vals$saved_data[[input$data_bank]]
-    output$viewdata<-renderUI({
-
-      div(
-        style="overflow-x: scroll;",
-
-
-        div(class="datalist_tools",
-            h5(strong("Data-Attribute"),
-               inline(
-                 div(
-                   id="ddcogs",
-                   div(class="ddcogs0",span(icon("fas fa-cog"),style="padding-left: 6px")),
-                   div(class='ddlinks_all',
-                       div(class="ddlinks",
-                           actionLink("ddcogs1","Rename Variables")
-                       ),
-                       div(class="ddlinks",
-                           actionLink("ddcogs3","Edit changes")
-                       ),
-                       div(class="ddlinks",
-                           actionLink("ddcogs2","Download table")
-                       )
-                   )
-                   
-                   
-                 )
-             
-               )
-            )),
-        if(length(attr(data,"data.factors"))>0){
-          column(12,h5(
-            p(strong("Wargning:", style="color: red"),
-              strong("Factors were removed from the Data-Attribute")),
-            p("Use the 'Pre-processing & Descriptive tools' sidebar menu to handle this factors in the Data-Attribute")
-          ))
-        },
-        column(12,style=" background: white; padding: 0px",
-               if(ncol(getdata_bank())<1000){
-                 uiOutput("data_attr")
-               } else{"Preview not available for data with more than 1000 columns"}
-        )
-
-      )
-
-
-    })
-  })
+  
+  
+  
   observeEvent(input$merge_datalist_go,{
     vals$hand_save<-"Merge Datalists"
     validate(need(length(input$merge_datalist_in)>1,"Select at least two Datalists to merge"))
@@ -3349,35 +3313,35 @@ removeModal()
       hand_save_modal()
     )})
   output$viewfactors<-renderUI({
-
+    
     div(style="overflow-x: scroll;",
-             div(class="datalist_tools",h5(
-               span(strong("Factor-Attribute")),
-               inline(
-                 div(
-                   id="dfcogs",
-                   div(class="dfcogs0",span(icon("fas fa-cog"),style="padding-left: 6px")),
-                   div(class='dflinks_all',
-                       div(class="dflinks",
-                           actionLink("dfcogs1","Rename Factor")
-                       ),
-                       div(class="dflinks",
-                           actionLink("dfcogs3","Remove Factors")
-                       ),
-                       
-                       div(class="dflinks",
-                           actionLink("dfcogs2","Download table")
-                       )
-                   )
-                 )
-               )
-             )),
-             div(
-               tags$style('#x1_factors td {padding: 0}'),
-               inline(
-                 DT::dataTableOutput("x1_factors")
-               )
-             )
+        div(class="datalist_tools",h5(
+          span(strong("Factor-Attribute")),
+          inline(
+            div(
+              id="dfcogs",
+              div(class="dfcogs0",span(icon("fas fa-cog"),style="padding-left: 6px")),
+              div(class='dflinks_all',
+                  div(class="dflinks",
+                      actionLink("dfcogs1","Rename Factor")
+                  ),
+                  div(class="dflinks",
+                      actionLink("dfcogs3","Remove Factors")
+                  ),
+                  
+                  div(class="dflinks",
+                      actionLink("dfcogs2","Download table")
+                  )
+              )
+            )
+          )
+        )),
+        div(
+          tags$style('#x1_factors td {padding: 0}'),
+          inline(
+            DT::dataTableOutput("x1_factors")
+          )
+        )
     )
   })
   observeEvent(input$add_factor,{
@@ -3395,18 +3359,18 @@ removeModal()
     factor_t<-attr(vals$saved_data[[input$data_bank]],"factors")
     #cond<-sum(rownames(factor_t)%in%rownames(factor_i))==nrow(factor_t)
     cond<-any(rownames(factor_t)%in%rownames(factor_i))
-
+    
     column(12,
            p(strong("action:"),"Import factor from another Datalist"),
            p(strong("Source:"),em(input$import_datalist,"::",input$import_attr,"::",input$import_factor,style="color: SeaGreen")),
            p(strong("Target:"),em( input$data_bank,":Factor-Attribute",style="color: #05668D")),
            textInput("newfactor","Target factor name:",input$import_factor),
-
+           
            if(!cond){p(style="color: red",strong("error:"),em("Source and target IDs do not match"))} else{ bsButton("add_factor_yes","Confirm", style="button_active",block=T)}
     )
   })
   observeEvent(input$add_factor_yes,{
-
+    
     factor_i<- if(input$import_attr=="Factor-Attribute"){
       attr(vals$saved_data[[input$import_datalist]],"factors")
     } else{
@@ -3415,15 +3379,15 @@ removeModal()
     fac<-if(input$import_attr=="Data-Attribute"){
       as.factor(factor_i[,input$import_factor])
     } else{factor_i[,input$import_factor] }
-
+    
     factor_t<-attr(vals$saved_data[[input$data_bank]],"factors")
     factor_t[rownames(factor_i),input$newfactor]<-fac
     attr(vals$saved_data[[input$data_bank]],"factors")<-factor_t
-
+    
     removeModal()
   })
   output$import_factor<-renderUI({
-
+    
     choices=if(input$import_attr=="Factor-Attribute"){
       colnames(attr(vals$saved_data[[input$import_datalist]],"factors"))}else{
         colnames(vals$saved_data[[input$import_datalist]])
@@ -3432,13 +3396,13 @@ removeModal()
       div(strong("Select the variable:")),
       pickerInput("import_factor", NULL, choices=choices, width="150px")
     )
-
+    
   })
   output$viewcoords<-renderUI({
-
+    
     if(is.null(attr(getdata_bank(),"coords"))) {
       fluidRow(
-
+        
         column(12,
                p(strong("No coords found in Datalist:",style="color: red"),em(input$data_bank))),
         uiOutput("add_coords_intru"),
@@ -3449,9 +3413,9 @@ removeModal()
                         fileInput(inputId = "add_coords_file",label = NULL)),
                  column(12,
                         uiOutput("add_coords_button"))
-
+                 
                ))
-
+        
       )
     } else{
       div(
@@ -3463,17 +3427,17 @@ removeModal()
         )
       )
     }
-
+    
   })
   output$DTcoords<-DT::renderDataTable(data.frame(attr(getdata_bank(),"coords")),options = list(pageLength = 20, info = FALSE,lengthMenu = list(c(20, -1), c( "20","All")), autoWidth=T,dom = 'lt'), rownames = TRUE,class ='cell-border compact stripe')
   output$viewbase<-renderUI({
     req(input$pick_elayers)
     req(input$pick_elayers=="Base Shape")
-
+    
     column(12,
            #renderPlot(bankShpfile()),
            if(is.null(attr(getdata_bank(),"base_shape"))) {fluidRow(
-
+             
              column(12,
                     p(strong("No base_shape found in Datalist:",style="color: red"),em(input$data_bank))),
              uiOutput("add_base_intru"),
@@ -3484,9 +3448,9 @@ removeModal()
                              fileInput(inputId = "add_base_file",label = NULL)),
                       column(12,
                              uiOutput("add_base_button"))
-
+                      
                     ))
-
+             
            )} else {
              renderPlot({
                base_shape<-attr(getdata_bank(),"base_shape")
@@ -3495,16 +3459,16 @@ removeModal()
                        panel.border = element_rect(fill=NA,color="black", size=0.5, linetype="solid"))
              })
            }
-
+           
     )
   })
   output$viewlayer<-renderUI({
-
+    
     req(input$pick_elayers)
     req(input$pick_elayers=="Layer Shape")
     div(
       if(is.null(attr(getdata_bank(),"layer_shape"))) {fluidRow(
-
+        
         column(12,
                p(strong("No layer_shape found in Datalist:",style="color: red"),em(input$data_bank))),
         uiOutput("add_layer_intru"),
@@ -3515,26 +3479,26 @@ removeModal()
                         fileInput(inputId = "add_layer_file",label = NULL)),
                  column(12,
                         uiOutput("add_layer_button"))
-
+                 
                ))
-
+        
       )} else    {
         fluidRow(
-
+          
           renderPlot({
             layer_shape<-attr(getdata_bank(),"layer_shape")
             ggplot(st_as_sf(layer_shape)) + geom_sf()+
               theme(panel.background = element_rect(fill = "white"),
                     panel.border = element_rect(fill=NA,color="black", size=0.5, linetype="solid"))
-
+            
           })
         )
       }
-
-
+      
+      
     )
-})
-
+  })
+  
   observeEvent(input$delete_datalist,{
     vals$saved_data[[input$data_bank]]<-NULL
     removeModal()
@@ -3543,26 +3507,26 @@ removeModal()
     req(input$view_datalist)
     column(12,id="view_out",
            div(style="margin-top: 20px",
-             switch(input$view_datalist,
-                    'data'= uiOutput("viewdata"),
-                    'factors'=uiOutput("viewfactors"),
-                    'coords'= uiOutput("viewcoords"),
-                    'extra_shape'= uiOutput("viewshapes"),
-                    'som'= uiOutput("viewsom"),
-                    'rf'=   uiOutput("viewrf"),
-                    'nb'=uiOutput("viewnb"),
-                    'svm'=uiOutput("viewsvm")
-             )
-             
-             
-             
+               switch(input$view_datalist,
+                      'data'= uiOutput("viewdata"),
+                      'factors'=uiOutput("viewfactors"),
+                      'coords'= uiOutput("viewcoords"),
+                      'extra_shape'= uiOutput("viewshapes"),
+                      'som'= uiOutput("viewsom"),
+                      'rf'=   uiOutput("viewrf"),
+                      'nb'=uiOutput("viewnb"),
+                      'svm'=uiOutput("viewsvm")
+               )
+               
+               
+               
            ))
   })
   layers_choices<-reactive({
     base_shape<-attr(vals$saved_data[[input$data_bank]],"base_shape")
     layer_shape<-attr(vals$saved_data[[input$data_bank]],"layer_shape")
     eshape<-attr(vals$saved_data[[input$data_bank]],"extra_shape")
-
+    
     pic<-which(unlist(lapply(list(base_shape,layer_shape),function(x)length(x)>0)))
     choices=c(c("Base Shape","Layer Shape"),names(eshape))
     choices
@@ -3577,15 +3541,15 @@ removeModal()
                pickerInput("pick_elayers","Shapes:",  choices, width="200px")
              ),
              actionButton("delete_elayer_shape",icon("fas fa-trash-alt"))
-
+             
            ),
-
-
+           
+           
            uiOutput('viewbase'),
            uiOutput('viewlayer'),
            uiOutput("elayers")
-           )
-
+    )
+    
   })
   observeEvent(input$delete_elayer_shape,{
     req(input$pick_elayers!='Base Shape')
@@ -3608,21 +3572,21 @@ removeModal()
   })
   output$elayers<-renderUI({
     req(input$pick_elayers)
-   div(
-
-     #renderPrint(attr(vals$saved_data[[input$data_bank]],"extra_shape")),
-     renderPlot({
-       shape<-
-         attr(vals$saved_data[[input$data_bank]],"extra_shape")[[input$pick_elayers]]
-       req(!is.null(shape))
-       ggplot(st_as_sf(shape)) + geom_sf()+
-         theme(panel.background = element_rect(fill = "white"),
-               panel.border = element_rect(fill=NA,color="black", size=0.5, linetype="solid"))
-
-
-
-     })
-   )
+    div(
+      
+      #renderPrint(attr(vals$saved_data[[input$data_bank]],"extra_shape")),
+      renderPlot({
+        shape<-
+          attr(vals$saved_data[[input$data_bank]],"extra_shape")[[input$pick_elayers]]
+        req(!is.null(shape))
+        ggplot(st_as_sf(shape)) + geom_sf()+
+          theme(panel.background = element_rect(fill = "white"),
+                panel.border = element_rect(fill=NA,color="black", size=0.5, linetype="solid"))
+        
+        
+        
+      })
+    )
   })
   output$rf_remove<-renderUI({
     div(
@@ -3679,7 +3643,7 @@ removeModal()
     attr(vals$saved_data[[input$data_bank]],"svm")[input$remove_svm]<-NULL
   })
   getglobal_nb<-reactive({
-
+    
     models<-lapply(attr(vals$saved_data[[input$data_bank]],"nb"), function (x) x[[1]])
     res<-caret_global_stats(models)
     res
@@ -3689,7 +3653,7 @@ removeModal()
       h4(strong("NB-Attribute"),inline(uiOutput('nb_remove'))),
       numericInput("nb_round","Round table:",value=3, step=1, min=1,width="100px"),
       column(12,style="background: white",
-
+             
              div(span(
                strong("Naive Bayes models"),inline(
                  div(actionButton("down_nbtable_class",icon("fas fa-download")))
@@ -3702,9 +3666,9 @@ removeModal()
                      text-align: left;
                      font-size:12px}'),
              inline(DT::dataTableOutput('nbtab_class'))
-
+             
       )
-
+      
     )
   })
   output$nbtab_class <- DT::renderDataTable({
@@ -3724,7 +3688,7 @@ removeModal()
         c(1), `border-left` = "solid 1px"
       ),       c(ncol_base,ncol(table)), `border-right` = "solid 1px"
     )
-
+    
   }, rownames = TRUE,class ='compact cell-border')
   observeEvent(input$down_nbtable_class,{
     vals$hand_down<-"nb_stats_class"
@@ -3732,25 +3696,25 @@ removeModal()
     mod_downcenter <- callModule(module_server_downcenter, "downcenter",  vals=vals)
   })
   getglobal_rf<-reactive({
-
-    models<-lapply(attr(vals$saved_data[[input$data_bank]],"rf"), function (x) x[[1]])
-  if(any(unlist(lapply(models,function(x) !is.list(class(x)))))){
-    models<-attr(vals$saved_data[[input$data_bank]],"rf")
     
-  }
+    models<-lapply(attr(vals$saved_data[[input$data_bank]],"rf"), function (x) x[[1]])
+    if(any(unlist(lapply(models,function(x) !is.list(class(x)))))){
+      models<-attr(vals$saved_data[[input$data_bank]],"rf")
+      
+    }
     res<-caret_global_stats(models)
     res
   })
   output$viewrf<-renderUI({
     rf_regs<-getglobal_rf()$regs
     rf_class<-getglobal_rf()$class
-
+    
     div(
       h4(strong("RF-Attribute"),inline(uiOutput('rf_remove'))),
       numericInput("rf_round","Round table:",value=3, step=1, min=1,width="100px"),
       if(length(rf_class)>0){
         column(12,style="background: white",
-
+               
                div(span(
                  strong("Classification models"),inline(
                    div(actionButton("down_rftable_class",icon("fas fa-download")))
@@ -3763,7 +3727,7 @@ removeModal()
                      text-align: left;
                      font-size:12px}'),
                inline(DT::dataTableOutput('rftab_class'))
-
+               
         )},
       hr(),
       if(length(rf_regs)>0){
@@ -3801,7 +3765,7 @@ removeModal()
         c(1), `border-left` = "solid 1px"
       ),       c(ncol_base,ncol(table)), `border-right` = "solid 1px"
     )
-
+    
   }, rownames = TRUE,class ='compact cell-border')
   output$rftab_regs <- DT::renderDataTable({
     vals$rftable_reg<-table<-getglobal_rf()$regs
@@ -3820,7 +3784,7 @@ removeModal()
         c(1), `border-left` = "solid 1px"
       ),       c(9,13), `border-right` = "solid 1px"
     )
-
+    
   }, rownames = TRUE,class ='compact cell-border')
   observeEvent(input$down_rftable_reg,{
     vals$hand_down<-"rf_stats_reg"
@@ -3833,7 +3797,7 @@ removeModal()
     mod_downcenter <- callModule(module_server_downcenter, "downcenter",  vals=vals)
   })
   getglobal_svm<-reactive({
-
+    
     models<-lapply(attr(vals$saved_data[[input$data_bank]],"svm"), function (x) x[[1]])
     res<-caret_global_stats(models)
     res
@@ -3841,13 +3805,13 @@ removeModal()
   output$viewsvm<-renderUI({
     svm_regs<-getglobal_svm()$regs
     svm_class<-getglobal_svm()$class
-
+    
     div(
       h4(strong("SVM-Attribute"),inline(uiOutput('svm_remove'))),
       numericInput("svm_round","Round table:",value=3, step=1, min=1,width="100px"),
       if(length(svm_class)>0){
         column(12,style="background: white",
-
+               
                div(span(
                  strong("Classification models"),inline(
                    div(actionButton("down_svmtable_class",icon("fas fa-download")))
@@ -3860,7 +3824,7 @@ removeModal()
                      text-align: left;
                      font-size:12px}'),
                inline(DT::dataTableOutput('svmtab_class'))
-
+               
         )},
       hr(),
       if(length(svm_regs)>0){
@@ -3898,7 +3862,7 @@ removeModal()
         c(1), `border-left` = "solid 1px"
       ),       c(ncol_base,ncol(table)), `border-right` = "solid 1px"
     )
-
+    
   }, rownames = TRUE,class ='compact cell-border')
   output$svmtab_regs <- DT::renderDataTable({
     vals$svmtable_reg<-table<-getglobal_svm()$regs
@@ -3917,7 +3881,7 @@ removeModal()
         c(1), `border-left` = "solid 1px"
       ),       c(9,13), `border-right` = "solid 1px"
     )
-
+    
   }, rownames = TRUE,class ='compact cell-border')
   observeEvent(input$down_svmtable_reg,{
     vals$hand_down<-"svm_stats_reg"
@@ -3934,11 +3898,11 @@ removeModal()
     vals$cur_partsom<-"None"
     updatePickerInput(session,"som_test_pick","None")
     facs[input$remove_factor]<-NULL
-
+    
     attr(vals$saved_data[[input$data_bank]],"factors")<-facs
     removeModal()
     updateRadioGroupButtons(session,"view_datalist", selected="extra_shape")
-
+    
   })
   output$x1_factors = {DT::renderDataTable(attr(getdata_bank(),"factors"),options = list(pageLength = 20, info = FALSE,lengthMenu = list(c(20, -1), c( "20","All")), autoWidth=T), rownames = TRUE,class ='cell-border compact stripe')}
   observeEvent(input$delete_coords,{
@@ -3951,7 +3915,7 @@ removeModal()
         ,
         easyClose = T,
         size = "s"
-
+        
       )
     )
   })
@@ -3959,8 +3923,8 @@ removeModal()
     attr(vals$saved_data[[input$data_bank]],"coords")<-NULL
     removeModal()
     updateRadioGroupButtons(session,"view_datalist", selected="coords")
-
-
+    
+    
   })
   output$add_coords_button<-renderUI({
     req(length(input$add_coords_file$datapath)>0)
@@ -4012,7 +3976,7 @@ removeModal()
              column(12,style="margin-top: 20px",
                     strong("2. Click ",strong("Add", style="color: SeaGreen")," to insert it to the Datalist:", em(input$data_bank, style="color: SeaGreen")))
            }
-
+           
     )
   })
   observeEvent(input$delete_base_shape,{
@@ -4024,7 +3988,7 @@ removeModal()
                bsButton("delete_base_shape_yes",icon=icon("far fa-trash-alt"),"Confirm", style="button_active",block=T)),
         easyClose = T,
         size = "s"
-
+        
       )
     )
   })
@@ -4042,7 +4006,7 @@ removeModal()
                bsButton("delete_layer_shape_yes",icon=icon("far fa-trash-alt"),"Confirm", style="button_active",block=T)),
         easyClose = T,
         size = "s"
-
+        
       )
     )
   })
@@ -4060,7 +4024,7 @@ removeModal()
                bsButton("delete_som_yes",icon=icon("far fa-trash-alt"),"Confirm", style="button_active",block=T)),
         easyClose = T,
         size = "s"
-
+        
       )
     )
   })
@@ -4070,26 +4034,26 @@ removeModal()
     updateRadioGroupButtons(session,"view_datalist", selected="som")
   })
   observeEvent(input$add_base,{
-
+    
     t<-try({get(gsub(" ", "", capture.output(
       load(input$add_base_file$datapath, verbose = T)
     )[2]))})
     if("try-error" %in% class(t)) {t<-readRDS(input$add_base_file$datapath) }
-
+    
     attr(vals$saved_data[[input$data_bank]],"base_shape")<-t
     updateRadioGroupButtons(
       session,"view_datalist", selected="extra_shape"
     )
-
+    
   })
   observeEvent(input$add_layer,{
-
+    
     t<-try({get(gsub(" ", "", capture.output(
       load(input$add_layer_file$datapath, verbose = T)
     )[2]))})
     if("try-error" %in% class(t)) {t<-readRDS(input$add_layer_file$datapath) }
     attr(vals$saved_data[[input$data_bank]],"layer_shape")<-t
-
+    
     updateRadioGroupButtons(
       session,"view_datalist", selected="extra_shape"
     )
@@ -4099,7 +4063,7 @@ removeModal()
     output$error_coords<-renderUI("bank compleated")
   })
   observeEvent(input$add_coords,{
-
+    
     coords<-data.frame(fread(input$add_coords_file$datapath))
     rownames(coords) <- coords[, 1]
     coords[, 1] <- NULL
@@ -4108,7 +4072,7 @@ removeModal()
         column(12, strong(
           "Invalid Entries. The first column must contain the name of the observations. The second and third columns must contain the logitude and latitude respectively", style="color: red"))
       })}
-
+    
     if(any(rownames(coords)%in%rownames(vals$saved_data[[input$data_bank]]))==F) {
       output$error_coords<-
         renderUI({
@@ -4116,30 +4080,30 @@ removeModal()
             "None of the IDs of the banked coordinates are compatible with the ids of the selected datalist. Please bank coodinates with valid IDs", style="color: red"))
         })
     }
-
+    
     req(any(rownames(coords)%in%rownames(vals$saved_data[[input$data_bank]])))
-
+    
     attr(vals$saved_data[[input$data_bank]],"coords")<-na.omit(
       coords[rownames(vals$saved_data[[input$data_bank]]),]
     )
     updateRadioGroupButtons(
       session,"view_datalist", selected="coords"
     )
-
+    
   })
   getdata_bank<-reactive({
     req(input$data_bank)
-
+    
     vals$saved_data[[input$data_bank]]
-
-
+    
+    
   })
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
   output$data_attr<-renderUI({
     res<-if(ncol(getdata_bank())<1000){
       div(
@@ -4153,170 +4117,81 @@ removeModal()
     res
   })
   output$DT_data<-DT::renderDataTable(getdata_bank(),options = list(pageLength = 20, info = FALSE,lengthMenu = list(c(20, -1), c( "20","All")), autoWidth=T), rownames = TRUE,class ='cell-border compact stripe')
-  getordinal<-reactive({
-    column(12,style="overflow-y: scroll;height: 250px",
-           splitLayout(
-             cellWidths = c("30%","5%","40%","15%"),
-             column(12,
-                    p("Drag and drop the labels to define their levels and click",span("'",icon("fas fa-arrow-right"),"'")," to pre-save the variable",style='white-space: normal;'),
-                    splitLayout(  cellWidths = c("20%","80%"),
-                                  div(
-                                    style="margin-top:25px",
-                                    uiOutput("toorder_or")),
-                                  div(uiOutput("toorder_in"),style="font-size: 11px;"),
-                                  verbatimTextOutput("teste_lev"),
-                                  #div(uiOutput("toorder_lev"),style="font-size: 11px")
-                    )),
-             popify(actionButton("create_ordinal",div(popify(icon("fas fa-arrow-right"),'Create new ordinal factor'),style='white-space: normal;')),NULL,"Create new ordinal factor"),
-             column(12,style="overflow: scroll; z-index: 1;",uiOutput("toorder_out")),
-
-             popify(actionButton("insert_ordinal",div(strong('Include new variables'),style='white-space: normal;'), icon=icon("fas fa-arrow-right"), width="100px"),NULL,"Click to insert the new variables in the Data-Attribute")
-
-           )
-    )
-  })
-  output$toorder_or<-renderUI({
-    res<-list()
-    for(i in 1:length(input$rank_list_1)){
-      res[[i]]<-div(actionButton(paste('ord',i),i, style=" height: 25px;padding:5px"))
-    }
-    res
-
-
-  })
-  output$ordinal_out<-renderUI({
-
-    getordinal()
-  })
-  output$toorder_out<-renderUI({
-
-    column(12,
-           strong(paste("pre-saved:")),
-           fluidRow(
-             tags$style('#order_out td {padding: 0}'),
-             inline(
-               DT::dataTableOutput("order_out")
-             )
-           )
-
-
-    )
-  })
-  output$order_out<-DT::renderDataTable(data.frame(vals$new_facts),options = list(pageLength = 20, info = FALSE,lengthMenu = list(c(20, -1), c( "20","All")), autoWidth=T), rownames = TRUE,class ='cell-border compact stripe')
+  
+  
   data_overwritte<-reactiveValues(df=F)
   data_store<-reactiveValues(df=F)
-  hand_save_modal<-reactive({
-
-    modalDialog(
-      withSpinner(type=8,color="SeaGreen",uiOutput("databank_storage")),
-      title=strong('Databank storage',icon("fas fa-warehouse")),
-      footer=column(12,class="needed",
-                    fluidRow(tipify(bsButton("preview_button",icon("fas fa-eye"), block=F),"Preview"), modalButton(strong("cancel")),
-                             inline(uiOutput("save_confirm"))
-                    ),
-                    conditionalPanel("input.preview_button % 2",{
-                      column(12,style="margin-top: 20px",align="left",
-                             column(12,strong("Preview")),
-                             uiOutput("preview"))
-                    })),
-      size="l",
-      easyClose = T
-    )
-  })
-  output$databank_storage<-renderUI({
-    column(12,
-           fluidRow(
-             column(12,p(strong("action:"),em("*",vals$hand_save,style="color: SeaGreen")), p(vals$hand_save2,style="color: gray")),
-             column(12,vals$hand_save3),
-             column(12,style='margin-top: 10px; margin-left: 10px',
-                    splitLayout(cellWidths = c("30%","70%"),
-                                radioButtons("hand_save",NULL,
-                                             choiceNames= list(div(style="height: 50px","create"),
-                                                               div(style="height: 50px","overwrite")),
-                                             choiceValues=list('create',"over")),
-                                column(12,div(style="height: 50px",
-                                              withSpinner(type=8,color="SeaGreen",uiOutput("data_create"))),
-                                       div(style="height: 50px",
-                                           withSpinner(type=8,color="SeaGreen",uiOutput("data_over"))))
-                    ))
-
-           )
-    )
-  })
-  output$save_confirm<-renderUI({
-    req(isTRUE(data_store$df)|isTRUE(data_overwritte$df))
-    actionButton("data_confirm",strong("confirm"))
-  })
-  bag_mapname<-reactive({
-    bag<-1
-    name0<-input$var_map
-    name1<-paste0(name0," (",bag,")")
-    if(name1%in%names(vals$saved_maps))
-    {
-      repeat{
-        bag<-bag+1
-        name1<-paste0(name0," (",bag,")")
-        if(!name1%in%names(vals$saved_maps)) break
-      }
-    }
-    paste0(name0," (",bag,")")
-
-  })
-  bag_agg<-reactive({
-    bag<-1
-    name0<-'Datalist_agg'
-    name1<-paste0(name0," (",bag,")")
-    if(name1%in%names(vals$saved_data))
-    {
-      repeat{
-        bag<-bag+1
-        name1<-paste0(name0," (",bag,")")
-        if(!name1%in%names(vals$saved_data)) break
-      }
-    }
-    paste0(name0," (",bag,")")
-
-  })
-  bag_extralayer<-reactive({
-    bag<-1
-    name0<-'Extra-Layer'
-    name1<-paste0(name0," (",bag,")")
-    if(name1%in%names(attr(vals$saved_data[[input$data_bank]],"extra_shape")))
-    {
-      repeat{
-        bag<-bag+1
-        name1<-paste0(name0," (",bag,")")
-        if(!name1%in%names(attr(vals$saved_data[[input$data_bank]],"extra_shape"))) break
-      }
-    }
-    paste0(name0," (",bag,")")
-
-  })
-  observeEvent(input$insert_ordinal,{
-    vals$hand_save<-"Include ordinal variables in the Data-Attribute"
-    showModal(
-      hand_save_modal()
-    )})
-  observeEvent(input$insert_classMat,{
-    vals$hand_save<-"Include binary columns in the Data-Attribute"
-    showModal(
-      hand_save_modal()
-    )})
-  observeEvent(input$tools_save,{
+  gosave <- reactiveValues(df=0,  modal=F) # Corresponds to the current displayed input$myinput
+  
+  
+  observeEvent(input$radio_cogs,{
+    gosave$modal<-T
+    req(input$radio_cogs=='tools_drop8')
+    # updateRadioGroupButtons(session,'radio_cogs',selected = last_btn$equal[1])
+    
     vals$hand_save<-"Save changes"
     vals$hand_save2<-NULL
     vals$hand_save3<-NULL
+    removeClass('tools_drop8',"save_changes")
     showModal(
       hand_save_modal()
-    )})
-  observe({
-    req(vals$hand_save=="Create factor using breakpoints from the dissimilarity profile")
-    req(input$data_confirm %% 2)
-    updateRadioGroupButtons(session,'desc_options',selected='segRDA')
-    updateTabsetPanel(session,'segrda_panels',selected='DP')
+    )
+    
+    
   })
-  observeEvent( input$data_confirm,{
-    removeModal()
+  last_btn<-reactiveValues(df='tools_drop1')
+  
+  observeEvent(input$radio_cogs,{
+    req(input$radio_cogs!='')
+    req(input$radio_cogs!='tools_drop8')
+    req(!is.na(input$radio_cogs))
+    req(length(input$radio_cogs)>0)
+    last_btn$equal<-c(input$radio_cogs,last_btn$df[1])
+    last_btn$df<-input$radio_cogs
+    
+  })
+  
+  hand_save_modal<-reactive({
+    
+    tags$div(id="savemodal",
+             
+             modalDialog(
+               withSpinner(type=8,color="SeaGreen",uiOutput("databank_storage")),
+               title=strong('Databank storage',icon("fas fa-warehouse")),
+               footer=column(12,class="needed",
+                             fluidRow(bsButton("cancel_save","Cancel"),
+                                      inline(uiOutput("save_confirm"))
+                             )),
+               size="l",
+               easyClose = T
+             )
+    )
+  })
+  
+  observe({
+    req(length(input$lastkeypresscode)>0)
+    if(input$lastkeypresscode == 27){ removeModal()}
+  })
+  observeEvent(input$data_confirm,{
+    gosave$df<-1
+  })
+  observe({
+    req(isTRUE(gosave$modal))
+    req(length(input$data_confirm)>0)
+    req(length(input$lastkeypresscode)>0)
+    action <- gosave$df
+    # Decide which action should be taken
+    gosave$df<- if(input$data_confirm %% 2|input$lastkeypresscode == 13) {
+      action <- 1
+    } else    if(input$lastkeypresscode == 27){
+      action <- 0
+      
+    }
+    
+    gosave$df
+  })
+  
+  save_switch<-reactive({
     switch(vals$hand_save,
            "Save new som in" = {savesom()},
            "Save changes"= {  savechanges_comb()},
@@ -4345,6 +4220,111 @@ removeModal()
            "Merge Datalists"=mergedata()
     )
   })
+  observeEvent(gosave$df,{
+    req(length(vals$hand_save)>0)
+    gosave$modal<-F
+    runjs("Shiny.setInputValue('lastkeypresscode', 18);")
+    if(gosave$df==1){  save_switch()
+      gosave$df<-0
+      
+      
+      vals$hand_save<-NULL
+      
+      runjs(paste0("Shiny.setInputValue('last_btn', 'main_panel');"))
+      runjs(paste0("Shiny.setInputValue('radio_cogs', '');"))
+      updateRadioGroupButtons(session,"radio_cogs",selected=NA)} else{
+        updateRadioGroupButtons(session,"radio_cogs",selected=last_btn$equal[1])
+        runjs(paste0("Shiny.setInputValue('radio_cogs', ",last_btn$equal[1],");"))
+        runjs(paste0("Shiny.setInputValue('last_btn', ",last_btn$equal[1],");"))
+        runjs(paste0("Shiny.setInputValue('cancel_save', 0);"))
+        removeModal()
+      }
+    
+    removeModal()
+  })
+  
+  observeEvent(input$cancel_save,{
+    if(input$cancel_save %%2)
+      runjs("Shiny.setInputValue('lastkeypresscode', 27);")
+  })
+  
+  output$databank_storage<-renderUI({
+    column(12,
+           fluidRow(
+             column(12,p(strong("action:"),em("*",vals$hand_save,style="color: SeaGreen")), p(vals$hand_save2,style="color: gray")),
+             column(12,vals$hand_save3),
+             column(12,style='margin-top: 10px; margin-left: 10px',
+                    splitLayout(cellWidths = c("30%","70%"),
+                                radioButtons("hand_save",NULL,
+                                             choiceNames= list(div(style="height: 50px","create"),
+                                                               div(style="height: 50px","overwrite")),
+                                             choiceValues=list('create',"over")),
+                                column(12,div(style="height: 50px",
+                                              withSpinner(type=8,color="SeaGreen",uiOutput("data_create"))),
+                                       div(style="height: 50px",
+                                           withSpinner(type=8,color="SeaGreen",uiOutput("data_over"))))
+                    ))
+             
+           )
+    )
+  })
+  output$save_confirm<-renderUI({
+    req(isTRUE(data_store$df)|isTRUE(data_overwritte$df))
+    actionButton("data_confirm",strong("confirm"))
+  })
+  bag_mapname<-reactive({
+    bag<-1
+    name0<-input$var_map
+    name1<-paste0(name0," (",bag,")")
+    if(name1%in%names(vals$saved_maps))
+    {
+      repeat{
+        bag<-bag+1
+        name1<-paste0(name0," (",bag,")")
+        if(!name1%in%names(vals$saved_maps)) break
+      }
+    }
+    paste0(name0," (",bag,")")
+    
+  })
+  bag_agg<-reactive({
+    bag<-1
+    name0<-'Datalist_agg'
+    name1<-paste0(name0," (",bag,")")
+    if(name1%in%names(vals$saved_data))
+    {
+      repeat{
+        bag<-bag+1
+        name1<-paste0(name0," (",bag,")")
+        if(!name1%in%names(vals$saved_data)) break
+      }
+    }
+    paste0(name0," (",bag,")")
+    
+  })
+  bag_extralayer<-reactive({
+    bag<-1
+    name0<-'Extra-Layer'
+    name1<-paste0(name0," (",bag,")")
+    if(name1%in%names(attr(vals$saved_data[[input$data_bank]],"extra_shape")))
+    {
+      repeat{
+        bag<-bag+1
+        name1<-paste0(name0," (",bag,")")
+        if(!name1%in%names(attr(vals$saved_data[[input$data_bank]],"extra_shape"))) break
+      }
+    }
+    paste0(name0," (",bag,")")
+    
+  })
+  
+  observe({
+    req(vals$hand_save=="Create factor using breakpoints from the dissimilarity profile")
+    req(input$data_confirm %% 2)
+    updateRadioGroupButtons(session,'desc_options',selected='segRDA')
+    updateTabsetPanel(session,'segrda_panels',selected='DP')
+  })
+  
   mergedata<-reactive({
     to_merge<-vals$saved_data[input$merge_datalist_in]
     to_merge<-readRDS("to_merge.rds")
@@ -4353,14 +4333,14 @@ removeModal()
     newdata<-  do.call("merge", c(to_merge, 
                                   by = 0, all = TRUE))[-1]
     colnames(newdata)<- unlist(lapply(to_merge, colnames))
-
-
+    
+    
     to_merge_fac<-lapply(to_merge, function (x) attr(x,"factors"))
     newfac<-do.call(cbind,to_merge_fac)
     pic_fac<-which(duplicated(unlist(lapply(to_merge_fac, colnames)))==F)
     newfac<- newfac[pic_fac]
     colnames(newfac)<-unlist(lapply(to_merge_fac, colnames))[pic_fac]
-
+    
     newdata<-data_migrate(data1,newdata,input$merge_newname)
     attr(newdata, "transf")=NULL
     attr(newdata,"factors")<-newfac[rownames(data1),]
@@ -4369,7 +4349,7 @@ removeModal()
     else{
       vals$saved_data[[input$merge_over]]<-newdata
     }
-
+    
   })
   saveinterp<-reactive({
     req(input$interps_newname)
@@ -4384,7 +4364,7 @@ removeModal()
       vals$cur_saved_maps<-cur
     }
     updatePickerInput(session,"saved_maps",selected=cur, choices=names(vals$saved_maps))
-
+    
   })
   savediscrete<-reactive({
     req(input$discrete_newname)
@@ -4399,7 +4379,7 @@ removeModal()
       vals$cur_saved_maps<-cur
     }
     updatePickerInput(session,"saved_maps",selected=cur, choices=names(vals$saved_maps))
-
+    
   })
   datalist_som_errorsX<-reactive({
     temp<-data.frame(get_sompred_results())
@@ -4455,7 +4435,7 @@ removeModal()
     }
   })
   saveclusters<-reactive({
-
+    
     vals$baghc0<-vals$baghc0+1
     hc <- phc()
     temp <- hc$somC
@@ -4464,10 +4444,10 @@ removeModal()
     } else{
       attr(vals$saved_data[[input$data_hc]],"factors")[input$hc_over]<-as.factor(temp)
     }
-
-
-
-
+    
+    
+    
+    
   })
   modal_dialog<-function(){
     modalDialog(
@@ -4503,7 +4483,7 @@ removeModal()
       }
     }
     paste("Div_results",bag)
-
+    
   })
   bag_sompred_eX<-reactive({
     bag<-1
@@ -4518,7 +4498,7 @@ removeModal()
       }
     }
     paste("Som_pred_errorsX",bag)
-
+    
   })
   bag_sompred_eY<-reactive({
     bag<-1
@@ -4533,7 +4513,7 @@ removeModal()
       }
     }
     paste("Som_pred_errorsY",bag)
-
+    
   })
   bag_hc<-reactive({
     bag<-1
@@ -4548,23 +4528,15 @@ removeModal()
       }
     }
     paste("HC",bag)
-
+    
   })
   output$nointerpsmodel<-renderPrint(
     cat("no saved map to overwritte")
   )
-  classmat_out <- reactive({
-    column(12,
-           p(icon("fas fa-exclamation-circle"),"factors transformed into class membership matrix"),
-           p(icon("fas fa-exclamation-circle"),"New variables created with class membership  indicated by '1'"),
-           verbatimTextOutput("classmat_vars"),
-           p(icon("fas fa-exclamation-circle"),"We advise using the scale option in the forward analyses"))
-  })
-  output$classmat_vars <- renderPrint({
-    colnames(getclassmat(attr(getdata_upload(), 'data.factors')))
-  })
+  
+  
   observeEvent(input$load_savepoint,{
- # saveRDS(input$load_savepoint$datapath,"mybooks.rds")
+    # saveRDS(input$load_savepoint$datapath,"mybooks.rds")
   })
   observeEvent(input$bank_button, {
     showModal(upload_modal())
@@ -4582,10 +4554,10 @@ removeModal()
   output$upload_input<-renderUI({
     column(12,style="background: white",
            div(class="example_data",
-
+               
                uiOutput("upload_example")),
            uiOutput("upload_input2")
-
+           
     )
   })
   output$upload_input2<-renderUI({
@@ -4602,18 +4574,18 @@ removeModal()
             em("*Required for the", style="margin-left: 10px"),
             p(em('spatial tools menu'), style="margin-bottom: -15px; margin-left: 10px"),
             absolutePanel(style="border-bottom: 2px dashed #05668D;height: 20px;  margin-left: 20px; margin-right: -60px", width ="100px")
-
+            
           ),
-
-
+          
+          
           column(12,class="datalist_str",
                  style="color:  SeaGreen;",
                  h5(strong("Name the datalist")),
                  uiOutput("datalistname")
                  ,
-
+                 
                  column(12,div(style=" margin-left: 60px;",absolutePanel(style="border-left: 2px solid Lavender; height:500px;margin-top: -15px"))),
-
+                 
                  column(12,
                         div(style=" margin-left: 60px;",
                             splitLayout(
@@ -4630,19 +4602,19 @@ removeModal()
                                      }
                               ),
                               cellWidths = c("16%","84%")),
-
-
-
+                            
+                            
+                            
                         ),
-
-
-
+                        
+                        
+                        
                         div(style=" margin-left: 60px;",
-
+                            
                             splitLayout(
                               absolutePanel(style="border-left: 2px dashed SeaGreen; height:50px; border-bottom: 2px dashed SeaGreen;", width='50px'),
                               column(12,
-
+                                     
                                      h5(strong("Factor-Attribute:",style="color:  SeaGreen"),
                                         popify(actionLink('labhelp', icon("fas fa-question-circle")),"Upload the factors",textlab(), trigger = "hover",options=list(container="body"))),
                                      if(length(input$up_or_ex)>0){
@@ -4651,12 +4623,12 @@ removeModal()
                                                   fileInput("labels", NULL, accept = c(".csv"),placeholder=if(length(input$labels$datapath)>0){input$labels$name})
                                          )
                                        }else{em("sampling factors")}
-
+                                       
                                      }
                               ),
                               cellWidths = c("16%","84%")),
-
-
+                            
+                            
                         ),
                         div(style=" margin-left: 60px;",
                             splitLayout(
@@ -4676,8 +4648,8 @@ removeModal()
                               cellWidths = c("16%",'84%')
                             )
                         ),
-
-
+                        
+                        
                         div(style=" margin-left: 60px;  ",
                             splitLayout(
                               absolutePanel(style="border-left: 2px dashed #05668D; height:50px; border-bottom: 2px dashed #05668D;", width='50px'),
@@ -4690,7 +4662,7 @@ removeModal()
                                          )
                                        }else {em("base shape of the Araca Bay")}
                                      }
-
+                                     
                               ),
                               cellWidths = c("16%",'84%')
                             )
@@ -4707,16 +4679,16 @@ removeModal()
                                          )
                                        }else{em("layer shape of the Araca Bay")}
                                      }
-
-
+                                     
+                                     
                               ),
                               cellWidths = c("16%",'84%')
                             )
                         )
-
+                        
                  )
-
-
+                 
+                 
           ),
           cellWidths = c("20%","80%")
         )
@@ -4727,14 +4699,14 @@ removeModal()
     textInput("data_name", NULL, value=paste0(if(input$up_or_ex == 'use example data'){'nema_araca'} else {gsub(".csv","",input$filedata$name)}))
   })
   fingerprint_model <-reactive({
-      do.call("cbind", lapply(vals$saved_model, function (x)
-        attr(x, "fingerprint")))
-    })
+    do.call("cbind", lapply(vals$saved_model, function (x)
+      attr(x, "fingerprint")))
+  })
   fingerprint_data <- reactive({
     res <-
       lapply(vals$saved_data, function (x)
         attr(x, "fingerprint_data"))
-
+    
     res
   })
   get_sup_som_test<-reactive({
@@ -4743,10 +4715,10 @@ removeModal()
     factors<-if(input$som_type2=="Factors"){
       attr(data_Y,"factors")[,input$selecfac, drop=F]} else{data_Y}
     res<-factors[rownames(attr(data,"test_data")),]
-
+    
     res
-
-
+    
+    
   })
   observeEvent(input$som_part,{
     updateTabsetPanel(session,"som_tab","som_tab1")
@@ -4770,44 +4742,44 @@ removeModal()
                                  tosave["newcolhabs"],
                                  tosave['colors_img'],
                                  tosave[grep("cur",names(tosave))])
-
-
+                       
+                       
                        saveRDS(tosave, file)
                        beep(10)
                        runjs("Shiny.setInputValue('last_btn', false);")
                        runjs("Shiny.setInputValue('dropID_tool9', 0);")
                      })
-
+        
       }
     )
   }
-
+  
   observeEvent(input$load_savepoint,{
     output$validade_savepoint<-renderUI({
-
-     
+      
+      
       validate(need(length(grep(".rds",input$load_savepoint$datapath))==length(input$load_savepoint$datapath),"Error: the uploaded file is not an rds file"))
     })
-
+    
   })
   observeEvent(input$savepoints_button, {
     showModal(dialogmodal())
   })
   output$downbook<-renderUI({
-
+    
     fluidRow(
       column(12,tipify(downloadButton("bookmarkBtn", style = "font-size: 12px", label=paste("Download", input$savepoint_name)),"This action allows you to load the created savepoint later (panel bellow).", options=list(container="body")))
     )})
   observeEvent(input$load_savepoint,{
-                 validate(need(length(grep(".rds",input$load_savepoint$datapath))==length(input$load_savepoint$datapath),"Requires rds file"))
-                 showModal(
-                   modalDialog(
-                     uiOutput("savepoint_request"),
-                     title="",
-                     footer = column(12,inline(uiOutput("savepoints_proceed")),modalButton("close"))
-
-                   )
-                 )})
+    validate(need(length(grep(".rds",input$load_savepoint$datapath))==length(input$load_savepoint$datapath),"Requires rds file"))
+    showModal(
+      modalDialog(
+        uiOutput("savepoint_request"),
+        title="",
+        footer = column(12,inline(uiOutput("savepoints_proceed")),modalButton("close"))
+        
+      )
+    )})
   output$savepoints_proceed<-renderUI({
     req(length(grep(".rds",input$load_savepoint$datapath)))
     inline(actionButton("load_savepoint_yes","Proceed"))
@@ -4817,10 +4789,10 @@ removeModal()
     column(12,
            h5('Are you sure? '),
            column(12,p(strong("Warning:", style="color: #0093fcff"),"The application will restart with the loaded savepoint and unsaved changes will be lost")))
-
+    
   })
   #observe({
-
+  
   react<-reactiveValues(df=NULL)
   mybooks<-reactive({
     validate(need(length(grep(".rds",input$load_savepoint$datapath))==length(input$load_savepoint$datapath),"Requires rds file"))
@@ -4828,10 +4800,10 @@ removeModal()
     #b<-"D:/OneDrive/PÓS-DOC/Articles/MS_meiofauna/Submission/Dados/Results/Savepoint_2022-06-24.rds"
     #input$load_savepoint$datapath<-c(a,b)
     if(length(input$load_savepoint$datapath)>1){
-
+      
       res<-lapply(as.list(input$load_savepoint$datapath), function(x) readRDS(x))
       saved_data<-do.call(c,lapply(res,function(x)    x[["saved_data"]]))
-
+      
       newcolhabs<-do.call(c,lapply(res,function(x)    x[["newcolhabs"]]))
       colors_img<-do.call(c,lapply(res,function(x)    x[["colors_img"]]))
       #curs<-do.call(c,lapply(res,function(x)    x[grep("cur",names(tosave))]))
@@ -4839,69 +4811,55 @@ removeModal()
       mybooks<-c(saved_data,newcolhabs,colors_img)
     } else{
       mybooks<-readRDS(input$load_savepoint$datapath)
-      }
-  
+    }
+    
     mybooks
     
     #curlist<-lapply(lapply(res,function(x) names(x)),function(x) x[grep("cur",x)])
     
     
-   # unique(do.call(c,lapply(lapply(res,function(x) names(x)),function(x) x[grep("cur",x)])))
-   
+    # unique(do.call(c,lapply(lapply(res,function(x) names(x)),function(x) x[grep("cur",x)])))
     
-  
-
-   
-
+    
+    
+    
+    
+    
     #myinputs<- reactiveValuesToList(mybooks[[2]])
     #react$df<-myinputs[order(names(myinputs))]
     #mybooks[[1]]
   })
   observeEvent(input$load_savepoint_yes,{
-
+    
     mybooks<-mybooks()
-
+    
     #temp2_path<-paste0(vals$temp_path)
     #shinyjs::runjs(paste0("window.location = '",mybooks$urlDF,"';"))
     #runjs(paste0(mybooks$urlDF))
     # copy reactiveValues() to reactiveValues()
     # runjs(paste0("window.open('", mybooks$urlDF, "', '_blank');"))
-
+    
     for (var in names(mybooks)) {
       vals[[var]] <- mybooks[[var]]
     }
     updateTextInput(session, "tabs", value = mybooks$cur_tab)
+    runjs(paste0("Shiny.setInputValue('last_btn', 'main_panel');"))
+    runjs(paste0("Shiny.setInputValue('radio_cogs', '');"))
+    updateRadioGroupButtons(session,"radio_cogs",selected=NA)
+    
     #file.copy(input$load_savepoint$datapath,mybooks$urlDF)
     #file.copy(input$load_savepoint$datapath,temp2_path)
     #vals$temp_path<-temp2_path
-
+    
     #isolate(updateTabItems(session, "tabs", "menu_intro"))
     #isolate(updateTabItems(session, "tabs", "menu_upload"))
-
+    
     #isolate(updateTabItems(session, "tabs", "menu_explore"))
     #isolate(updateTabItems(session, "tabs", "menu_maps"))
-
+    
     beep(10)
   })
-  teste<-reactive({
-    req(length(react$df)>0)
-    newinputs<-react$df
-    #newinputs<-newinputs[-unlist(which(newinputs=="Done"))]
-    inputlist<-reactiveValuesToList(input)
-    inputlist<-inputlist[names(newinputs)]
-    try(
-      for (var in names(newinputs)) {
-        if(length(inputlist[[var]])>0){
-          if(react$df[[var]]!="Done"){
-            updateTextInput(session, paste(var), value = paste(newinputs[[var]]))}
-          react$df[[var]]<-"Done"
-        }
-      }
-    )
-    done<-which(react$df=="Done")
-    react$df<-react$df[-done]
 
-  })
   observeEvent(input$tabs,{
     vals$cur_tab<-input$tabs
   })
@@ -4918,7 +4876,7 @@ removeModal()
                                                                 choiceValues =list("N","S","margalef","D","H","J'","Dom_rel","Skewness"),
                                                                 selected=c("N","S","margalef","D","H","J'","Dom_rel","Skewness"),
                                                                 inline = F,
-
+                                                                
                                                                 choiceNames =list(
                                                                   span("N", actionLink('Nhelp',icon("fas fa-question-circle")), conditionalPanel("input.Nhelp % 2",{uiOutput("Nhelp")})),
                                                                   span("S",actionLink('Shelp',icon("fas fa-question-circle")), conditionalPanel("input.Shelp % 2",{uiOutput("Shelp")})),
@@ -4957,14 +4915,14 @@ removeModal()
     fluidRow(
       p(
         uiOutput("data_div"),
-
-
+        
+        
       )
-
-
-
+      
+      
+      
     )
-
+    
   })
   output$Nhelp<-renderUI({
     column(12,style="background: white",
@@ -5049,32 +5007,32 @@ removeModal()
     if("Dom_rel"%in%choices){res$Dom_rel<-apply(decostand(abund, "total"),1,sort,T)[1,]}
     if("Skewness"%in%choices){res$Skewness=apply(abund,1,skewness)}
     res<-data.frame(do.call(cbind,res))
-
+    
     #rowSums(apply(data,2,function(x)x==1))
-
+    
     res
   })
   output$downloadData <- downloadHandler(
     filename = function() {
       paste("iMESc.zip", sep = "")
     },
-
+    
     content = function(name1) {
       fs <- c()
       fs <-
         c('meta',"code_to_run.R","app.R","iMESc.R"
-
+          
         )
-
+      
       zip(zipfile = name1, files = fs)
-
+      
       if (file.exists(name1)) {
         file.rename(name1, name1)
       }
     },
     contentType = "application/zip"
   )
-
+  
   observeEvent(input$var_map,{
     vals$cur_var_map<-input$var_map
   })
@@ -5087,8 +5045,8 @@ removeModal()
   accu <- reactive({
     confu <- getConfusion(som_part)
     sum(diag(round(as.matrix(confu[, -ncol(confu)]), 2)))
-
-
+    
+    
   })
   choices_hc <- reactive({
     req(input$data_hc)
@@ -5097,7 +5055,7 @@ removeModal()
     } else {
       NULL
     }
-
+    
     b <-    if(length(attr(vals$saved_data[[input$data_hc]],"som"))>0){"som codebook"}else{NULL}
     res <- c(a, b)
     res
@@ -5129,12 +5087,12 @@ removeModal()
     names(re)<-colnames(factors)
     attr(res,"faclist")<-re
     res
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
   })
   labels <- reactive({
     vals$loadlabel<-0
@@ -5147,27 +5105,27 @@ removeModal()
       labels[, 1] <- NULL
       labels[which(unlist(lapply(labels, is.numeric)))] <-
         do.call("data.frame", lapply(labels[which(unlist(lapply(labels, is.numeric)))], function(x) as.factor(x)))
-
-
-
-
+      
+      
+      
+      
     } else {
       labels <-data.frame(fread("meta/factors_araca.csv", stringsAsFactors = T,na.strings=c("","NA")))
       #labels <-data.frame(fread("DADOS SANSED_OFICIAL CENPES.csv", stringsAsFactors = T))
-
+      
       rownames(labels) <- labels[, 1]
       #colnames(labels)[1]<-"id"
       labels[, 1] <- NULL
       labels[which(unlist(lapply(labels, is.numeric)))] <-
         do.call("data.frame", lapply(labels[which(unlist(lapply(labels, is.numeric)))], function(x) as.factor(x)))
-
-
-
-
+      
+      
+      
+      
     }
-
+    
     labels
-
+    
   })
   coords<-reactive({
     if (input$up_or_ex == 'use example data') {
@@ -5191,13 +5149,13 @@ removeModal()
         )[2]))})
         if("try-error" %in% class(t)) {t<-readRDS(input$base_shape$datapath) }
         t
-
+        
       }else{NULL}
-
+      
     }
   })
   layer_shape <- reactive({
-
+    
     if (input$up_or_ex == 'use example data'){
       get(gsub(" ","",capture.output(load("meta/layer_shape_araca",verbose=T))[2]))
       #get(gsub(" ","",capture.output(load("0006_layer_shape",verbose=T))[2]))
@@ -5208,9 +5166,9 @@ removeModal()
         )[2]))})
         if("try-error" %in% class(t)) {t<-readRDS(input$layer_shape$datapath) }
         t
-
+        
       }else{NULL}
-
+      
     }})
   observeEvent(input$desc_options,{
     vals$bag_submenu<-switch(input$desc_options,
@@ -5224,7 +5182,7 @@ removeModal()
     style<-paste("border: 3px solid",col)
     style
   })
- 
+  
   observeEvent(input$summ_options,
                {vals$curview_summ_options<-input$summ_options})
   output$stats_cbox <- renderUI({
@@ -5238,13 +5196,13 @@ removeModal()
                uiOutput("filter_box2")
              )
            ))
-
+           
     )
   })
   output$stats_cpca<-renderUI({
     column(12,style="background: white",
            p(strong("Principal Component Analysis"))
-
+           
     )
   })
   output$stats_cmds<-renderUI({
@@ -5263,7 +5221,7 @@ removeModal()
         updateTabsetPanel(session,'segrda_panels','DP')
       }
     }
-
+    
   })
   output$ord_side<-renderUI({
     fluidRow(class="map_control_style",style="color: #05668D",
@@ -5272,7 +5230,7 @@ removeModal()
                     checkboxInput("segrda_scale",span("Scale variables",tiphelp("Scale variables to unit variance (like correlations)")), value=T, width = "100px")
                )
              ),
-
+             
              div(
                span("+",
                     inline(
@@ -5282,8 +5240,8 @@ removeModal()
                )
              ),
              uiOutput("ord_sure")
-
-
+             
+             
     )
   })
   output$ord_check<-renderUI({
@@ -5307,7 +5265,7 @@ removeModal()
       }, content = function(file) {
         saveRDS(filtershp(),file)
       })
-
+    
   }
   observeEvent(input$shp_view,{
     showModal(
@@ -5325,169 +5283,169 @@ removeModal()
     )
   })
   output$shp_help<-renderUI({
-
+    
     div(id="shp_help",
         strong("1. Upload "),
         popify(a("shape files*"),"Shape files",options=list(style="width: 600px", container="body"), placement = "right",
-                            HTML(
-                              paste0(
-                                "Shapefiles are a simple, nontopological format for storing the geometric location and attribute information of geographic features. The shapefile format defines the geometry and attributes of geographically referenced features in three or more files with specific file extensions that should be stored in the same project workspace. Requires at least three files:",
-                                div(HTML(paste0(hr()))),
-                                div(HTML(paste0(strong(".shp --")," The main file that stores the feature geometry; required."))),
-                                div(HTML(paste0(strong(".shx --")," The index file that stores the index of the feature geometry; required."))),
-
-                                div(HTML(paste0(strong(".dbf --")," The dBASE table that stores the attribute information of features; required."))),
-                                div(HTML(paste0(hr()))),
-                                div(HTML(paste0("There is a one-to-one relationship between geometry and attributes, which is based on record number. Attribute records in the dBASE file must be in the same order as records in the main file. "))),
-                                div(HTML(paste0(em(
-                                  "Each file must have the same prefix, for example, basin.shp, basin.shx, and basin.dbf"
-                                ))))
-
-
-
-
-
-                              )
-                            )
-
-
+               HTML(
+                 paste0(
+                   "Shapefiles are a simple, nontopological format for storing the geometric location and attribute information of geographic features. The shapefile format defines the geometry and attributes of geographically referenced features in three or more files with specific file extensions that should be stored in the same project workspace. Requires at least three files:",
+                   div(HTML(paste0(hr()))),
+                   div(HTML(paste0(strong(".shp --")," The main file that stores the feature geometry; required."))),
+                   div(HTML(paste0(strong(".shx --")," The index file that stores the index of the feature geometry; required."))),
+                   
+                   div(HTML(paste0(strong(".dbf --")," The dBASE table that stores the attribute information of features; required."))),
+                   div(HTML(paste0(hr()))),
+                   div(HTML(paste0("There is a one-to-one relationship between geometry and attributes, which is based on record number. Attribute records in the dBASE file must be in the same order as records in the main file. "))),
+                   div(HTML(paste0(em(
+                     "Each file must have the same prefix, for example, basin.shp, basin.shx, and basin.dbf"
+                   ))))
+                   
+                   
+                   
+                   
+                   
+                 )
+               )
+               
+               
         )," at once",
-
-
-
-
+        
+        
+        
+        
     )
-
+    
   })
   shp_tool<-reactive({
     div(id="shp_toobox",style="width: 600px",
-      modalDialog(
-        div(
-          tabsetPanel(id="shp_tab",
-            tabPanel("Create Shape",value="tab_create",
-                     sidebarLayout(
-                       sidebarPanel(width=5,style="height:320px",
-                         div(
-                           uiOutput('shp_help'),
-                           fileInput(inputId = "shp", NULL, multiple = TRUE, accept = c('.shp', '.dbf','.sbn', '.sbx', '.shx', '.prj'), width="200px")),
-                         uiOutput("shp_feature1")
-                       ),
-                       mainPanel(width=7,
-                         div(
-                           uiOutput("SHP_plot")
-
-                         )
-                       ))
-                     ),
-            tabPanel("Crop Shapes",value="tab_crop",
-                     uiOutput("shp_crop")),
-            column(12,style="align: center",uiOutput("shp_control"))
-
-          )
-        ),
-        title=strong("Shapefile toolbox"),
-        easyClose = T
-      )
+        modalDialog(
+          div(
+            tabsetPanel(id="shp_tab",
+                        tabPanel("Create Shape",value="tab_create",
+                                 sidebarLayout(
+                                   sidebarPanel(width=5,style="height:320px",
+                                                div(
+                                                  uiOutput('shp_help'),
+                                                  fileInput(inputId = "shp", NULL, multiple = TRUE, accept = c('.shp', '.dbf','.sbn', '.sbx', '.shx', '.prj'), width="200px")),
+                                                uiOutput("shp_feature1")
+                                   ),
+                                   mainPanel(width=7,
+                                             div(
+                                               uiOutput("SHP_plot")
+                                               
+                                             )
+                                   ))
+                        ),
+                        tabPanel("Crop Shapes",value="tab_crop",
+                                 uiOutput("shp_crop")),
+                        column(12,style="align: center",uiOutput("shp_control"))
+                        
+            )
+          ),
+          title=strong("Shapefile toolbox"),
+          easyClose = T
+        )
     )
   })
-output$shp_crop<-renderUI({
-  choices<-layers_choices()
-  div(
-    validate(need(length(choices)>1,"Requires a Datalist with at least two shapes")),
-
-    sidebarPanel(
+  output$shp_crop<-renderUI({
+    choices<-layers_choices()
+    div(
+      validate(need(length(choices)>1,"Requires a Datalist with at least two shapes")),
+      
+      sidebarPanel(
         div(style="margin: 15px",
             div(strong("1. Shape A:")),
             pickerInput("croplayerA",NULL,  choices, width="150px")),
         div(uiOutput("croplayerA_plot"))
-    ),
-    sidebarPanel(
+      ),
+      sidebarPanel(
         uiOutput("croplayer_B"),
         div(uiOutput("croplayerB_plot"))
-    ),
-    sidebarPanel(
-      div(style="height: 217px",
-        uiOutput("croplayer_C"))
-    )
-    ,
-
-  )
-})
-getcrop<-reactive({
-  req(length(shapes_list())>0)
-  new<-shapes_list()
-  req(input$croplayerA)
-  req(input$croplayerB)
-  a<-st_as_sf(new[[input$croplayerA]])
-  b<-st_as_sf(new[[input$croplayerB]])
-  st_combine( st_crop(a,b))
-})
-output$croplayer_C<-renderUI({
-  res<-getcrop()
-  div(style="margin-top: 20px",
-      div(strong("3. New shape:"),style="margin-bottom: 20px"),
-      renderPlot({
-        par(mar=c(0,0,0,0))
-        plot(res, col="gray")
-      },height = 150)
-  )
-})
-output$croplayerA_plot<-renderUI({
-  req(input$croplayerA)
-  req(length(shapes_list())>0)
-  renderPlot({
-    plotshape(shapes_list()[[input$croplayerA]])
-  },height = 150)
-})
-output$croplayerB_plot<-renderUI({
-  req(input$croplayerB)
-  req(length(shapes_list())>0)
-  renderPlot({
-    plotshape(shapes_list()[[input$croplayerB]])
-  },height = 150)
-})
-shapes_list<-reactive({
-  base_shape<-attr(vals$saved_data[[input$data_bank]],"base_shape")
-  layer_shape<-attr(vals$saved_data[[input$data_bank]],"layer_shape")
-  eshape<-attr(vals$saved_data[[input$data_bank]],"extra_shape")
-  pic<-which(unlist(lapply(list(base_shape,layer_shape),function(x)length(x)>0)))
-  eshape[['Base Shape']]<-base_shape
-  eshape[['Layer Shape']]<-layer_shape
-  new=c(eshape)
-  new
-})
-output$croplayer_B<-renderUI({
-  choices<-layers_choices()
-  pic<-which(choices!=input$croplayerA)
-  div(style="margin: 15px",
-      div(strong("2. Shape B:")),
-    div(pickerInput("croplayerB",NULL,  choices[pic], width="150px"))
-
-  )
-
-})
-output$shp_control<-renderUI({
-  req(length(input$shp$datapath)!=0|input$shp_tab=="tab_crop")
-  if(input$shp_tab=="tab_crop"){
-    choices<-layers_choices()
-    validate(need(length(choices)>1,"Requires a Datalist with at least two shapes"))
-  }
-  div(class="well",
-    div(
-      inline(pickerInput("shp_include","4. Include shape as:", c("Base-Shape","Layer-Shape","Extra-Shape"),width="150px")),
-      inline(uiOutput("shp_datalist")),
-      inline(
-        conditionalPanel("input.shp_include=='Extra-Shape'",
-                         textInput("extra_layer_newname", "5. Name of of layer",bag_extralayer(), width="200px"))
       ),
-      tipify(bsButton("add_shape",span(icon("fas fa-map"),icon("fas fa-arrow-circle-right")), style='button_active'),"Click to add the Shape into the selected Datalist"),
-
-      inline(
-        tipify(downloadButton("save_feature",label =NULL),"use the Download button to save the shapes as a single object. This file can be uploaded in the 'Data Input' menu as base_shape or layer_shape.", options=list(container="body"))
+      sidebarPanel(
+        div(style="height: 217px",
+            uiOutput("croplayer_C"))
       )
+      ,
+      
     )
-  )
-})
+  })
+  getcrop<-reactive({
+    req(length(shapes_list())>0)
+    new<-shapes_list()
+    req(input$croplayerA)
+    req(input$croplayerB)
+    a<-st_as_sf(new[[input$croplayerA]])
+    b<-st_as_sf(new[[input$croplayerB]])
+    st_combine( st_crop(a,b))
+  })
+  output$croplayer_C<-renderUI({
+    res<-getcrop()
+    div(style="margin-top: 20px",
+        div(strong("3. New shape:"),style="margin-bottom: 20px"),
+        renderPlot({
+          par(mar=c(0,0,0,0))
+          plot(res, col="gray")
+        },height = 150)
+    )
+  })
+  output$croplayerA_plot<-renderUI({
+    req(input$croplayerA)
+    req(length(shapes_list())>0)
+    renderPlot({
+      plotshape(shapes_list()[[input$croplayerA]])
+    },height = 150)
+  })
+  output$croplayerB_plot<-renderUI({
+    req(input$croplayerB)
+    req(length(shapes_list())>0)
+    renderPlot({
+      plotshape(shapes_list()[[input$croplayerB]])
+    },height = 150)
+  })
+  shapes_list<-reactive({
+    base_shape<-attr(vals$saved_data[[input$data_bank]],"base_shape")
+    layer_shape<-attr(vals$saved_data[[input$data_bank]],"layer_shape")
+    eshape<-attr(vals$saved_data[[input$data_bank]],"extra_shape")
+    pic<-which(unlist(lapply(list(base_shape,layer_shape),function(x)length(x)>0)))
+    eshape[['Base Shape']]<-base_shape
+    eshape[['Layer Shape']]<-layer_shape
+    new=c(eshape)
+    new
+  })
+  output$croplayer_B<-renderUI({
+    choices<-layers_choices()
+    pic<-which(choices!=input$croplayerA)
+    div(style="margin: 15px",
+        div(strong("2. Shape B:")),
+        div(pickerInput("croplayerB",NULL,  choices[pic], width="150px"))
+        
+    )
+    
+  })
+  output$shp_control<-renderUI({
+    req(length(input$shp$datapath)!=0|input$shp_tab=="tab_crop")
+    if(input$shp_tab=="tab_crop"){
+      choices<-layers_choices()
+      validate(need(length(choices)>1,"Requires a Datalist with at least two shapes"))
+    }
+    div(class="well",
+        div(
+          inline(pickerInput("shp_include","4. Include shape as:", c("Base-Shape","Layer-Shape","Extra-Shape"),width="150px")),
+          inline(uiOutput("shp_datalist")),
+          inline(
+            conditionalPanel("input.shp_include=='Extra-Shape'",
+                             textInput("extra_layer_newname", "5. Name of of layer",bag_extralayer(), width="200px"))
+          ),
+          tipify(bsButton("add_shape",span(icon("fas fa-map"),icon("fas fa-arrow-circle-right")), style='button_active'),"Click to add the Shape into the selected Datalist"),
+          
+          inline(
+            tipify(downloadButton("save_feature",label =NULL),"use the Download button to save the shapes as a single object. This file can be uploaded in the 'Data Input' menu as base_shape or layer_shape.", options=list(container="body"))
+          )
+        )
+    )
+  })
   observeEvent(input$add_shape,{
     shape<- if(input$shp_tab=="tab_create"){
       filtershp()
@@ -5495,35 +5453,35 @@ output$shp_control<-renderUI({
       getcrop()
     }
     res<-switch(input$shp_include,
-           "Base-Shape"={attr(vals$saved_data[[input$data_bank]],"base_shape")<-shape},
-           "Layer-Shape"={attr(vals$saved_data[[input$data_bank]],"layer_shape")<-shape},
-           'Extra-Shape'={
-             attr(vals$saved_data[[input$data_bank]],"extra_shape")[[input$extra_layer_newname]]<-shape
-           }
-           )
+                "Base-Shape"={attr(vals$saved_data[[input$data_bank]],"base_shape")<-shape},
+                "Layer-Shape"={attr(vals$saved_data[[input$data_bank]],"layer_shape")<-shape},
+                'Extra-Shape'={
+                  attr(vals$saved_data[[input$data_bank]],"extra_shape")[[input$extra_layer_newname]]<-shape
+                }
+    )
     removeModal()
     res
-
+    
   })
   output$SHP_plot<-renderUI({
     req(length(filtershp())>0)
-   div(
-     strong("3. New shape:"),
-     renderPlot({
-       ggplot(st_as_sf(filtershp())) + geom_sf()+
-         theme(panel.background = element_rect(fill = "white"),
-               panel.border = element_rect(fill=NA,color="black", size=0.5, linetype="solid"))
-
-
-     }, height = 300)
-   )
+    div(
+      strong("3. New shape:"),
+      renderPlot({
+        ggplot(st_as_sf(filtershp())) + geom_sf()+
+          theme(panel.background = element_rect(fill = "white"),
+                panel.border = element_rect(fill=NA,color="black", size=0.5, linetype="solid"))
+        
+        
+      }, height = 300)
+    )
   })
   output$shp_datalist<-renderUI({
     req(length(vals$saved_data)>0)
     pickerInput("shp_datalist","5. Select the Datalist:",choices=names(vals$saved_data), width="200px")
   })
   observeEvent(input$close_shp,{
-
+    
     removeModal()
   })
   output$shp_back<-renderUI({
@@ -5531,7 +5489,7 @@ output$shp_control<-renderUI({
     actionButton("shp_back","back")
   })
   output$shp_feature1<-renderUI({
-
+    
     req(isTRUE(vals$bagshp))
     atributos_shp<-attributes(uploadShpfile())$names
     div(
@@ -5546,7 +5504,7 @@ output$shp_control<-renderUI({
     )
   })
   filtershp<-reactive({
-
+    
     bacias<-    uploadShpfile()
     req(isTRUE(vals$bagshp))
     req(input$shp_feature1)
@@ -5555,7 +5513,7 @@ output$shp_control<-renderUI({
     {
       bacias<-uploadShpfile()
       bacias<-bacias[bacias[[input$shp_feature1]]==input$shp_feature2,]
-
+      
     }
     bacias
   })
@@ -5568,8 +5526,8 @@ output$shp_control<-renderUI({
     )
   })
   downcenter<-reactive({
-
-
+    
+    
     modalDialog(
       if(!sum(vals$bagdata==c(T,T))==2){"the selected datalist has unsaved changes.Please save them before continuing."} else{
         column(12,
@@ -5577,7 +5535,7 @@ output$shp_control<-renderUI({
                splitLayout(cellWidths = c("30%","70%"),
                            column(12,
                                   radioButtons("down_type",strong("format",tipify(icon("fas fa-question-circle"),"file extension", options=list(container="body"))),c(".xlsx",".csv"))),
-
+                           
                            conditionalPanel("input.down_type=='.csv'",{
                              splitLayout(
                                column(12,
@@ -5589,7 +5547,7 @@ output$shp_control<-renderUI({
                                                    )
                                       )),
                                column(12,
-
+                                      
                                       conditionalPanel("input.down_sep==';'",{
                                         radioButtons("down_dec",strong("dec",tipify(icon("fas fa-question-circle"), "the string to use for decimal points in columns", options=list(container="body"))),
                                                      choiceValues =list(".",","),
@@ -5604,40 +5562,40 @@ output$shp_control<-renderUI({
                                                ))
                                       })
                                )
-
+                               
                              )
                            })
                ),
                column(12,
                       downloadButton("download_action",NULL,icon=icon("fas fa-download"),style="width: 50%"))
-
+               
         )
       }
       ,
-
+      
       title=h4(icon("fas fa-download"),strong("Download")),
       size="m",
       easyClose = T
-
+      
     )
   })
   observeEvent(input$ddcogs2,{
     vals$hand_down<-"data"
     showModal(downcenter())
-
+    
   })
   observeEvent(input$dfcogs2,{
-
+    
     vals$hand_down<-"factors"
     showModal(downcenter())
   })
   observeEvent(input$downcenter_coords,{
-
+    
     vals$hand_down<-"coords"
     showModal(downcenter())
   })
   observeEvent(input$downcenter_som,{
-
+    
     vals$hand_down<-"som"
     showModal(downcenter())
   })
@@ -5655,69 +5613,69 @@ output$shp_control<-renderUI({
           write_xlsx(cbind(id=rownames(getdown()),getdown()), file)
         }
         removeModal()
-
+        
       })
-
+    
   }
-
+  
   output$remove_sp<-renderUI({
     div(style="margin-top:10px; ",
-             div(style="border-bottom: 1px solid gray; margin-top: 10px;",span("Value-based remotion",tipify(icon("fas fa-question-circle"), "Check to select a filter"))
-                    ),
-             div(
-                 class="cogs_in",style=" height: 180px",
-                 div(uiOutput("pct_rareabund")),
-                 div(uiOutput("pct_rarefreq")),
-                 div(inline(uiOutput("pct_raresing")))
-
-             )
-
+        div(style="margin-top: 10px;",span("Value-based remotion",tipify(icon("fas fa-question-circle"), "Check to select a filter"))
+        ),
+        div(
+          class="cogs_in",style=" height: 180px",
+          div(uiOutput("pct_rareabund")),
+          div(uiOutput("pct_rarefreq")),
+          div(inline(uiOutput("pct_raresing")))
+          
+        )
+        
     )
   })
-
-
+  
+  
   output$pct_rareabund<-renderUI({
     div(style="margin-left: 5px",
-      tipify( icon("fas fa-question-circle"),"Remove variables with an value less than x-percent of the total"),
-      inline( checkboxInput("rareabund","Abund<",F, width='70px')),
-      inline(uiOutput("p_rareabund")),
-
-      bsTooltip("pct_rare","Percentage", options=list(container="body"))
+        tipify( icon("fas fa-question-circle"),"Remove variables with an value less than x-percent of the total"),
+        inline( checkboxInput("rareabund","Abund<",F, width='70px')),
+        inline(uiOutput("p_rareabund")),
+        
+        bsTooltip("pct_rare","Percentage", options=list(container="body"))
     )
   })
-
+  
   output$p_rareabund<-renderUI({
-  req(isTRUE(input$rareabund))
+    req(isTRUE(input$rareabund))
     div( inline(numericInput('pct_rare', NULL, value =0.1, width='70px')),"%")
   })
-
+  
   output$p_rarefreq<-renderUI({
     req(isTRUE(input$rarefreq))
     div(inline(numericInput('pct_prev', NULL, value =0.1, width='70px')),"%")
   })
   output$pct_rarefreq<-renderUI({
     div(style="margin-left: 5px",
-      tipify( icon("fas fa-question-circle"),"Remove variables occurring in less than  x-percent of the number of samples"),
-      inline(checkboxInput("rarefreq","Freq<",F, width='70px')),
-      inline(uiOutput("p_rarefreq")),
-
-      bsTooltip("pct_prev","Percentage")
+        tipify( icon("fas fa-question-circle"),"Remove variables occurring in less than  x-percent of the number of samples"),
+        inline(checkboxInput("rarefreq","Freq<",F, width='70px')),
+        inline(uiOutput("p_rarefreq")),
+        
+        bsTooltip("pct_prev","Percentage")
     )
   })
   output$pct_raresing<-renderUI({
     #req(sum(apply(data_cogs$df,2, is.integer), na.rm=T)==0)
     div(style="margin-left: 5px",
-      tipify( icon("fas fa-question-circle"),"Requires a counting data. Remove variables occurring only once"),
-      inline(checkboxInput("raresing","Singletons",F, width='100px')),
-      inline(
-        conditionalPanel("input.raresing==T",{
-          uiOutput("war_raresing")
-        })
-      )
-
+        tipify( icon("fas fa-question-circle"),"Requires a counting data. Remove variables occurring only once"),
+        inline(checkboxInput("raresing","Singletons",F, width='100px')),
+        inline(
+          conditionalPanel("input.raresing==T",{
+            uiOutput("war_raresing")
+          })
+        )
+        
     )
   })
-
+  
   dataraw <- reactive({
     req(input$up_or_ex)
     if (input$up_or_ex == 'use example data') {
@@ -5725,59 +5683,25 @@ output$shp_control<-renderUI({
       #data <-data.frame(fread("DADOS SANSED_OFICIAL CENPES.csv", stringsAsFactors = T))
       rownames(data) <- data[, 1]
       data[, 1] <- NULL
-
-
+      
+      
     } else {
       validate(need(length(input$filedata$datapath)!=0,"Data file is required"))
-
+      
       data <-
         data.frame(fread(input$filedata$datapath, stringsAsFactors = T,na.strings=c("","NA")))
       rownames(data) <- data[, 1]
       data[, 1] <- NULL
-
-
+      
+      
     }
     data
   })
-  getdatalist<-reactive({
-    data=dataraw()
-    if (any(names(datastr(data)$type.vars) == "factor")){
-
-      for(i in 1:ncol(data)){
-        new<-as.numeric(as.character(data[,i]))
-        if(!sum(is.na(new))==length(new)){data[,i]<-new}
-      }
-      num_cols<-which(unlist(lapply(data, function(x)is.numeric(x))))#ok
-      data.numerics <-data[, num_cols,drop=F]
-      data.factors<-data[, which(unlist(lapply(data, function(x)is.factor(x)))),drop=F]
-      rownames(data.numerics)<-rownames(data)
-      data<-data.numerics
-      attr(data,"data.factors")<-data.factors}
-    attr(data,"nobs_ori")<-nrow(data)
-    attr(data,"nvar_ori")<-ncol(data)
-
-    if(input$up_or_ex == 'use example data'){
-      attr(data,"filename")<-'nema_araca.csv'
-      attr(data, "datalist") <- paste("Datalist_nema_araca")
-    } else {attr(data,"filename")<-input$data_name
-    attr(data, "datalist") <- input$data_name
-
-    }
-
-    attr(data, "transf")<-attr(data, "transf")
-    #attr(data, "transf")<-newattribs
-    factors_in<-labels()[rownames(data),,drop=F]
-
-    validate(need(sum(rownames(factors_in)%in%rownames(data))>0,"Data-Attribute and Factors-Attribute must have conforming IDs (first column). Check these files and reload again;"))
-    attr(data, "factors") <- factors_in
-    attr(data,"coords") <- coords()[rownames(data),]
-    attr(data,"base_shape") <- base_shape()
-    attr(data,"layer_shape") <- layer_shape()
-
-    datalist = list(data)
-    names(datalist) <- input$data_name
-    datalist
-  })
+  
+  
+  
+  
+  
   observeEvent(input$upload_insert,{
     if(input$up_or_ex=="upload"){
       validate(need(length(input$labels$datapath)>0,"error"))
@@ -5792,7 +5716,7 @@ output$shp_control<-renderUI({
       envi<-data_migrate(datalist[[1]],envi,"envi_araca")
       vals$saved_data[["envi_araca"]]<-envi
     }
-
+    
     upload_bag$df<-0
     removeModal()
     updateSelectInput(session,"data_bank",selected=input$data_name)
@@ -5801,7 +5725,7 @@ output$shp_control<-renderUI({
   output$filterdata <- renderUI({
     filterdata()
   })
-
+  
   update_selecvar<-reactiveValues(df=F)
   observe({
     if(isTRUE(update_selecvar$df)){
@@ -5809,8 +5733,8 @@ output$shp_control<-renderUI({
         toggleDropdownButton('dropID_tool2')
         update_selecvar$df<-F
       })
-
-
+      
+      
     }
   })
   data_cogs<-reactiveValues(df=0)
@@ -5842,8 +5766,8 @@ output$shp_control<-renderUI({
     req(input$model_or_data)
     req(input$usesuggK)
     req(input$method.hc0)
-
-
+    
+    
     if (input$model_or_data == "som codebook") {
       if(input$usesuggK=="suggested"){
         req(input$suggsKmodel)
@@ -5855,24 +5779,24 @@ output$shp_control<-renderUI({
       }
       somC <- cutdata.reactive()
     }
-
+    
     somC
-
+    
   })
   getmodel_hc <- reactive({
     req(input$som_hc)
     attr(getdata_hc(),"som")[[as.character(input$som_hc)]]
   })
   output$phc <- renderUI({
-
-
+    
+    
     fluidRow(
       column(12,actionButton('downp_hcut',icon("fas fa-image"),icon("fas fa-download"), style="button_active")),
       column(12,plotOutput("hc_dend")
       )
     )
-
-
+    
+    
   })
   output$hc_dend<-renderPlot({
     req(input$model_or_data)
@@ -5886,7 +5810,7 @@ output$shp_control<-renderUI({
   })
   output$pclus_code<-renderPlot({
     req(input$pclus_facpalette)
-
+    
     pclus(
       somC=cutsom.reactive(),
       cex = as.numeric(input$pclus_symbol_size),
@@ -5901,24 +5825,24 @@ output$shp_control<-renderUI({
       alpha.legend=input$bgleg_pclus,
       newcolhabs=vals$newcolhabs
     )
-
-
+    
+    
     vals$pclus_plot<-recordPlot()
   })
   observeEvent(input$bmu_dotlabel,{
     vals$bmu_points<-if(bmu_dotlabel$df == 'symbols'){ T} else {F}
-
+    
   })
   bmu_clus_points<-reactive({
     req(input$dot_label_clus)
     if(input$dot_label_clus == 'symbols'){ T} else {F}
-
+    
   })
   output$showgrid <- renderPlot({
     if(isTRUE(input$splitdata_som)){data=training_data$df}else{
       data = getdata_som()}
-
-
+    
+    
     validate(need(input$xdim!="", ""))
     validate(need(input$ydim!="", ""))
     validate(need( (input$xdim*input$ydim)<=nrow(data), "The number of map units must be less than or equal to the number of observations. Please decrease the 'xdim' and/or 'ydim' dimensions"))
@@ -5930,7 +5854,7 @@ output$shp_control<-renderUI({
         rlen = 5
       )
     grid<-m$grid[[1]]
-
+    
     plot(
       m,
       shape = "straight",
@@ -5955,13 +5879,13 @@ output$shp_control<-renderUI({
   #d<-if(length(pred)>0){"predictions"} else {NULL}
   observeEvent(input$scale_map,{
     if(isFALSE(input$scale_map)){
-
+      
       updateCheckboxInput(session,"scalesize_size","Size", F)
       updateCheckboxInput(session,"scalesize_color","Color", F)
     }
   })
   scalesize_size<-reactive({
-
+    
     res<-if(isFALSE(input$scale_map)){F} else{input$scalesize_size}
   })
   scalesize_color<-reactive({
@@ -6005,13 +5929,13 @@ output$shp_control<-renderUI({
     )
   })
   observeEvent(input$edit_map,{
-
+    
     req(length(vals$saved_maps)>0)
     req(isTRUE(input$edit_map))
-
+    
     p<-vals$saved_maps[[input$saved_maps]]
     l<-attr(p,"args")
-
+    
     for(i in names(l)){
       try(updateTextInput(session,i, value=l[[i]]))
     }
@@ -6020,11 +5944,11 @@ output$shp_control<-renderUI({
     req(length(input$maxdist)>0)
     maxdist=if(is.na(input$maxdist)){Inf}else{as.numeric(input$maxdist)}
     nmax=if(is.na(input$nmax_idp)){Inf}else{as.numeric(input$nmax_idp)}
-
+    
     c(maxdist,nmax)
   })
   observeEvent(input$maxdist,{
-
+    
     if(!is.na(input$maxdist)){
       if(is.na(input$nmax_idp)){
         updateNumericInput(session,"nmax_idp", value=3)
@@ -6037,20 +5961,20 @@ output$shp_control<-renderUI({
     req(input$lat_xmin)
     req(input$long_xmax)
     req(input$lat_xmax)
-
+    
     get<-vars_data$df[which(vars_data$df==input$var_map)]
     data <- getdata_map()[filtermap(),,drop=F]
     req(get%in%colnames(data))
-
+    
     colored_by_factor<-
       if(isTRUE(input$colored_map)){
         attr(data,"factors")[as.character(input$map_lab)]
-
+        
       } else {NULL}
     req(input$breaks_map)
     mybreaks<-as.numeric(unlist(strsplit(input$breaks_map,",")))
     validate(need(min(mybreaks)>=min(data[,get])&max(mybreaks)<=max(data[,get]),paste0("Breaks must be within the data range (","min: ",min(data[,get]),"; max: ",max(data[,get]),")")))
-
+    
     m<-
       map_discrete_variable(
         data = data,
@@ -6097,10 +6021,10 @@ output$shp_control<-renderUI({
         breaks_len=input$breaks_len,
         mybreaks=mybreaks
       )
-
+    
     attr(m,"args")<-l1()
     vals$map_data_disc<-m
-
+    
   })
   extralayers<-reactive({
     shapes<-attr(vals$saved_data[[input$data_map]],"extra_shape")
@@ -6110,7 +6034,7 @@ output$shp_control<-renderUI({
         trulayers[i]<-input[[paste0("map_extra_layer",i)]]
       }
       req(is.logical(trulayers))
-
+      
       layers<-list()
       colors=c()
       alphas=c()
@@ -6123,18 +6047,18 @@ output$shp_control<-renderUI({
         alphas[i]<-input[[paste0("ssextra_layer_lighten",i)]]
         labels[i]<-input[[paste0("feat_extra",i)]]
         sizes[i]<-input[[paste0("feat_extra_size",i)]]
-
+        
       }
       if(length(colors[which(trulayers)])>0){
-
+        
         extralayers<-list(colors=colors[which(trulayers)],alphas=alphas[which(trulayers)], layers=layers[which(trulayers)], labels=labels[which(trulayers)], sizes=sizes[which(trulayers)])}else{     extralayers<-NULL}
-
-
-
+      
+      
+      
     } else{
       extralayers<-NULL
     }
-
+    
     extralayers
   })
   map_fac_disc<-reactive({
@@ -6143,7 +6067,7 @@ output$shp_control<-renderUI({
     data <- attr(getdata_map(),"factors")[filtermap(),,drop=F]
     coords<-attr(getdata_map(),"coords")[rownames(data),]
     req(get%in%colnames(data))
-
+    
     m<-suppressWarnings(
       map_discrete_variable(
         data = data,
@@ -6186,7 +6110,7 @@ output$shp_control<-renderUI({
     )
     attr(m,"args")<-l1()
     vals$map_fac_disc<-m
-
+    
   })
   labcoords<-reactive({
     labcoords<-if(!isTRUE(input$showfactors)){NULL} else{
@@ -6220,15 +6144,15 @@ output$shp_control<-renderUI({
                  omax=as.numeric(input$omax),
                  maxdist=maxdist
     )
-
-
+    
+    
     vals$map_data_interp<-p
     p
   })
   map_data_interp<-reactive({
-
+    
     p0<-p<-model_idw_data()
-
+    
     get<-vars_data$df[which(vars_data$df==input$var_map)]
     data <- getdata_map()[filtermap(),,drop=F]
     coords<-attr(data,"coords")[rownames(data),]
@@ -6268,7 +6192,7 @@ output$shp_control<-renderUI({
     attr(p,"my_rst")<-my_rst
     attr(p,"data_z")<-attr(p0,"data_z")
     vals$map_data_interp<-p
-
+    
   })
   model_knn_data<-reactive({
     #req(isFALSE(stopmap$df))
@@ -6290,8 +6214,8 @@ output$shp_control<-renderUI({
                    c(input$long_xmax,  input$lat_xmax)
                  ))
     )
-
-
+    
+    
     vals$map_fac_interp<-p
     p
   })
@@ -6337,7 +6261,7 @@ output$shp_control<-renderUI({
     attr(p,"my_rst")<-my_rst
     attr(p,"data_z")<-attr(p0,"data_z")
     vals$map_fac_interp<-p
-
+    
   })
   data_raster<-reactive({
     get<-vars_data$df[which(vars_data$df==input$var_map)]
@@ -6355,10 +6279,10 @@ output$shp_control<-renderUI({
   })
   map_raster<-reactive({
     validate(need(input$choices_map=="Data-Attribute","This functionality is currently only available for Data-Attribute"))
-
+    
     p0<-p<-data_raster()
-
-
+    
+    
     get<-vars_data$df[which(vars_data$df==input$var_map)]
     data <- getdata_map()[filtermap(),,drop=F]
     coords<-attr(data,"coords")[rownames(data),]
@@ -6396,36 +6320,36 @@ output$shp_control<-renderUI({
     attr(my_rst,"col.palette")<-input$pt_palette
     attr(p,"my_rst")<-my_rst
     attr(p,"data_z")<-attr(p0,"data_z")
-
+    
     # path<-'D:/OneDrive/PÓS-DOC/Articles/MS_meiofauna/Figuras_MS_Fabi/Rasters/'
     #saveRDS(my_rst,paste0(path,get,".rds"))
     vals$map_data_raster<-p
-
+    
   })
   persp_res<-reactiveValues(df=0)
   output$persp_out<-renderUI({
     req(input$saved_maps!="new map")
     req(isTRUE(input$surface_map))
-
+    
     p1<-vals$saved_maps[[input$saved_maps]]
-
+    
     zlab<-attr(p1,'args')['var_map']
     p1<- attr(p1,"my_rst")
     p2<-if(length(vals$saved_maps)>1){
       attr(vals$saved_maps[[input$saved_maps2]],"my_rst")
     } else{NULL}
-
+    
     fluidRow(
       renderPlot({
         my_rst<-p1
         data_z<- attr(p,"data_z")
-
+        
         if(is.factor(data_z)){
           colors<- getcolhabs(vals$newcolhabs,input$pt_palette,nlevels(data_z))
         } else {
           colors<- getcolhabs(vals$newcolhabs,input$pt_palette,length(my_rst@data@values))
         }
-
+        
         my_rst2=p2
         pmat<-get_4D(my_rst,my_rst2=my_rst2,colors, theta=input$surf_theta, phi=input$surf_phi,r=input$surf_r,d=input$surf_d,xlab="long", ylab="Latitude", zlab=zlab, exp=input$surf_exp,wlegend=input$surface_width.legend,hlegend=input$surface_height.legend)
         if(isTRUE(input$showcoords)){
@@ -6452,31 +6376,31 @@ output$shp_control<-renderUI({
         persp<-recordPlot()
         attr(persp,"coarser")<-attr(pmat,"coarser")
         persp_res$df<-persp
-
+        
       })
     )
-
-
-
+    
+    
+    
   })
   getmap<-reactive({
     if(input$cmap=='discrete'){
       if(input$choices_map=="Data-Attribute"){  p<-vals$map_data_disc}
       if(input$choices_map=="Factor-Attribute"){  p<-vals$map_fac_disc}
-
+      
     }
-
+    
     if(input$cmap=='interpolation') {
       if(input$choices_map=="Data-Attribute"){  p<-vals$map_data_interp}
       if(input$choices_map=="Factor-Attribute"){  p<-vals$map_fac_interp}
     }
-
+    
     if(input$cmap=='raster'){  p<-vals$map_data_raster}
     suppressWarnings(print(p))
   })
   stack_out<-reactiveValues(df=0)
   output$stack_out<-renderPlot({
-
+    
     if(isTRUE(input$automap)){
       output$automap_war<-renderUI({NULL})
       vals$map_res<-get_stackmap()
@@ -6494,21 +6418,21 @@ output$shp_control<-renderUI({
           vals$map_res}
       }
     }
-
+    
   })
   get_stackmap<-reactive({
-
-
+    
+    
     res_list<-get_stacklist()[input$stack_layers]
     validate(need(length(res_list)>1,"Requires at least two layers"))
     coords<-attr(getdata_map(),"coords")
     data<-getdata_map()
-
+    
     layer_shape=if(isTRUE(input$srmap_layer)){
       attr(data,"layer_shape") } else{ NULL}
     srcol_layer=adjustcolor(getcolhabs(vals$newcolhabs,input$srlayer_col,1), input$srlayer_lighten)
-
-
+    
+    
     zs<-c()
     co<-c()
     labs<-list()
@@ -6520,8 +6444,8 @@ output$shp_control<-renderUI({
       showlab[i]<-input[[paste0("stack_lab",i)]]
       labs[[i]]<-attr(getdata_map(),"factors")[rownames(coords), input[[paste0("stack_labels",i)]]]
     }
-
-
+    
+    
     pmat<-stack4D_2(res_list,
                     legtitle.pos=input$stack_legtitle.pos,
                     leglabpos=input$stack_leglab.pos,
@@ -6535,7 +6459,7 @@ output$shp_control<-renderUI({
                     exp=input$stack_exp,
                     transp=abs(1-input$stack_alpha),
                     layer_shape=layer_shape,
-
+                    
                     colgrid=input$stack_colguides,
                     coords=coords,
                     labels=labs,
@@ -6557,35 +6481,35 @@ output$shp_control<-renderUI({
                     zlab=input$sr_zlab,
                     col_layer=srcol_layer
     )
-
-
+    
+    
     if(isTRUE(input$showguides_stack)){
       grid4D(coords,res_list[[1]], col=input$col_guides_stack, pmat=pmat,lty=as.numeric(input$lty_guides_stack),lwd=input$lwd_guides_stack)
     }
-
+    
     stack_out$df<-recordPlot()
     stack_out$df
-
+    
   })
   output$m3d_map<-renderRglwidget({
-
+    
     req(input$saved_maps!="new map")
     req(isTRUE(input$surface_map))
-
+    
     p1<-vals$saved_maps[[input$saved_maps]]
     zlab<-attr(p1,'args')['var_map']
     p1<- attr(p1,"my_rst")
     p2<-if(length(vals$saved_maps)>1){
       attr(vals$saved_maps[[input$saved_maps2]],"my_rst")
     } else{NULL}
-
+    
     rgl.open()
     rgl.bg(color=c('white','white'))
     anim_4D(r1=p1,r2=p2,r3=NULL,colors=input$pt_palette, exp=input$surf_exp,   newcolhabs=vals$newcolhabs)
     rglwidget()
-
+    
   })
-
+  
   output$pclus_tools<-renderUI({
     column(12,
            fluidRow(
@@ -6597,7 +6521,7 @@ output$shp_control<-renderUI({
   output$pop_pcorr<-renderUI({
     fluidRow(class="map_control_style",style="color: #05668D",
              div(
-
+               
                span("+ ",
                     inline(checkboxInput("varfacmap_action", span("Variable factor map",actionLink("varfacmap", tipify(icon("fas fa-question-circle"), "Click for more details"))),value =T, width="100px")))
              ),
@@ -6620,7 +6544,7 @@ output$shp_control<-renderUI({
                radioButtons(
                  "bmu_dotlabel",NULL , choices = c("labels", "symbols"),selected=bmu_dotlabel$df,inline=T, width="100px")
              ))),
-
+             
              div(span("+ Obs color:",inline(
                tipify(
                  pickerInput(inputId = "bmu_facpalette",
@@ -6639,7 +6563,7 @@ output$shp_control<-renderUI({
                                               label = NULL,
                                               choices = df_symbol$val,
                                               choicesOpt = list(content = df_symbol$img),
-
+                                              
                                               selected=bmu_symbol$df, width="75px")
                                   ,"symbol shape"
                                 )
@@ -6656,7 +6580,7 @@ output$shp_control<-renderUI({
                                       label = NULL,
                                       choices = vals$colors_img$val,
                                       choicesOpt = list(content = vals$colors_img$img),
-
+                                      
                                       selected=bmu_bgpalette$df, width="75px"),
                           "Color of grid units"
                         )
@@ -6705,7 +6629,7 @@ output$shp_control<-renderUI({
                  "download BMU plot",     options=list(container="body")
                )
              ),
-
+             
              div(
                tipify(
                  actionLink(
@@ -6714,19 +6638,19 @@ output$shp_control<-renderUI({
                  "download variable factor results",     options=list(container="body")
                )
              )
-
-
-
-
-
+             
+             
+             
+             
+             
     )
-
+    
   })
   output$bmu_legend_out<-renderUI({
     req(input$bmu_dotlabel=="symbols")
     col<-getcolhabs(vals$newcolhabs,input$bmu_facpalette,2)
     req(col[1]!=col[2])
-
+    
     div(
       actionLink('bmu_legend' ,h5("+ Legend adjustment:",style="color: blue")),
       uiOutput('pcorr_legcontrol')
@@ -6764,20 +6688,20 @@ output$shp_control<-renderUI({
                                ,"symbol shape")))
              })
              ,
-
-
-
-
+             
+             
+             
+             
              uiOutput('pclus_legcontrol')
-
+             
     )
-
-
-
+    
+    
+    
   })
   observeEvent(input$bmu_legend,{
     vals$bmuleg<-if(isFALSE(vals$bmuleg)){T} else if(isTRUE(vals$bmuleg)){F}
-
+    
   })
   output$pcorr_legcontrol<-renderUI({
     req(isTRUE(vals$bmuleg))
@@ -6798,13 +6722,13 @@ output$shp_control<-renderUI({
                       tipify(numericInput("bmu_leg_transp",NULL,value=vals$bmu_leg_transp,step=0.05, max=1, width="75px"),"Legend background transparency")
                     )))
     )
-
-
+    
+    
   })
   output$pclus_legcontrol<-renderUI({
     col<-getcolhabs(vals$newcolhabs,input$pclus_facpalette,2)
     req(col[1]!=col[2])
-
+    
     {
       div(
         div(span("+ leg x:",tipify(numericInput("insertx_pclus",NULL,value=0,step=0.05, width="75px"),"legend position relative to the x location"))),
@@ -6828,7 +6752,7 @@ output$shp_control<-renderUI({
                     #dcodes<-object.distances(m,"codes")
                     #res<-unlist(lapply(codes, function (x)  sum(dist(x)/dist(dtopo))))
                     #sort(res, dec=T)})
-
+                    
                )
              )
            ))
@@ -6846,12 +6770,12 @@ output$shp_control<-renderUI({
              mainPanel( plotOutput("pclus_code"))
            )
     )
-
+    
   })
   output$bmu_fac_control<-renderUI({
     col<-getcolhabs(vals$newcolhabs,input$bmu_facpalette,2)
-if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
-
+    if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
+    
     if(input$bmu_dotlabel=='labels'|col[1]!=col[2])
     {span("+ Labels",
           inline(
@@ -6862,15 +6786,15 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     }})
   output$pclus_fac_control<-renderUI({
     col<-getcolhabs(vals$newcolhabs,input$pclus_facpalette,2)
-
-
+    
+    
     req(input$dot_label_clus == 'labels'|col[1]!=col[2])
     span("+ Labels:", inline(
       pickerInput("pclus_factors",NULL,
                   choices = c(colnames(attr(getdata_hc(),"factors"))), width="75px")
     ))
-
-
+    
+    
   })
   BMUs<-reactive({
     req(length(input$varfacmap_action)>0)
@@ -6895,16 +6819,16 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       alpha.legend=vals$bmu_leg_transp,
       alpha_bg=vals$bmu_bg_transp,
       border=getcolhabs(vals$newcolhabs,input$bmu_border_grid,1),
-
+      
       col.text= getcolhabs(vals$newcolhabs,input$bmu_var_color,1),
       newcolhabs=vals$newcolhabs,
-
+      
     )
     vals$bmus_plot<-recordPlot()
     p
-
-
-
+    
+    
+    
   })
   output$pCorrCodes <- renderPlot({
     #req(input$varfacmap_action)
@@ -6936,9 +6860,9 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       15
     }
   })
-
-
-
+  
+  
+  
   {
     introhelpmodal <- function() {
       modalDialog(
@@ -6953,8 +6877,8 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     observeEvent(input$introhelp, {
       showModal(introhelpmodal())
     })
-
-
+    
+    
   }
   #screeplothelpmodal
   {
@@ -6971,8 +6895,8 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     observeEvent(input$screeplothelp, {
       showModal(screeplothelpmodal())
     })
-
-
+    
+    
   }
   #voteshelpmodal
   {
@@ -6989,8 +6913,8 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     observeEvent(input$voteshelp, {
       showModal(voteshelpmodal())
     })
-
-
+    
+    
     output$voteshelp <- renderText({
       if (input$votesh %% 2) {
         paste0(
@@ -7069,10 +6993,10 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     observeEvent(input$hchelp, {
       showModal(hchelpmodal())
     })
-
-
-
-
+    
+    
+    
+    
   }
   #removemodal
   {
@@ -7088,19 +7012,19 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     observeEvent(input$transfhelp, {
       showModal(transfmodal())
     })
-
+    
     transfmodal <- function() {
       div(id="teste",
-        modalDialog(
-          texttransf(),
-          title = "Transformation",
-          footer = modalButton("close"),
-          size = "m",
-          easyClose = TRUE
-        )
+          modalDialog(
+            texttransf(),
+            title = "Transformation",
+            footer = modalButton("close"),
+            size = "m",
+            easyClose = TRUE
+          )
       )
     }
-
+    
     observeEvent(input$Remove, {
       showModal(removemodal())
     })
@@ -7108,7 +7032,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
   #somgridmodal
   {
     somgridmodal <-reactive({
-
+      
       modalDialog(
         textsomgrid(),
         title = h4(strong("somgrid")),
@@ -7116,13 +7040,13 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         size = "m",
         easyClose = TRUE
       )
-
+      
     })
-
+    
     observeEvent(input$somgridhelp, {
       showModal(somgridmodal())
     })
-
+    
     output$somgridhelp <- renderText({
       if (input$somgridh %% 2) {
         paste0(br(),
@@ -7132,8 +7056,8 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         getHelp('kohonen')
       }
     })
-
-
+    
+    
   }
   #supersommodal
   {
@@ -7146,11 +7070,11 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$supersomhelp, {
       showModal(supersommodal())
     })
-
+    
     output$supersomhelp <- renderText({
       if (input$supersomh %% 2) {
         paste0(
@@ -7201,8 +7125,8 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         getHelp('kohonen')
       }
     })
-
-
+    
+    
   }
   #varfacmapmodal
   {
@@ -7215,17 +7139,17 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$varfacmap, {
       showModal(varfacmapmodal())
     })
-
-
-
-
+    
+    
+    
+    
   }
   #Propertymodal
-
+  
   #scalehelpmodal
   {
     scalehelpmodal <- function() {
@@ -7237,11 +7161,11 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$scalehelp, {
       showModal(scalehelpmodal())
     })
-
+    
     output$scalehelp_out <- renderText({
       if (input$scalehelph %% 2) {
         paste0(
@@ -7255,12 +7179,12 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
             code("TRUE")
           ),
           getHelp(help(scale, "base"))
-
+          
         )
       }
     })
-
-
+    
+    
   }
   #interpmodal
   {
@@ -7273,11 +7197,11 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$interphelp, {
       showModal(interpmodal())
     })
-
+    
     output$interphelp <- renderText({
       if (input$interph %% 2) {
         paste0(
@@ -7295,8 +7219,8 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         )
       }
     })
-
-
+    
+    
   }
   #hclustmodal
   {
@@ -7309,11 +7233,11 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$hclusthelp, {
       showModal(hclustmodal())
     })
-
+    
     output$hclusthelp <- renderText({
       if (input$hclusth %% 2) {
         paste0(
@@ -7325,14 +7249,14 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
             " is fixed to =",
             code("NULL")
           ),
-
+          
           h4("hclust {stats}"),
           getHelp('hclust')
         )
       }
     })
-
-
+    
+    
   }
   {
     pcahelpmodal <- function() {
@@ -7344,7 +7268,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$pcahelp, {
       showModal(pcahelpmodal())
     })
@@ -7357,12 +7281,12 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
             icon("fas fa-exclamation-circle"),
             "Default for the S3 method. The 'center' and 'scale' arguments are set in the panel",code("3.1 Tranformation"),"from the dashboard."
           ),
-
+          
           getHelp('prcomp')
         )
       }
     })
-
+    
   }
   #mdshelpmodal
   {
@@ -7375,11 +7299,11 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$mdshelp, {
       showModal(mdshelpmodal())
     })
-
+    
     output$mdshelphelp <- renderText({
       if (input$mdshelph %% 2) {
         paste0(
@@ -7394,13 +7318,13 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
             "function from 'vegan'",
             " . The remaining arguments are fixed to their default values;'"
           ),
-
+          
           getHelp('metaMDS')
         )
       }
     })
-
-
+    
+    
   }
   #sugtopohelpmodal
   {
@@ -7413,13 +7337,13 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$sugtopohelp, {
       showModal(sugtopohelpmodal())
     })
-
-
-
+    
+    
+    
   }
   #rfbphelpmodal
   {
@@ -7432,16 +7356,16 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$rfbphelp, {
       showModal(rfbphelpmodal())
     })
-
-
-
-
+    
+    
+    
+    
   }
-
+  
   #bphelpmodal
   {
     bphelpmodal <- function() {
@@ -7453,21 +7377,21 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$bphelp, {
       showModal(bphelpmodal())
     })
-
-
-
-
+    
+    
+    
+    
   }
   output$decostand <- renderText({
     if (input$decostand %% 2) {
       paste0(
         br(),
         h4("decostand {vegan}"),
-
+        
         p(
           icon("fas fa-exclamation-circle"),
           "Only",
@@ -7478,8 +7402,8 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         ),
         getHelp('decostand')
       )
-
-
+      
+      
     } else if (input$vegan %% 2) {
       paste0(br(),
              h4(h4("vegan {package}")),
@@ -7496,13 +7420,13 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$basehelp, {
       showModal(basemodal())
     })
-
-
-
+    
+    
+    
   }
   {
     layermodal <- function() {
@@ -7514,17 +7438,17 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         easyClose = TRUE
       )
     }
-
+    
     observeEvent(input$layerhelp, {
       showModal(layermodal())
     })
-
-
-
-
+    
+    
+    
+    
   }
-
-
+  
+  
   output$codechunk_base <- renderPrint({
     codebase()
   })
@@ -7540,18 +7464,10 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       )
     )
   })
-  accrf_labinfo <- reactive({
-    strong(
-      "split moving window",
-      tipify(
-        actionLink("bphelp", icon("fas fa-question-circle")),
-        "Performs split moving window to detect significant discontinuities in the relationship between the number of clusters and accRF values. Click for more information."
-      )
-    )
-  })
+  
   smw_data_WSS <- reactive({
     conditionalPanel("output.plot_data_WSS",
-
+                     
                      div(
                        column(
                          5,
@@ -7592,55 +7508,10 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         )
       )
     })
-
+    
   })
-  smw_data_accRF <- reactive({
-    conditionalPanel("output.plot_data_accRF", {
-      div(
-        column(
-          5,
-          style = "margin-top: 5px;",
-          checkboxInput("smw_data_accRF", value = T,
-                        accrf_labinfo())
-        ),
-        column(
-          3,
-          tipify(strong("w"), "window size"),
-          numericInput(
-            "w_data_accRF",
-            NULL,
-            value = 6,
-            min = 2,
-            step = 2
-          )
-        )
-      )
-    })
-
-
-  })
-  smw_model_accRF <- reactive({
-    conditionalPanel("output.plot_model_accRF", {
-      div(
-        column(
-          5,
-          style = "margin-top: 5px;",
-          checkboxInput("smw_model_accRF", value = T, accrf_labinfo())
-        ),
-        column(
-          3,
-          tipify(strong("w"), "window size"),
-          numericInput(
-            "w_model_accRF",
-            NULL,
-            value = 6,
-            min = 2,
-            step = 2
-          )
-        )
-      )
-    })
-  })
+  
+  
   output$data_WSS <- renderUI({
     column(
       12,
@@ -7649,11 +7520,11 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         2,
         actionButton("getWSSdata", "run", style = "margin-top: 20px;")
       ),
-
+      
       smw_data_WSS(),
       column(12, uiOutput('plot_data_WSS'))
-
-
+      
+      
     )
   })
   output$model_WSS <- renderUI({
@@ -7665,43 +7536,16 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         2,
         actionButton("getWSSmodel", "run", style = "margin-top: 20px;")
       ),
-
+      
       column(12, smw_model_WSS()),
       column(12, uiOutput('plot_model_WSS'))
-
+      
     )
-
-
+    
+    
   })
-  output$data_accRF <- renderUI({
-    column(
-      12,
-      column(3, uiOutput("input_accRF_data")),
-      column(2, uiOutput("K_accRF_data")),
-      column(
-        2,
-        actionButton("getaccRFdata", "run", style = "margin-top: 20px;")
-      ),
-      smw_data_accRF(),
-      column(12, uiOutput('plot_data_accRF'))
-
-    )
-  })
-  output$model_accRF <- renderUI({
-    column(
-      12,
-      column(3, uiOutput("input_accRF_model")),
-      column(2, uiOutput("K_accRF_model")),
-      column(
-        2,
-        actionButton("getaccRFmodel", "run", style = "margin-top: 20px;")
-      ),
-      smw_model_accRF(),
-      column(12, uiOutput('plot_model_accRF'))
-
-
-    )
-  })
+  
+  
   screeplot_control <- reactive({
     column(
       12,
@@ -7709,43 +7553,28 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       div(strong(
         "Scree plot", actionLink('screeplothelp', icon("fas fa-question-circle"))
       ), style = "margin-bottom: 5px;"),
-      radioButtons(
-        "screeplot_type",
-        NULL,
-        choices = c("WSS", "accRF"),
-        inline = T
-      ),
+      
       uiOutput("screeplot_control2")
     )
-
+    
   })
   output$screeplot_control2 <- renderUI({
     fluidRow(
       conditionalPanel(
-        "input.model_or_data=='data' & input.screeplot_type=='WSS'",
+        "input.model_or_data=='data'",
         {
           uiOutput("data_WSS")
         }
       ),
       conditionalPanel(
-        "input.model_or_data=='som codebook' & input.screeplot_type=='WSS'",
+        "input.model_or_data=='som codebook'",
         {
           uiOutput("model_WSS")
         }
-      ),
-      conditionalPanel(
-        "input.model_or_data=='data' & input.screeplot_type=='accRF'",
-        {
-          uiOutput("data_accRF")
-        }
-      ),
-      conditionalPanel(
-        "input.model_or_data=='som codebook' & input.screeplot_type=='accRF'",
-        {
-          uiOutput("model_accRF")
-        }
       )
-
+      
+      
+      
     )
   })
   WSSdata <- eventReactive(input$getWSSdata, {
@@ -7761,7 +7590,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                      dist = input$disthc
                    )
                  })
-
+    
   })
   WSSmodel <- eventReactive(input$getWSSmodel, {
     withProgress(message = "Running elbow analysis... this may take a while....",
@@ -7776,7 +7605,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                      dist = input$disthc
                    )
                  })
-
+    
   })
   suggsKmodel <- reactive({
     selectInput(
@@ -7788,10 +7617,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
           vals$saved_kmodelWSS,
           attr(vals$saved_kmodelWSS, "suggmethod")
         ),
-        paste(
-          vals$saved_kmodelaccRF,
-          attr(vals$saved_kmodelaccRF, "suggmethod")
-        ),
+        
         paste(
           vals$saved_kmodelvotes,
           attr(vals$saved_kmodelvotes, "suggmethod")
@@ -7805,12 +7631,12 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
   picK <- reactive({
     req(input$usesuggK)
     req(input$model_or_data)
-
-
+    
+    
     if (input$usesuggK == "suggested")
     {
-
-
+      
+      
       if (length(input$suggsKmodel) > 0 | length(input$suggsKdata) > 0) {
         if (input$model_or_data == "data") {
           req(input$suggsKdata)
@@ -7819,7 +7645,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
           req(input$suggsKmodel)
           as.numeric(gsub("([0-9]+).*$", "\\1", input$suggsKmodel))
         }
-
+        
       }
     } else  if (input$usesuggK == "user-defined") {
       if (input$model_or_data == "data") {
@@ -7829,11 +7655,11 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         req(input$customKmodel)
         as.numeric(input$customKmodel)
       }
-
-
-
+      
+      
+      
     }
-
+    
   })
   suggsKdata <- reactive({
     selectInput(
@@ -7842,10 +7668,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       selectize=T,
       choices = c(
         paste(vals$saved_kdataWSS, attr(vals$saved_kdataWSS, "suggmethod")),
-        paste(
-          vals$saved_kdataaccRF,
-          attr(vals$saved_kdataaccRF, "suggmethod")
-        ),
+        
         paste(
           vals$saved_kdatavotes,
           attr(vals$saved_kdatavotes, "suggmethod")
@@ -7855,7 +7678,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
   })
   observeEvent(input$customK,
                vals$saved_kcustom <- isolate(input$customK))
-
+  
   output$suggsKdata <- renderUI({
     suggsKdata()
   })
@@ -7864,8 +7687,8 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                  "Number of clusters",
                  value = 2,
                  step = 1)
-
-
+    
+    
   })
   output$customKmodel <- renderUI({
     numericInput("customKmodel",
@@ -7886,9 +7709,9 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                    c("user-defined"),
                    selected = "user-defined")
     }
-
-
-
+    
+    
+    
   })
   output$usesuggK <- renderUI({
     usesuggK()
@@ -7898,7 +7721,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       12,
       splitLayout(
         column(12,uiOutput('usesuggK')),
-
+        
         fluidRow(
           conditionalPanel("input.model_or_data=='data'",{
             splitLayout(
@@ -7906,7 +7729,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                      conditionalPanel("input.usesuggK=='user-defined'",{
                        uiOutput("customKdata")
                      }),
-
+                     
                      conditionalPanel(
                        "input.usesuggK=='suggested'",
                        uiOutput("suggsKdata")
@@ -7918,11 +7741,11 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                                  label = NULL,
                                  choices = vals$colors_img$val,
                                  choicesOpt = list(content = vals$colors_img$img)))
-
+              
             )
-
+            
           }),
-
+          
           conditionalPanel(
             "input.model_or_data=='som codebook'",  {
               splitLayout(
@@ -7944,43 +7767,19 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                                    options=list(container="body")
                        ))
               )
-
+              
             }
           )
         ),cellWidths = c("40%","60%")
-
-
+        
+        
       )
-
-
+      
+      
     )
   })
-  sugg_accRF_data <- reactive({
-    if (input$smw_data_accRF %% 2)
-    {
-      rfs <- accRFdata()
-      res <- rfs$acutable
-      bp = smw_bp(res, ws = input$w_data_accRF)
-      attr(bp, "suggmethod") <- c("(accRF)")
-      vals$saved_kdataaccRF <- isolate(bp)
-      bp
-    } else {
-      NULL
-    }
-  })
-  sugg_accRF_model <- reactive({
-    if (input$smw_model_accRF %% 2)
-    {
-      rfs <- accRFmodel()
-      res <- rfs$acutable
-      bp <- smw_bp(res, ws = input$w_model_accRF)
-      attr(bp, "suggmethod") <- c("(accRF)")
-      vals$saved_kmodelaccRF <- isolate(bp)
-      bp
-    } else {
-      NULL
-    }
-  })
+  
+  
   sugg_WSS_data <- reactive({
     if (input$smw_data_WSS %% 2)
     {
@@ -8001,7 +7800,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       attr(bp, "suggmethod") <- c("(WSS)")
       vals$saved_kmodelWSS <- isolate(bp)
       bp
-
+      
     } else {
       NULL
     }
@@ -8028,36 +7827,10 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       column(12,renderPlot(elbow_plot(WSSmodel(), sugg = sugg_WSS_model())))
     )
   })
-  output$plot_data_accRF <- renderUI({
-    validate(need(input$getaccRFdata %% 2,""))
-    fluidRow(
-      column(12,
-             fluidRow(
-               actionButton('downr_accRFdata',icon("fas fa-table"),icon("fas fa-download"), style="button_active"),
-               actionButton('downp_accRFdata',icon("fas fa-image"),icon("fas fa-download"), style="button_active"),
-             )),
-      column(12,renderPlot(plot_accuclus(accRFdata(), sugg = sugg_accRF_data())))
-    )
-  })
-  output$plot_model_accRF <- renderUI({
-    validate(need(input$getaccRFmodel %% 2,""))
-    fluidRow(
-      column(12,
-             fluidRow(
-               actionButton('downr_accRFmodel',icon("fas fa-table"),icon("fas fa-download"), style="button_active"),
-               actionButton('downp_accRFmodel',icon("fas fa-image"),icon("fas fa-download"), style="button_active"),
-             )),
-      column(12,renderPlot(plot_accuclus(accRFmodel(), sugg = sugg_accRF_model())))
-    )
-  })
-  observeEvent(input$downr_accRFdata,{
-    vals$hand_down<-"screeplot_accRF data"
-    showModal(downcenter())
-  })
-  observeEvent(input$downr_accRFmodel,{
-    vals$hand_down<-"screeplot_accRF som"
-    showModal(downcenter())
-  })
+  
+  
+  
+  
   observeEvent(input$downr_WSSdata,{
     vals$hand_down<-"screeplot_WSS data"
     showModal(downcenter())
@@ -8066,59 +7839,9 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     vals$hand_down<-"screeplot_WSS som"
     showModal(downcenter())
   })
-  output$input_accRF_data <- renderUI({
-    fluidRow(
-      tipify(
-        strong("accRF data"),
-        "Select the data to validate the optimum number of clusters"
-      ),
-      selectInput(
-        "input_accRF_data",
-        NULL,
-        choices =    names(vals$saved_data),
-        selectize=T
-      )
-    )
-  })
-  output$input_accRF_model <- renderUI({
-    fluidRow(
-      tipify(
-        strong("accRF data"),
-        "Select the data to validate the optimum number of clusters"
-      ),
-      selectInput(
-        "input_accRF_model",
-        NULL,
-        choices =    names(vals$saved_data),
-        selectize=T
-      )
-    )
-  })
-  accRFdata <- eventReactive(input$getaccRFdata, {
-    get <- as.character(input$input_accRF_data)
-    envi <- data.frame(vals$saved_data[[get]])
-    machineRF(
-      getdata_hc(),
-      data = envi,
-      k = input$K_accRF_data,
-      type = "data",
-      method = input$method.hc0,
-      dist = input$disthc
-    )
-  })
-  accRFmodel <- eventReactive(input$getaccRFmodel, {
-    get <- as.character(input$input_accRF_model)
-    envi <- data.frame(vals$saved_data[[get]])
-    machineRF(
-      getmodel_hc(),
-      data = envi ,
-      k = input$K_accRF_model,
-      type = "som",
-      method = input$method.hc0,
-      dist = input$disthc,
-      newcolhabs=vals$newcolhabs
-    )
-  })
+  
+  
+  
   sugg <- reactive({
     if (input$smw_elbow %% 2)
     {
@@ -8127,14 +7850,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       NULL
     }
   })
-  K_accRF_data <- reactive({
-    fluidRow(strong("k"),
-             numericInput("K_accRF_data", NULL, value = Kdata(getdata_hc())))
-  })
-  K_accRF_model <- reactive({
-    fluidRow(strong("k"),
-             numericInput("K_accRF_model", NULL, value = Kmodel(getmodel_hc())))
-  })
+  
   K_WSS_data <- reactive({
     fluidRow(strong("k"),
              numericInput("K_WSS_data", NULL, value = Kdata(getdata_hc())))
@@ -8143,12 +7859,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     fluidRow(strong("k"),
              numericInput("K_WSS_model", NULL, value = Kmodel(getmodel_hc())))
   })
-  output$K_accRF_data <- renderUI({
-    K_accRF_data()
-  })
-  output$K_accRF_model <- renderUI({
-    K_accRF_model()
-  })
+  
   output$K_WSS_data <- renderUI({
     K_WSS_data()
   })
@@ -8172,7 +7883,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                          tabPanel(strong("1. Dendrogram"),value="hc_tab1",
                                   column(12,actionButton('downp_dend',icon("fas fa-image"),icon("fas fa-download"), style="button_active")) ,
                                   column(12,uiOutput("Dendrogram"))),
-
+                         
                          tabPanel(
                            strong("2. Clustering Tools"),
                            value = "hc_tab2",
@@ -8188,13 +7899,13 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                            strong('3. Clustering results'),value="hc_tab3",
                            uiOutput("suggestedK"),
                            tabsetPanel(id = "hc_results",
-
+                                       
                                        tabPanel(
                                          "3.1. Hcut",value ="Hcut",
                                          column(12,  style = "background: Snow;",
                                                 uiOutput("phc"))
                                        ))
-
+                           
                          )
              ))
   })
@@ -8269,13 +7980,13 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                                           {
                                             column(12, uiOutput("somHC"))
                                           }),
-
+                         
                          conditionalPanel("input.model_or_data=='data'",
                                           column(12, uiOutput("disthc"))
-
+                                          
                          )
                        ),
-
+                       
                        selectInput(
                          "method.hc0",
                          "method.hc",
@@ -8283,12 +7994,12 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                        )
            )
            ,uiOutput("saveHC")
-
+           
     )
-
-
-
-
+    
+    
+    
+    
   })
   output$data_hc<-renderUI({
     column(12,selectInput("data_hc",
@@ -8297,30 +8008,30 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                           selectize=T, selected=vals$cur_data))
   })
   output$choicesHC<-renderUI({
-
+    
     radioButtons("model_or_data", "Clustering target", choices = choices_hc(), selected=c(choices_hc()[length(choices_hc())]))
   })
   output$saveHC<-renderUI({
     req(input$data_hc)
-
+    
     fac<-as.list(attr(vals$saved_data[[input$data_hc]],"factors"))
     fac<-lapply(fac,function(x) as.character(x))
     vals$baghc<-!any(unlist(lapply(fac, function(x) identical(x, as.character(phc()$somC)))))
-
+    
     if(isTRUE(vals$baghc)) {column(12,offset=8,
                                    absolutePanel(style="margin-top: 8px",popify(bsButton("tools_savehc", icon("fas fa-save"),style  = "button_active", type="action",value=FALSE),NULL,
                                                                                 "Save clusters"
                                    )))} else{
                                      column(12,offset=8,
                                             absolutePanel(style="margin-top: 8px",em("Clusters saved in the Factor-Attributte"))
-
-
-
+                                            
+                                            
+                                            
                                      )
                                    }
   })
   output$somHC<-renderUI({
-
+    
     selectInput(
       "som_hc",
       "som codebook:",
@@ -8348,19 +8059,14 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
   })
   sc_rf_elbow <- reactive({
     fluidRow(
-      conditionalPanel("input.screeplot_type=='WSS'", {
-        column(12,
-               uiOutput("elbowcontrol"))
-      }),
-      conditionalPanel("input.screeplot_type=='accRF'", {
-        column(12,
-               uiOutput('rfloopcontrol'))
-      })
-
-
-
-
-
+      column(12,
+             uiOutput("elbowcontrol"))
+      
+      
+      
+      
+      
+      
     )
   })
   labhc <- reactive({
@@ -8391,25 +8097,25 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
              conditionalPanel("input.model_or_data=='data'", {
                fluidRow(column(12, plotOutput("hcdata_plot")),
                         column(12, downloadButton('down_hcdata', 'Download')))
-
+               
              }),
              conditionalPanel("input.model_or_data=='som codebook'", {
                fluidRow(column(12, plotOutput("hcmodel_plot")),
                         column(12, downloadButton('down_hcmodel', 'Download')))
              }),
            ))
-
+    
   })
   output$hclabs_control <-renderUI({
-      column(6,
-             selectInput(
-               "labhc",
-               "Labels",
-               choices = c(colnames(attr(getdata_hc(),"factors"))),
-               selectize=T
-             ))
-
-    })
+    column(6,
+           selectInput(
+             "labhc",
+             "Labels",
+             choices = c(colnames(attr(getdata_hc(),"factors"))),
+             selectize=T
+           ))
+    
+  })
   output$Dendrogram <- renderUI({
     hc0panel()
   })
@@ -8423,9 +8129,9 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
                numericInput("pointsize", "pointsize",value=12,step=1),
                selectInput("fformat", "File type", choices=c("png","tiff","jpeg","pdf"), selected = "pdf", multiple = FALSE, selectize = TRUE),
                div(style="margin-top: 25px",downloadButton("bn_download",NULL, style="button_active")),
-
+               
              ),
-
+             
              column(12, withSpinner(type=8,color="SeaGreen",imageOutput("plotoutput")))
       ),
       title=p(strong("action:"),"download", vals$hand_plot),
@@ -8433,23 +8139,23 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     )
   })
   get_plot<-reactive({
-
+    
   })
   fn_downloadf <- reactive({
-
+    
     if(input$fformat=="png") filename <- paste0(vals$hand_plot,".png",sep="")
     if(input$fformat=="tiff") filename <- paste0(vals$hand_plot,".tif",sep="")
     if(input$fformat=="jpeg") filename <- paste0(vals$hand_plot,".jpg",sep="")
     if(input$fformat=="pdf") filename <- paste0(vals$hand_plot,".pdf",sep="")
     return(filename)
   })
-
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
+  
   output$bn_download <- downloadHandler(
     filename = fn_downloadf,
     content = function(file) {
@@ -8458,7 +8164,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       file.copy(fn_downloadf(), file, overwrite=T)
     }
   )
-
+  
   ## observes PLOT
   observeEvent(input$downp_summ_num,{
     vals$hand_plot<-"variable summary"
@@ -8512,14 +8218,8 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     vals$hand_plot<-"Dendrogram"
     showModal(downplot_center())
   })
-  observeEvent(input$downp_accRFdata,{
-    vals$hand_plot<-"screeplot_accRF data"
-    showModal(downplot_center())
-  })
-  observeEvent(input$downp_accRFmodel,{
-    vals$hand_plot<-"screeplot_accRF som"
-    showModal(downplot_center())
-  })
+  
+  
   observeEvent(input$downp_WSSdata,{
     vals$hand_plot<-"screeplot_WSS data"
     showModal(downplot_center())
@@ -8548,7 +8248,7 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     if(isTRUE(input$scatter_3d)){
       vals$hand_plot<-"Scatter 3D"
     }
-
+    
     if(isTRUE(input$mantel_map)){
       vals$hand_plot<-"mantel plot"
     }
@@ -8558,17 +8258,17 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     if(isTRUE(input$stack_scatter_3d)){
       vals$hand_plot<-"stacked scatter map"
     }
-
+    
     showModal(downplot_center())
   })
   #outputOptions(output, "tbl_order", suspendWhenHidden = FALSE)
   observeEvent(input$downp_dp,{
-
+    
     vals$hand_plot<-"dp"
     showModal(downplot_center())
   })
   observeEvent(input$downp_pw,{
-
+    
     vals$hand_plot<-"segrda"
     showModal(downplot_center())
   })
@@ -8583,28 +8283,21 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
   observeEvent(input$down_som_pred_results,{
     vals$hand_down<-"som predictions"
     showModal(downcenter())
-
+    
   })
   observeEvent(input$down_pcodes_results,{
     vals$hand_down<-"pcodes"
     showModal(downcenter())
-
+    
   })
-
-
-## transformations
-  droplist<-list('dropID_tool1',
-                 'dropID_tool2',
-                 'dropID_tool3',
-                 'dropID_tool4',
-                 'dropID_tool5',
-                 'dropID_tool6',
-                 'dropID_tool7',
-                 'dropID_tool9')
+  
+  
+  ## transformations
+  
   getdata_upload<-reactive({
     data_cogs$df
   })
-
+  
   change_inputs<-reactive({
     list(
       input$data_upload,
@@ -8621,17 +8314,23 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
       input$raresing,
       input$pct_rare,
       input$pct_prev,
-      vals$seltree
+      vals$seltree,
+      input$tag_edit,
+      input$rank_list_2
     )
   })
+  
   observeEvent(change_inputs(),{
     req(length(vals$saved_data)>0)
     req(input$data_upload)
-     data_cogs$df<- data.rares()
-
+    data<- data.rares()
+    factors<-attr(data,"factors")
+    
+    
+    data_cogs$df<-data
   })
-
-
+  
+  
   observeEvent( data_cogs$df,{
     req(is.data.frame(data_cogs$df))
     data<-data_cogs$df
@@ -8641,23 +8340,23 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
     bagfac<-identical(as.matrix(factors),as.matrix(factors_o))
     vals$bagdata<-c(bagdata,bagfac)
   })
-
-
   
-
+  
+  
+  
   nul<-eventReactive(input$cogs,{
     req(isTRUE(input$cogs))
-
-   showModal(
+    
+    showModal(
       div(
         id="change_modal",
         modalDialog({
           div(
             uiOutput("histo"),
             uiOutput("tools_upload")
-
-
-
+            
+            
+            
           )
         },
         footer = NULL,
@@ -8665,90 +8364,134 @@ if(is.null(vals$cur_bmu_factors)){vals$cur_bmu_factors<-1}
         )
       )
     )
-
-
+    
+    
   })
   output$change_summary <- renderPrint({
-
+    
     ppsummary("----------------")
     ppsummary(paste("Missing values:",sum(is.na(attr(getdata_upload0(),"factors")))))
     ppsummary("----------------")
     str(attr(getdata_upload0(),"factors")[rownames(getdata_upload0()),,drop=F])
   })
-
-  input_list<-reactive({
-    req(isTRUE(last_cog()))
-    c(input$dropID_tool1,input$dropID_tool2,input$dropID_tool3,input$dropID_tool4,input$dropID_tool5,input$dropID_tool6,input$dropID_tool7,input$dropID_tool9)
-  })
-  observeEvent(input_list(),{
-    req(last_btn$equal[1]==last_btn$equal[2])
-
-  })
+  
+  
+  
   toggled<-reactiveValues(df=F)
-
-
-  toggled<-reactiveValues(df=F)
-  toggle_bg<-reactive({
-    if(isFALSE(toggled$df)){
-    shinyjs::show("change_background0")
-    shinyjs::show("change_head")
-
-    }
-  })
-
-
+  
+  
   swi<-function(x, id){
-
+    
     if(as.character(x)=="TRUE"){return(FALSE)} else{
       return(TRUE)
     }
   }
-
-
-
-
-
-
-output$change_background<-renderUI({
-  req(isTRUE(last_cog()))
-
-  class  = if(sum(vals$bagdata==c(T,T))==2){"change_background"} else{"change_alert"}
-
-  div(id='change_background0',style="overflow-y: scroll",
-      div(id="change_background",class=class,
-          div(uiOutput("track_change"))
-      )
-  )
-
-
-})
-
+  getdatalist<-reactive({
+    data=dataraw()
+    factors<-attr(data,"factors")
+    factors_in<-labels()[rownames(data),,drop=F]
+    if (any(names(datastr(data)$type.vars) == "factor")){
+      
+      for(i in 1:ncol(data)){
+        new<-as.numeric(as.character(data[,i]))
+        if(!sum(is.na(new))==length(new)){data[,i]<-new}
+      }
+      num_cols<-which(unlist(lapply(data,function(x)is.numeric(x))))#ok
+      data.numerics<-data[,num_cols,drop=F]
+      data.factors<-data[,which(unlist(lapply(data,function(x)is.factor(x)))),drop=F]
+      rownames(data.numerics)<-rownames(data)
+      data<-data.numerics
+      attr(data,"data.factors")<-data.factors
+      factors_in[,colnames(data.factors)]<-data.factors}
+    
+    attr(data,"nobs_ori")<-nrow(data)
+    attr(data,"nvar_ori")<-ncol(data)
+    
+    if(input$up_or_ex == 'use example data'){
+      attr(data,"filename")<-'nema_araca.csv'
+      attr(data,"datalist")<-paste("Datalist_nema_araca")
+    } else {attr(data,"filename")<-input$data_name
+    attr(data,"datalist")<-input$data_name
+    
+    }
+    
+    attr(data,"transf")<-attr(data,"transf")
+    #attr(data,"transf")<-newattribs
+    
+    
+    validate(need(sum(rownames(factors_in)%in%rownames(data))>0,"Data-Attribute and Factors-Attribute must have conforming IDs (first column). Check these files and reload again;"))
+    attr(data,"factors")<-factors_in
+    attr(data,"coords")<-coords()[rownames(data),]
+    attr(data,"base_shape")<-base_shape()
+    attr(data,"layer_shape")<-layer_shape()
+    
+    datalist = list(data)
+    names(datalist)<-input$data_name
+    datalist
+  })
+  
+  
+  
+  last_cog<-reactive({
+    input$last_btn%in%c("tools_drop1",
+                        "tools_drop2",
+                        "tools_drop3",
+                        "tools_drop4",
+                        "tools_drop5",
+                        "tools_drop6",
+                        "tools_drop7",
+                        "tools_drop8",
+                        "tools_drop9")})
+  change_list<-reactive({
+    list(input$dropID_tool1,input$dropID_tool2,input$dropID_tool3,input$dropID_tool4,input$dropID_tool5,input$dropID_tool6,input$dropID_tool7,input$dropID_tool9)
+  })
+  output$histo_plot<-renderUI({
+    req(isTRUE(input$show_histo))
+    column(12,
+           renderPlot({
+             
+             plothists(data_cogs$df,vals$newcolhabs, len=6)
+           }, width=350, height=300),
+           absolutePanel(top=0,left=0,right = 0,actionLink("close_histo",icon("fas fa-window-close")))
+    )
+  })
+  output$change_background<-renderUI({
+    req(isTRUE(last_cog()))
+    
+    class  = if(sum(vals$bagdata==c(T,T))==2){"change_background"} else{"change_alert"}
+    
+    div(id="change_background",class=class,
+        div(uiOutput("track_change"))
+    )
+    
+    
+  })
   output$track_change<-renderUI({
     req(input$last_btn!='tools_drop7'& input$last_btn!='tools_drop9' )
-    req(is.data.frame(data_cogs$df))
+    # req(is.data.frame(data_cogs$df))
     req(isTRUE(last_cog()))
     div(class="needed",
+        
         tags$div(class="track_change1",div(class="tools_content",
-          tags$style(
-            paste(paste0("#transf_attr"),"td {padding: 3px;
+                                           tags$style(
+                                             paste(paste0("#transf_attr"),"td {padding: 3px;
                      text-align: left;
                      font-size:11px;
                 background: #f0eeeeff}")
-          ),
-          tags$style(
-            paste0("#transf_attr"),"th {padding: 3px;
+                                           ),
+                tags$style(
+                  paste0("#transf_attr"),"th {padding: 3px;
                      text-align: left;
                      font-size:11px;
                 background: transparent}"
-          ),
-          div("Changes:", style="color: #696969; margin-left: 3px"),
-          div(class="cogs_in",
-              div(style="margin: 3px",
-                  inline(DT::dataTableOutput('transf_attr'))
-              ))
+                ),
+                div("Changes:", style="color: #696969; margin-left: 3px"),
+                div(class="cogs_in",
+                    div(style="margin: 3px",
+                        inline(DT::dataTableOutput('transf_attr'))
+                    ))
         )))
   })
-
   output$showhisto<-renderUI({
     if(is.null(vals$cur_showhisto)){vals$cur_showhisto<-F}
     div(
@@ -8756,24 +8499,9 @@ output$change_background<-renderUI({
       bsButton("show_histo", span("show hist",icon("fas fa-signal")), type="toggle", style="show_histo", value=vals$cur_showhisto)
     )
   })
-
-  observeEvent(input$show_histo,{
-    vals$cur_showhisto<-input$show_histo
-  })
-
-  output$histo_plot<-renderUI({
-    req(isTRUE(input$show_histo))
-    column(12,
-      renderPlot({
-
-        plothists(data_cogs$df,vals$newcolhabs, len=6)
-      }, width=350, height=300),
-      absolutePanel(top=0,left=0,right = 0,actionLink("close_histo",icon("fas fa-window-close")))
-    )
-  })
-
   output$transf_attr<-DT::renderDataTable({
     table<-  attr(data_cogs$df, 'transf')
+    req(!is.null(table))
     rownames(table)<-c("Selected.obs",
                        "Selected.vars",
                        "Transf",
@@ -8783,554 +8511,823 @@ output$change_background<-renderUI({
                        "NA.omit",
                        "Data.impt",
                        "Factor.impt")
-    req(length(table)>0)
+    
     DT::datatable(table, options=list(
       rownames=T,
       info=FALSE,autoWidth=T,dom = 't', rownames = TRUE,class ='compact cell-border'))
   })
+  output$change_head<-renderUI({
+    div(
+      hidden(
+        div(id="change_head0",
+            div(id="change_head",
+                div(class="tool_title0",uiOutput("cogs_title")),
+                uiOutput("get_data_upload"))
+        )
+      ),
+      div(id="tog_tools",
+          hidden(div(id="tog_tool1",uiOutput("tool1"))),
+          hidden(div(id="tog_tool2",uiOutput("tool2"))),
+          hidden(div(id="tog_tool3",uiOutput("tool3"))),
+          hidden(div(id="tog_tool4",uiOutput("tool4"))),
+          hidden(div(id="tog_tool5",uiOutput("tool5"))),
+          hidden(div(id="tog_tool6",uiOutput("tool6"))),
+          hidden(div(id="tog_tool7",uiOutput("tool7"))),
+          hidden(div(id="tog_tool8",uiOutput("tool8"))),
+          hidden(div(id="tog_tool9",uiOutput("tool9"))))
+    )
+  })
+  output$cogs_title<-renderUI({
+    req(length(input$last_btn)>0)
+    res<-switch (input$last_btn,
+                 "tools_drop1"={"Filter observations"},
+                 "tools_drop2"={"Filter variables"},
+                 "tools_drop3"={"Transformations"},
+                 "tools_drop4"={"Data imputation"},
+                 "tools_drop5"={"Split data"},
+                 "tools_drop6"={"Edit factors"},
+                 "tools_drop7"={"Create color palette"},
+                 "tools_drop9"={"Savepoint"}
+    )
+    vals$last_tool<-res
+    div(res,class="tool_title",id='tool_title')
+  })
+  output$get_data_upload<-renderUI({
+    div(class="data_change0",
+        bsTooltip("data_change","Target Datalist"),
+        div(id="data_change",
+            pickerInput(
+              "data_upload",NULL,choices=names(vals$saved_data),  selected=vals$cur_data, width="230px", options=list(container="body")
+            ))
+    )
+  })
+  
+  observe({
+    req(!is.na(input$radio_cogs))
+    if(!input$radio_cogs%in%  c('tools_drop7','tools_drop8','tools_drop9')){
+      shinyjs::show("data_change")
+    } else{
+      shinyjs::hide("data_change")
+    }
+  })
 
-observeEvent(input$close_histo,{
-  updateButton(session,'show_histo', value=F)
-})
+ 
+  observeEvent(input$show_histo,{
+    vals$cur_showhisto<-input$show_histo
+  })
+  observeEvent(input$close_histo,{
+    updateButton(session,'show_histo', value=F)
+  })
   observeEvent(input$tools_drop9,{
     updateButton(session,'cogs', value=F)
     removeModal()
   })
-
-
-  toggled<-reactiveValues(df=F)
-
-observeEvent(input$last_btn,{
-  if(isFALSE(last_cog())){
-    toggled$df<-F
-  }
-})
-
-observeEvent(toggled$df,{
-  if(isTRUE(toggled$df)){
-    addClass("main_panel",'panel0')
-    shinyjs::show('change_head0')
-    shinyjs::show('data_change')
-
-  }else{
-    removeClass("main_panel",'panel0')
-    shinyjs::hide('change_head0')
-
-  }
-})
-change_list<-reactive({
-  list(input$dropID_tool1,input$dropID_tool2,input$dropID_tool3,input$dropID_tool4,input$dropID_tool5,input$dropID_tool6,input$dropID_tool7,input$dropID_tool9)
-})
-
-
   observeEvent(change_list(),{
     req(length(last_cog())>0)
     if(isTRUE(last_cog())){
       toggled$df<-T
     } else{toggled$df<-F}
-   
   })
-  observe({
+  observeEvent(input$radio_cogs,{
+    req(input$radio_cogs)
+    req(!is.na(input$radio_cogs))
+    runjs(paste0("Shiny.setInputValue('last_btn', '",input$radio_cogs,"');"))
+  })
+  observeEvent(last_cog(),{
     req(input$last_btn)
-    if(input$last_btn=='tools_drop7'|input$last_btn=='tools_drop9'){
-      shinyjs::hide('data_change')
-    } else if(input$last_btn %in% c('tools_drop1','tools_drop2','tools_drop3','tools_drop4','tools_drop5','tools_drop6')){
+    req(length(input$radio_cogs)>0)
+    if(isTRUE(last_cog())){
+      addClass("main_panel",'panel0')
+      shinyjs::show('tog_tools')
+      shinyjs::show('change_head0')
       shinyjs::show('data_change')
+      addClass("upload_tools",'upload_tools1')
+      removeClass("upload_tools",'upload_tools')
     }
+    if(!isTRUE(last_cog())) {
+      removeClass("upload_tools",'upload_tools1')
+      addClass("upload_tools",'upload_tools')
+      removeClass("main_panel",'panel0')
+      shinyjs::hide('tog_tools')
+      shinyjs::hide('change_head0')
+    }
+    
   })
-  
-  class_reac<-reactiveValues(df=F)
-  change_others<-function(id,droplist=NULL, test=last_cog()){
-    tochange<-as.list(gsub("dropID_tool","tools_drop",droplist))
-    if(isTRUE(test)){
-    addClass(id,"change_active")
-    lapply(tochange[-which(as.vector(droplist)==    gsub("tools_drop","dropID_tool",id))], function(x){
-      removeClass(x,"change_active")
-    })
-    toggleDropdownButton(id)
-    }
-    }
-
-observeEvent(input$last_btn,{
-  if(isFALSE(last_cog()))
-  lapply(as.list(gsub("dropID_tool","tools_drop",droplist)), function(x){
-    removeClass(x,"change_active")
-  })
-
-})
-  cogs_title<-reactive({
-
-    res<-switch (input$last_btn,
-                 "tools_drop1"={
-                   change_others(id='tools_drop1',droplist)
-                   "Filter observations"
-
-                 },
-                 "tools_drop2"={
-                   change_others(id='tools_drop2',droplist)
-                   "Filter variables"},
-                 "tools_drop3"={
-                   change_others(id='tools_drop3',droplist)
-                   "Transformations"},
-                 "tools_drop4"={
-                   change_others(id='tools_drop4',droplist)
-                   "Data imputation"},
-                 "tools_drop5"={
-                   change_others(id='addClass',droplist)
-                   "Split data"},
-                 "tools_drop6"={
-                   change_others(id='addClass',droplist)
-                   "Edit factors"},
-                 "tools_drop7"={
-                   change_others(id='tools_drop7',droplist)
-                   "Create color palette"},
-                 "tools_drop9"={
-                   change_others(id='tools_drop9',droplist)
-                   "Savepoint"}
-    )
+  observeEvent(last_cog(),{
     if(isFALSE(last_cog())){
-
+      runjs("Shiny.setInputValue('radio_cogs', NA);")
+      if(length(input$radio_cogs)>0){
+        updateRadioGroupButtons(session,'radio_cogs',selected = NA)
+        
+      }
     }
-
-    vals$last_tool<-res
-    div(res,class="tool_title")
-
   })
-output$change_head<-renderUI({
-
-  hidden(
-    div(id="change_head0",
-
-      div(id="change_head",div(class="change_head",
-                               splitLayout(uiOutput("cogs_title"),uiOutput("get_data_upload"))
-      ))
-
-    )
-  )
-})
-  output$cogs_title<-renderUI({
-
-    cogs_title()
+  observeEvent(list(input$radio_cogs,input$last_btn),{
+    req(input$last_btn)
+    req(!is.na(input$radio_cogs))
+    if(input$radio_cogs=='tools_drop1'){shinyjs::show('tog_tool1')} else{ hide('tog_tool1')}
+    if(input$radio_cogs=='tools_drop2'){shinyjs::show('tog_tool2')} else{ hide('tog_tool2')}
+    if(input$radio_cogs=='tools_drop3'){shinyjs::show('tog_tool3')} else{ hide('tog_tool3')}
+    if(input$radio_cogs=='tools_drop4'){shinyjs::show('tog_tool4')} else{ hide('tog_tool4')}
+    if(input$radio_cogs=='tools_drop5'){shinyjs::show('tog_tool5')} else{ hide('tog_tool5')}
+    if(input$radio_cogs=='tools_drop6'){shinyjs::show('tog_tool6')} else{ hide('tog_tool6')}
+    if(input$radio_cogs=='tools_drop7'){shinyjs::show('tog_tool7')} else{ hide('tog_tool7')}
+    if(input$radio_cogs=='tools_drop8'){shinyjs::show('tog_tool8')} else{ hide('tog_tool8')}
+    if(input$radio_cogs=='tools_drop9'){shinyjs::show('tog_tool9')} else{ hide('tog_tool9')}
   })
-
-  output$get_data_upload<-renderUI({
-  conditionalPanel("input.last_btn!='tools_drop7'& input.last_btn!='tools_drop9' ",{
-    div(
-      bsTooltip("data_change","Target Datalist"),
-      div(id="data_change",
-          pickerInput(
-            "data_upload",NULL,choices=names(vals$saved_data),  selected=vals$cur_data, width="230px", options=list(container="body")
-          ))
-    )
-  })
-  
-  })
-
-
-  #
-  js_getid<-paste0("$(document).on('click', '.needed', function () {debugger;
-           Shiny.onInputChange('", 'last_btn', "', this.id);
-        });")
-
-
-  
-  last_cog<-reactive({
-    input$last_btn %in% c("tools_drop1",
-                          "tools_drop2",
-                          "tools_drop3",
-                          "tools_drop4",
-                          "tools_drop5",
-                          "tools_drop6",
-                          "tools_drop7",
-                          "tools_drop9")
-  })
-
-  last_btn<-reactiveValues(df=0)
-
-observeEvent(list(input$dropID_tool1,input$dropID_tool2,input$dropID_tool3,input$dropID_tool4,input$dropID_tool5,input$dropID_tool6,input$dropID_tool7,input$dropID_tool9),{
-  last_btn$equal<-c(input$last_btn,last_btn$df[1])
-  last_btn$df<-input$last_btn
-
-})
-
-
-
-
-
   output$tools_upload<-renderUI({
     # req(isTRUE(input$cogs_toggle))
     #req(length(vals$saved_data)>0)
     # req(input$data_upload)
-    req(input$tabs!="menu_intro")
+    choiceValues=list('tools_drop1',
+                      'tools_drop2',
+                      'tools_drop3',
+                      'tools_drop4',
+                      'tools_drop5',
+                      'tools_drop6',
+                      'tools_drop7',
+                      'tools_drop8',
+                      'tools_drop9')
+    choiceNames=list(
+      
+      div(id="tools_drop1",class="needed",div(cogs_title="Filter observations",
+                                              icon("fas fa-list"))),
+      div(id="tools_drop2",class="needed",div(cogs_title="Filter variables",
+                                              icon("fas fa-list fa-rotate-90",verify_fa = FALSE))),
+      div(id="tools_drop3",class="needed",div(cogs_title="Transfromation",
+                                              icon("fas fa-hammer",verify_fa = FALSE))),
+      div(id="tools_drop4",class="needed",div(cogs_title="Data imputation",
+                                              img(src=na_icon,height='14',width='14'))),
+      div(id="tools_drop5",class="needed",div(cogs_title="Data split",
+                                              img(src=split_icon,height='14',width='14'))),
+      div(id="tools_drop6",class="needed",div(cogs_title="Edit factors",
+                                              icon("fas fa-tags"))),
+      div(id="tools_drop7",class="needed",div(cogs_title="Create palette",
+                                              icon("fas fa-palette"))),
+      div(id="tools_drop8",class="needed",div(cogs_title="Save Changes",
+                                              icon("fas fa-save",class="save_change_btn"))),
+      div(id="tools_drop9",class="needed",div(cogs_title="Savepoint",
+                                              icon("fas fa-thumbtack",verify_fa = FALSE)))
+    )
  
-
-
-    div( id="upload_tools",pp_title="Pre-processing",
-         tags$head(tags$script(HTML(js_getid))),
-         useShinyjs(),
-         
-
-         div( class="tools_drop0",
-
-              inline(
-                div(class="cog_tool1",
-                  div(id="tools_drop1",class='needed',cogs_title="Filter observations",
-                      inline(
-                        dropdown(
-                          inputId ="dropID_tool1",
-                          icon = icon("fas fa-list"), status ="button_change" , width="400px",uiOutput("tool1"), inline = T, circle=F, right=T)
-                      ),
-                  )
-                )
-              ),
-
-              inline(
-                div(class="cog_tool2",
-                  div(id="tools_drop2",class='needed',cogs_title="Filter variables",
-                      inline(
-                        dropdown(inputId = "dropID_tool2",
-                                 icon = icon("fas fa-list fa-rotate-90",verify_fa = FALSE),status ="button_change" ,width="400px",inline = T, circle=F,right=T, uiOutput("tool2")
-                        )
-                      ))
-                )
-              ),
-              inline(
-                div(class="cog_tool3",
-                  div(id="tools_drop3",class='needed',cogs_title="Transformation",
-                      inline(
-                        dropdown(inputId = "dropID_tool3",
-                                 icon = icon("fas fa-hammer",verify_fa = FALSE),status ="button_change" ,width="400px",inline = T, circle=F,right=T, uiOutput("tool3")
-                        )
-                      ))
-                )
-              ),
-              inline(
-                div(class="cog_tool4",
-                  div(id="tools_drop4",class='needed',cogs_title="Data imputation",
-                      inline(
-                        dropdown(inputId = "dropID_tool4",
-                                 icon = img(src=na_icon,height='14',width='14'),status ="button_change" ,width="400px",inline = T, circle=F,right=T, uiOutput("tool4")
-                        )
-                      ))
-                )
-              ),
-              inline(
-                
-                div(class="cog_tool5",
-                  div(id="tools_drop5",class='needed',cogs_title="Data split",
-                      inline(
-                        dropdown(inputId='dropID_tool5',
-                                 label=img(src=split_icon,height='14',width='14'), status ="button_change",inline=T, circle=F,right=T,width="400px",uiOutput("tool5")
-                        )
-                      ))
-                )
-              ),
-              inline(
-                div(class="cog_tool6",
-                  div(id="tools_drop6",class='needed',cogs_title="Edit factors",
-                      inline(
-                        dropdown(inputId="dropID_tool6",
-                                 icon = icon("fas fa-tags",verify_fa = FALSE), status ="button_change",inline=T, circle=F,right=T,width="400px",
-                                 uiOutput("tool6"))
-                      ))
-                )
-              ),
-              inline(
-                div(class="cog_tool7",
-                  div(id="tools_drop7",class='needed',cogs_title="Create palette",
-                      inline(
-                        dropdown(inputId="dropID_tool7",
-                                 icon = icon("fas fa-palette"), status ="button_change",inline=T, circle=F,right=T,width="400px",
-                                 uiOutput("tool7"))
-                      ))
-                )
-              ),
-
-              inline(
-                div(class="cog_tool8",
-                  div(id="tools_savechanges",cogs_title="Save changes",class='needed',
-                      uiOutput("bttn_save_changes", inline=T)
-                  )
-                )
-              ),
-              
-              inline(
-                div(class="cog_tool9",
-                    div(id="tools_drop9",class='needed',cogs_title="Savepoint",
-                        inline(
-                          dropdown(inputId="dropID_tool9",
-                                   icon = icon("fas fa-thumbtack",verify_fa = FALSE), status ="button_change",inline=T, circle=F,right=T,width="400px",
-                                   uiOutput("tool9"))
-                        ))
-                )
-              )
-
-
+    req(input$tabs!="menu_intro")
+    
+    if(length(vals$saved_data)>0){
+      div( 
         
-
-
-
-         ))
+        id="upload_tools",class='upload_tools',
+        
+        useShinyjs(),
+        tags$div(id="coog0",radioGroupButtons("radio_cogs",justified =T,selected=NA,status="radio_cogs",choiceValues =choiceValues,
+                                              choiceNames=choiceNames
+        )))
+    } else{
+      div( 
+        
+        id="upload_tools_NULL",
+        
+        useShinyjs(),
+        tags$div(style="
+                 width: 35px;
+                 height: 35px;
+                 position: absolute;
+                 right: 5px;
+                 top: 16px",id="coog0_NULL",
+                 div(style="
+                 padding: 0px;
+                 margin: 0px;
+                 line-height: 30px
+            ",id="coog0_NULL",
+                   radioGroupButtons("radio_cogs",justified =T,selected=NA,status="radio_cogs",choiceValues =choiceValues[9],
+                                     choiceNames=choiceNames[9]
+                   )
+                 )))
+    }
+    
   })
-
+  
+ 
+  
+  observeEvent(vals$bagdata,{
+    if(sum(vals$bagdata==c(T,T))==2){
+      removeClass("tools_drop8","save_changes")
+      
+    } else{      addClass("tools_drop8","save_changes")}
+    
+    
+  })
+  output$download_savepoint<-renderUI({
+    req(length(vals$saved_data)>0)
+    div(class="cogs_in",
+        div(style="padding: 5px;height: 100px",
+            div(strong(icon("fas fa-thumbtack"),'Create a savepoint:',style="color: #05668D")),
+            div(
+              splitLayout(
+                cellArgs = list(style='white-space: normal;'),
+                column(12,uiOutput("downbook"))
+                
+              ))
+            
+            
+        ))
+  })
+  
+  
+  mod_downcenter <- callModule(module_server_cc, "cc",  vals=vals,df_colors=vals$colors_img,newcolhabs=newcolhabs)
+  
+  output$tool1<-renderUI({
+    validate(need(length(vals$saved_data)>0,"No data found"))
+    
+    req(input$data_upload)
+    div(id="tool1",class="tools_content",
+        
+        div(class="cogs_in2",checkboxInput("na.omit", strong("NA.omit",pophelp(NULL,"check to remove all observations that contain any empty cases (NAs)")), value = F,)),
+        splitLayout(
+          div(style="overflow-x: scroll;height:180px;overflow-y: scroll",
+              div(
+                div(style="border-bottom: 1px solid gray; margin-top: 10px",
+                    "Filter by factors",tipify( icon("fas fa-question-circle"),"Click in the nodes to expand and select the factor levels. Only available for factors with less than 100 levels")),
+                div(class="cogs_in",
+                    div(shinyTree("tree", checkbox = TRUE,themeIcons=F,themeDots=T))))
+          ),
+          div(style="overflow-x: scroll;height:180px;overflow-y: scroll",
+              div(
+                div("Individual selection:",style="border-bottom: 1px solid gray; margin-top: 10px"),
+                div(
+                  div(class="cogs_in",
+                      div(class="cogs_in2",
+                          checkboxInput("check_obs",strong('Select/Unselect all'),T)
+                      ),
+                      uiOutput("filterby_indobs")
+                  )
+                ))
+          )
+        )
+    )
+  })
+  output$tool2<-renderUI({
+    
+    div(id="tool2",class="tools_content",
+        
+        splitLayout(
+          uiOutput("remove_sp"),
+          uiOutput("filterby_indvars")
+        ))
+  })
+  output$tool3<-renderUI({
+    
+    div(style=" height: 180px; margin-top: 10px",
+        tags$script(HTML(js_transf)),
+        
+        id="tool3",class="tools_content",
+        div(
+          div(style="vertical-align: middle",strong("Transformation"),tipify(icon("fas fa-question-circle"), "hover the options from to get method descriptions"),
+              inline(
+                pickerInput(inputId = "transf",label = NULL,
+                            choices =   do.call(c,lapply(transf_df, function (x) x$value)),inline=F, width="120px", selected="None")
+              ))
+        ),
+        div(style="margin-top: 15px",
+            div(strong("Scaling and Centering:")),
+            div(class="cogs_in0",
+                div(style="padding: 10px",
+                    div(
+                      span(
+                        inline(
+                          div(style="width: 110px",
+                              inline(
+                                checkboxInput("scale", 'Scale', F, width="65px")
+                              ),
+                              tipify(icon("fas fa-question-circle")," If scale is TRUE then scaling is done by dividing the (centered) columns of x by their standard deviations if center is TRUE, and the root mean square otherwise. If scale is FALSE, no scaling is done.")
+                          )
+                        )
+                      ),
+                      inline(uiOutput("scale_center"))
+                    )
+                ))
+        ),
+        div(style="margin-top: 15px",
+            div(
+              strong("Random rarefaction:"),tipify(icon("fas fa-question-circle"),"Generates one randomly rarefied community given sample size. If the sample size is equal to or larger than the observed number of individuals, the non-rarefied community will be returned"),
+            ),
+            div(class="cogs_in0",
+                div(style="padding: 10px",
+                    uiOutput("rare_out")
+                ))
+        )
+        
+    )
+  })
+  output$tool4<-renderUI({
+    
+    div(
+      
+      id="tool4",
+      class="tools_content",
+      div(id="tool4_2",
+          span("Target:", inline(pickerInput("na_targ",NULL, c("Data-Attribute","Factor-Attribute"), width="150px"))),
+          uiOutput("tool4_2")
+      )
+    )
+  })
+  output$tool5<-renderUI({
+    
+    div(
+      id="tool5",
+      class="tools_content",
+      inline(
+        div(
+          id="tool5_1",
+          div(style="margin-top: 10px",radioButtons("split_options",NULL,
+                                                    choices =c("Random sampling","Balanced sampling"),width = "200px")),
+          inline(uiOutput("split_factor")),
+          inline(numericInput("splitperc_data","Size (%)",value=20,min=0,max=99,step=1,width="100px")),
+          inline(numericInput("seed_test","Seed",value=NA,width="80px"))
+        )
+      ),
+      inline(
+        div(class="needed",tipify(actionButton("addpart",label=icon("fas fa-plus")),"Add partition  as a factor in Factor-Attribute. You can later choose the factor which you want to use to constrain training and testing data. "))
+        
+      ),
+      column(12,
+             splitLayout(
+               column(12,style="overflow-x: scroll;height:150px;overflow-y: scroll;",
+                      strong("Partition"),
+                      verbatimTextOutput("partition_preview")
+               ))
+      )
+      
+    )
+  })
+  output$tool6<-renderUI({
+    req(input$data_upload)
+    
+    factors<-attr(vals$saved_data[[input$data_upload]],"factors")
+    
+    div(
+      id="tool6",
+      class="tools_content",
+      div(radioGroupButtons("tag_fun","Edit:",choiceValues =c('label',"level order",'convert'), selected=cur_tag_fun$df, width="350px",justified =T,choiceNames=c("Label","Levels","Convert") )),
+      
+      inline(
+        div(class="tool6_1",
+            conditionalPanel("input.tag_fun!='convert'",{
+              inline(pickerInput("tag_edit","Factor",rev(colnames(factors)), selected=cur_tag$df, width="125px"))
+            })
+            
+            
+            
+        )
+      ),
+      
+      uiOutput("edit_fac_labels"),
+      uiOutput("edit_fac_ord"),
+      
+      div(style="margin-top: 20px",
+          tipify(bsButton("convert_factor","Numeric/Factor conversion",style  = "button_active"),"Open the toolbox to transform data-attribute factors into numeric values and vice versa")
+      )
+      
+      
+    )
+  })
+  output$tool7<-renderUI({
+    
+    module_ui_cc("cc")
+  })
   output$tool9<-renderUI({
     fluidRow(id="tool9",class="tools_content",
-           div(
+             div(
+               uiOutput("download_savepoint")),
+             div(
                div(class="cogs_in",
-                 div(style="padding: 5px;height: 100px",
-                   div(strong(icon("fas fa-thumbtack"),'Create a savepoint:',style="color: #05668D")),
-                   div(
-                     splitLayout(
-                       cellArgs = list(style='white-space: normal;'),
-                       column(12,uiOutput("downbook"))
-                       
-                     ))
-                   
-                   
-                 ))),
-           
-           
-           div(
-             div(class="cogs_in",
-               div(style="padding: 5px;height: 100px",
-                 div(
-                   tipify(strong(icon("fas fa-external-link-alt"),"Load a savepoint:",style="color: #05668D"),"Restore the dashboard with a previously saved savepoint (.rds file)")),
-                 div(id="tool_savepoint", fileInput("load_savepoint", label=NULL,accept =".rds",multiple =T))
-                 
-                 
-               ))
-           ),
-           uiOutput("validade_savepoint"),
-         
+                   div(style="padding: 5px;height: 100px",
+                       div(
+                         tipify(strong(icon("fas fa-external-link-alt"),"Load a savepoint:",style="color: #05668D"),"Restore the dashboard with a previously saved savepoint (.rds file)")),
+                       div(id="tool_savepoint", fileInput("load_savepoint", label=NULL,accept =".rds",multiple =T))))),
+             uiOutput("validade_savepoint"))
+  })
+  
+  
+  output$rare_out<-renderUI({
+    data<-data_cogs$df
+    div(
+      inline(
+        numericInput("rrarefy_sample","sample",50, width="100px")
+      ),
+      inline(tipify(actionButton("rrarefy_go", span(icon("fas fa-arrow-circle-right"))),"Run"))
     )
   })
-
-mod_downcenter <- callModule(module_server_cc, "cc",  vals=vals,df_colors=vals$colors_img,newcolhabs=newcolhabs)
-
-output$tool1<-renderUI({
-  validate(need(length(vals$saved_data)>0,"No data found"))
-req(isTRUE(toggled$df))
-  req(input$data_upload)
-  fluidRow(id="tool1",class="tools_content",
-
-           div(class="cogs_in2",checkboxInput("na.omit", strong("NA.omit",pophelp(NULL,"check to remove all observations that contain any empty cases (NAs)")), value = F,)),
-           splitLayout(
-             div(style="overflow-x: scroll;height:180px;overflow-y: scroll",
-                 div(
-                   div(style="border-bottom: 1px solid gray; margin-top: 10px",
-                       "Filter by factors",tipify( icon("fas fa-question-circle"),"Click in the nodes to expand and select the factor levels. Only available for factors with less than 100 levels")),
-                   div(id='filter_obs',class="cogs_in",
-                       div(shinyTree("tree", checkbox = TRUE,themeIcons=F,themeDots=T))))
-             ),
-             div(style="overflow-x: scroll;height:180px;overflow-y: scroll",
-                 div(
-                   div("Individual selection:",style="border-bottom: 1px solid gray; margin-top: 10px"),
-                   div(id='filter_indobs',
-                       div(class="cogs_in",
-                           div(class="cogs_in2",
-                               checkboxInput("check_obs",strong('Select/Unselect all'),T)
-                           ),
-                           uiOutput("filterby_indobs")
-                       )
-                   ))
+  saverare<-reactive({
+    data<-vals$saved_data[[input$data_upload]]
+    validate(need(identical(all.equal(data, round(data)), TRUE),"Functionality is available only for integers (counts)"))
+    req(!is.null(vals$rare))
+    newdata<-vals$rare
+    newdata<-data_migrate(data,newdata,"newrare")
+    if(input$hand_save=="create"){
+      vals$saved_data[[input$rare_newname]]<-newdata
+      vals$cur_data<-input$rare_newname
+      vals$rare<-NULL
+    } else {
+      vals$saved_data[[input$rare_over]]<-newdata
+      vals$cur_data<-input$rare_over
+      vals$rare<-NULL
+    }
+    
+  })
+  observeEvent(input$rrarefy_go,{
+    data<-data_cogs$df
+    if(!identical(all.equal(data, round(data)), TRUE)){
+      showModal(
+        modalDialog(
+          div(icon("fas fa-bug"),"Functionality is available only for integers (counts)")
+        )
+      )
+    } else{
+      newdata<-data.frame(vegan::rrarefy(data,input$rrarefy_sample))
+      newdata<-data_migrate(data,newdata,"newrare")
+      data_cogs$df<-newdata
+      
+    }
+    
+  })
+  output$classmat_vars<-renderPrint({
+    colnames(getclassmat(attr(getdata_upload(),"factors")))
+  })
+  output$fac_levels<-renderUI({
+    data<-vals$saved_data[[input$data_upload]]
+    lev<-levels(attr(data,"factors")[,input$sel_ommitedfac])
+    fluidRow(
+      p(strong("Levels:"),length(lev)),
+      renderPrint({
+        lev
+      })
+    )
+    
+  })
+  output$conversion_options<-renderUI({
+    data<-vals$saved_data[[input$data_upload]]
+    div(
+      div(class="well3",
+          p(
+            radioButtons("convertion_type","Type:",choices=c("Numeric to Factor","Factor to Numeric"), inline=T)
+          )
+      ),
+      conditionalPanel("input.convertion_type=='Numeric to Factor'",{
+        
+        column(12,style="width: 750px",
+               column(6,style="overflow-x: scroll; height: 300px", checkboxGroupInput("vars_num","Select the variables:",choices=colnames(data),selected=NULL)),
+               column(6,style="overflow-x: scroll; height: 300px",
+                      inline(DT::dataTableOutput('numfac'))),
+               
+               
+               tags$style('#numfac td {padding: 3px;
+                     text-align: left;
+                     font-size:12px}'),
+               tags$style('#numfac th {padding: 3px;
+                     text-align: left;
+                     font-size:12px}')
+               
+               
+               
+        )
+        
+      })
+    )
+  })
+  output$numfac <- DT::renderDataTable({
+    req(length(input$vars_num)>0)
+    table<-vals$saved_data[[input$data_upload]][input$vars_num]
+    table<-do.call(cbind,lapply(table, function (x) as.factor(x)))
+    DT::datatable(table,
+                  options=list(
+                    rownames=T,
+                    info=FALSE,autoWidth=T,dom = 'lt',lengthMenu = list(c(20,-1),c( "20","All"))))
+    
+  }, rownames = TRUE,class ='compact cell-border')
+  
+  output$conversion_tools<-renderUI({
+    data<-vals$saved_data[[input$data_upload]]
+    req(input$convertion_type=="Factor to Numeric")
+    div(
+      radioGroupButtons("hand_facs",NULL,
+                        choiceValues   = list("Binary","Ordinal"),choiceNames=list(span("Binary Tranformation",pophelp(NULL,"Creates a single binary column per factor level,with 1 indicating the class of that particular observation"),style="padding: 10px"),span("Ordinal Tranformation",pophelp(NULL,"Transform factors into ordinal variables"),style="padding: 10px"))),
+      conditionalPanel("input.hand_facs=='Binary'",{
+        div(
+          splitLayout(cellWidths = c('40%','40%',"20%"),
+                      column(12,style="height:200px;overflow-y: scroll;overflow-x: scroll",
+                             checkboxGroupInput("to_classmat","Select the factors:",choices=colnames(attr(data,"factors")))
+                      ),
+                      column(12,style="height:200px;overflow-y: scroll;overflow-x: scroll",
+                             uiOutput("binary_preview")),
+                      column(12,popify(actionButton("insert_classMat",div(strong('Include new variables'),style='white-space: normal;'),icon=icon("fas fa-arrow-right"),width="100px"),NULL,"Click to insert the new variables in the Data-Attribute"))
+                      
+                      
+          )
+          
+          #p("Any changes you make in this Panel affects the current Datalist,until you close the Panel"),
+          
+          
+          
+        )
+      }),
+      conditionalPanel("input.hand_facs=='Ordinal'",{
+        data<-vals$saved_data[[input$data_upload]]
+        div(
+          selectInput("to_ordinal","Select the factors:",choices=colnames(attr(data,"factors"))) ,
+          uiOutput("ordinal_out")
+          
+          #p("Any changes you make in this Panel affects the current Datalist,until you close the Panel"),
+          
+          
+          
+        )
+      })
+      
+      
+      
+    )
+  })
+  output$binary_preview<-renderUI({
+    data<-vals$saved_data[[input$data_upload]]
+    fluidRow(column(12,
+                    h5(strong("New binary variables:")),
+                    renderPrint({
+                      req(length(input$to_classmat)>0)
+                      colnames(getclassmat(attr(data,"factors")[,input$to_classmat,drop=F]))})))
+  })
+  output$toorder_in<-renderUI({
+    fluidRow(
+      rank_list(
+        text = "Drag the levels in any desired order",
+        labels = levels(attr(vals$saved_data[[input$data_upload]],"factors")[,input$to_ordinal]),
+        input_id = "rank_list_1",
+        class="custom-sortable"
+      ),
+      tags$style(
+        HTML("
+          .custom-sortable .rank-list-item {
+            height: 25px;
+          padding:5px;
+           background-color: #BDB;
+          border: 1px solid white;
+          }
+        ")
+      )
+    )
+  })
+  output$ordinal_out<-renderUI({
+    getordinal()
+  })
+  output$toorder_or<-renderUI({
+    res<-list()
+    for(i in 1:length(input$rank_list_1)){
+      res[[i]]<-div(actionButton(paste('ord',i),i,style=" height: 25px;padding:5px"))
+    }
+    res
+    
+    
+  })
+  output$toorder_out<-renderUI({
+    
+    column(12,
+           strong(paste("pre-saved:")),
+           fluidRow(
+             tags$style('#order_out td {padding: 0}'),
+             inline(
+               DT::dataTableOutput("order_out")
              )
            )
-  )
-})
-output$tool2<-renderUI({
-  req(isTRUE(toggled$df))
-  fluidRow(id="tool2",class="tools_content",
-
-           splitLayout(
-             uiOutput("remove_sp"),
-             uiOutput("filterby_indvars")
-           ))
-})
-output$tool3<-renderUI({
-  req(isTRUE(toggled$df))
-  fluidRow(style=" height: 180px",
-           tags$script(HTML(js_transf)),
-
-           id="tool3",class="tools_content",
-           div(
-             div(style="vertical-align: middle",strong("Transformation"),tipify(icon("fas fa-question-circle"), "hover the options from to get method descriptions"),
-                 inline(
-                   pickerInput(inputId = "transf",label = NULL,
-                               choices =   do.call(c,lapply(transf_df, function (x) x$value)),inline=F, width="120px", selected="None")
-                 ))
-           ),
-           div(style="margin-top: 15px",
-             div(strong("Scaling and Centering:")),
-             div(class="cogs_in0",
-                 div(style="padding: 10px",
-                     div(
-                       span(
-                         inline(
-                           div(style="width: 110px",
-                               inline(
-                                 checkboxInput("scale", 'Scale', F, width="65px")
-                               ),
-                               tipify(icon("fas fa-question-circle")," If scale is TRUE then scaling is done by dividing the (centered) columns of x by their standard deviations if center is TRUE, and the root mean square otherwise. If scale is FALSE, no scaling is done.")
-                           )
-                         )
-                       ),
-                       inline(uiOutput("scale_center"))
-                     )
-                 ))
-           ),
-           div(style="margin-top: 15px",
-             div(
-               strong("Random rarefaction:"),tipify(icon("fas fa-question-circle"),"Generates one randomly rarefied community given sample size. If the sample size is equal to or larger than the observed number of individuals, the non-rarefied community will be returned"),
-             ),
-             div(class="cogs_in0",
-                 div(style="padding: 10px",
-                     uiOutput("rare_out")
-                 ))
-           )
-
-  )
-})
-
-
-output$rare_out<-renderUI({
-  data<-data_cogs$df
-  div(
-    inline(
-      numericInput("rrarefy_sample","sample",round(min(rowSums(data))), width="100px")
-    ),
-    inline(tipify(actionButton("rrarefy_go", span(icon("fas fa-arrow-circle-right"))),"Run"))
-  )
-})
-
-
-
-
-
-saverare<-reactive({
-  data<-vals$saved_data[[input$data_upload]]
-  validate(need(identical(all.equal(data, round(data)), TRUE),"Functionality is available only for integers (counts)"))
-  req(!is.null(vals$rare))
-  newdata<-vals$rare
-  newdata<-data_migrate(data,newdata,"newrare")
-  if(input$hand_save=="create"){
-    vals$saved_data[[input$rare_newname]]<-newdata
-    vals$cur_data<-input$rare_newname
-    vals$rare<-NULL
-  } else {
-    vals$saved_data[[input$rare_over]]<-newdata
-    vals$cur_data<-input$rare_over
-    vals$rare<-NULL
-  }
-
-})
-observeEvent(input$rrarefy_go,{
-  data<-data_cogs$df
-  if(!identical(all.equal(data, round(data)), TRUE)){
-    showModal(
-      modalDialog(
-        div(icon("fas fa-bug"),"Functionality is available only for integers (counts)")
-      )
+           
+           
     )
-  } else{
-    newdata<-data.frame(vegan::rrarefy(data,input$rrarefy_sample))
-    newdata<-data_migrate(data,newdata,"newrare")
-    data_cogs$df<-newdata
-
-  }
-
-})
-
-output$tool4<-renderUI({
-  req(isTRUE(toggled$df))
-  fluidRow(
-
-    id="tool4",
-    class="tools_content",
-    div(id="tool4_2",
-        span("Target:", inline(pickerInput("na_targ",NULL, c("Data-Attribute","Factor-Attribute"), width="150px"))),
-        uiOutput("tool4_2")
-    )
-  )
-})
-output$tool5<-renderUI({
-  req(isTRUE(toggled$df))
-  fluidRow(
-    id="tool5",
-    class="tools_content",
-    inline(
-      div(
-        id="tool5_1",
-        div(style="margin-top: 10px",radioButtons("split_options",NULL,
-                                                  choices =c("Random sampling","Balanced sampling"),width = "200px")),
-        inline(uiOutput("split_factor")),
-        inline(numericInput("splitperc_data","Size (%)",value=20,min=0,max=99,step=1,width="100px")),
-        inline(numericInput("seed_test","Seed",value=NA,width="80px"))
-      )
-    ),
-    inline(
-      div(class="needed",tipify(actionButton("addpart",label=icon("fas fa-plus")),"Add partition  as a factor in Factor-Attribute. You can later choose the factor which you want to use to constrain training and testing data. "))
-
-    ),
+  })
+  output$order_out<-DT::renderDataTable(data.frame(vals$new_facts),options = list(pageLength = 20,info = FALSE,lengthMenu = list(c(20,-1),c( "20","All")),autoWidth=T),rownames = TRUE,class ='cell-border compact stripe')
+  
+  getordinal_factors<-reactive({
+    data=attr(vals$saved_data[[input$data_upload]],"factors")
+    res<-data[,input$to_ordinal]
+    res<-factor(res,labels=input$rank_list_1,levels=input$rank_list_1)
+    res<-as.numeric(res)
+    res
+    
+  })
+  getlevels<-reactive({
+    req(input$to_ordinal)
+    data.frame(label=levels(attr(vals$saved_data[[input$data_upload]],"factors")[,input$to_ordinal]))
+  })
+  savebinary<-reactive({
+    data=vals$saved_data[[input$data_upload]]
+    factors<-attr(data,"factors")
+    factors[,input$to_classmat]<-NULL
+    temp<-cbind(data,getclassmat(attr(data,"factors")[,input$to_classmat,drop=F]))
+    temp<-data_migrate(data,temp,input$data_newname)
+    
+    if(input$hand_save=="create"){
+      vals$saved_data[[input$data_newname]]<-temp
+      vals$cur_data<-input$data_newname
+    } else{
+      vals$saved_data[[input$data_over]]<-temp
+      vals$cur_data<-input$data_over
+    }
+    vals$new_facts<-NULL
+    
+    
+    
+  })
+  saveordinal<-reactive({
+    data=vals$saved_data[[input$data_upload]]
+    factors<-attr(data,"factors")
+    
+    temp<-cbind(data,vals$new_facts)
+    temp<-data_migrate(data,temp,input$data_newname)
+    
+    if(input$hand_save=="create"){
+      vals$saved_data[[input$data_newname]]<-temp
+      vals$cur_data<-input$data_newname
+    } else{
+      vals$saved_data[[input$data_over]]<-temp
+      vals$cur_data<-input$data_over
+    }
+    vals$new_facts<-NULL
+    
+  })
+  savechanges_comb<-reactive({
+    # saveRDS(reactiveValuesToList(vals),"vals.rds")
+    # saveRDS(reactiveValuesToList(input),"input.rds")
+    #saveRDS(reactiveValuesToList(data_cogs),"data_cogs.rds")
+    
+    # vals<-readRDS("input.rds")
+    #input<-readRDS("vals.rds")
+    # data_cogs<-readRDS("data_cogs.rds")
+    
+    
+    temp<-data_cogs$df
+    data<-data_cogs$df
+    
+    if(input$hand_save=="create"){
+      temp<-data_migrate(data,temp,input$data_newname)
+      vals$saved_data[[input$data_newname]]<-temp
+      vals$cur_data<-input$data_newname
+    } else{
+      temp<-data_migrate(data,temp,input$data_over)
+      vals$saved_data[[input$data_over]]<-temp
+      vals$cur_data<-input$data_over
+    }
+    vals$new_facts<-NULL
+    runjs("Shiny.setInputValue('last_btn', false);")
+  })
+  classmat_out<-reactive({
     column(12,
+           p(icon("fas fa-exclamation-circle"),"factors transformed into class membership matrix"),
+           p(icon("fas fa-exclamation-circle"),"New variables created with class membership  indicated by '1'"),
+           verbatimTextOutput("classmat_vars"),
+           p(icon("fas fa-exclamation-circle"),"We advise using the scale option in the forward analyses"))
+  })
+  getordinal<-reactive({
+    column(12,style="overflow-y: scroll;height: 250px",
            splitLayout(
-             column(12,style="overflow-x: scroll;height:150px;overflow-y: scroll;",
-                    strong("Partition"),
-                    verbatimTextOutput("partition_preview")
-             ))
+             cellWidths = c("30%","5%","40%","15%"),
+             column(12,
+                    p("Drag and drop the labels to define their levels and click",span("'",icon("fas fa-arrow-right"),"'")," to pre-save the variable",style='white-space: normal;'),
+                    splitLayout(  cellWidths = c("20%","80%"),
+                                  div(
+                                    style="margin-top:25px",
+                                    uiOutput("toorder_or")),
+                                  div(uiOutput("toorder_in"),style="font-size: 11px;")
+                                  #div(uiOutput("toorder_lev"),style="font-size: 11px")
+                    )),
+             popify(actionButton("create_ordinal",div(popify(icon("fas fa-arrow-right"),'Create new ordinal factor'),style='white-space: normal;')),NULL,"Create new ordinal factor"),
+             column(12,style="overflow: scroll; z-index: 1;",uiOutput("toorder_out")),
+             
+             popify(actionButton("insert_ordinal",div(strong('Include new variables'),style='white-space: normal;'),icon=icon("fas fa-arrow-right"),width="100px"),NULL,"Click to insert the new variables in the Data-Attribute")
+             
+           )
     )
-
-  )
-})
-output$tool6<-renderUI({
-  req(isTRUE(toggled$df))
-  factors<-attr(getdata_upload(),"factors")
-  fluidRow(
-    id="tool6",
-    class="tools_content",
-    inline(
-      div(class="tool6_1",
-
-          inline(pickerInput("tag_edit","Factor",rev(colnames(factors)), selected=cur_tag$df, width="125px")),
-          inline(pickerInput("tag_fun","Edit:",c("level order",'label'), selected=cur_tag_fun$df, width="125px"))
+  })
+  
+  observeEvent(input$convert_factor,{
+    
+    
+    showModal(
+      div(id="fac_convert",modalDialog(
+        div(style="background: white",
+            p(strong("Datalist:"),code(input$data_upload)),
+            div(style="margin: 5px",
+                uiOutput("conversion_options"),
+                uiOutput("conversion_tools")
+            )
+            
+            
+        ),
+        title="Numeric/Factor conversion",
+        size="xl",
+        easyClose = T,
+        footer=div(
+          bsButton("convert_num","Save", style="view_datalist"),modalButton("Dismiss"))
+        
+      ))
+    )
+    
+  })
+  observeEvent(input$convert_num,{
+    newnum<-data<-vals$saved_data[[input$data_upload]]
+    newfac<-data[,input$vars_num,drop=F]
+    newnum[,input$vars_num]<-NULL
+    attr(newnum,"factors")<-if(length(attr(data,"factors"))>0){
+      cbind(
+        attr(data,"factors"),newfac
       )
-    ),
-
-    uiOutput("edit_fac_labels"),
-    uiOutput("edit_fac_ord"),
-
-    div(style="margin-top: 20px",
-        tipify(bsButton("convert_factor","Numeric/Factor conversion",style  = "button_active"),"Open the toolbox to transform data-attribute factors into numeric values and vice versa")
-    ),
-
-
-  )
-})
-output$tool7<-renderUI({
-  req(isTRUE(toggled$df))
-  module_ui_cc("cc")
-})
-
-
+    } else{
+      newfac
+    }
+    vals$saved_data[[input$data_upload]]<-newnum
+    
+    
+    
+  })
+  observeEvent(input$create_ordinal,{
+    res<-getordinal_factors()
+    data=attr(vals$saved_data[[input$data_upload]],"factors")
+    if(is.null( vals$new_facts)){
+      res0<-data.frame(matrix(NA,nrow=nrow(data)))
+      colnames(res0)<-input$to_ordinal
+      rownames(res0)<-rownames(data)
+      vals$new_facts<-res0
+    }
+    vals$new_facts[input$to_ordinal]<-res
+  })
+  observeEvent(input$data_bank,{
+    data=vals$saved_data[[input$data_bank]]
+    output$viewdata<-renderUI({
+      
+      div(
+        style="overflow-x: scroll;",
+        
+        
+        div(class="datalist_tools",
+            h5(strong("Data-Attribute"),
+               inline(
+                 div(
+                   id="ddcogs",
+                   div(class="ddcogs0",span(icon("fas fa-cog"),style="padding-left: 6px")),
+                   div(class='ddlinks_all',
+                       div(class="ddlinks",
+                           actionLink("ddcogs1","Rename Variables")
+                       ),
+                       div(class="ddlinks",
+                           actionLink("ddcogs3","Edit changes")
+                       ),
+                       div(class="ddlinks",
+                           actionLink("ddcogs2","Download table")
+                       )
+                   )
+                   
+                   
+                 )
+                 
+               )
+            )),
+        if(length(attr(data,"data.factors"))>0){
+          column(12,h5(
+            p(strong("Wargning:",style="color: red"),
+              strong("Factor/character columns moved from the Data-Attribute to Factor-Attribute")),
+            p("A Data-Attribute can handle only numeric variables. Use the 'Edit factors' tool to explore and and convert factors to numeric variables")
+          ))
+        },
+        column(12,style=" background: white; padding: 0px",
+               if(ncol(getdata_bank())<1000){
+                 uiOutput("data_attr")
+               } else{"Preview not available for data with more than 1000 columns"}
+        )
+        
+      )
+      
+      
+    })
+  })
+  observeEvent(input$insert_ordinal,{
+    vals$hand_save<-"Include ordinal variables in the Data-Attribute"
+    showModal(
+      hand_save_modal()
+    )})
+  observeEvent(input$insert_classMat,{
+    vals$hand_save<-"Include binary columns in the Data-Attribute"
+    showModal(
+      hand_save_modal()
+    )})
+  
+  
   output$filterby_indobs<-renderUI({
-req(input$data_upload)
-   
+    req(input$data_upload)
+    
     data<-vals$saved_data[[input$data_upload]]
     #data<-getdata_upload()
     div(style = 'height: 130px;',
         validate(need(nrow(vals$saved_data[[input$data_upload]])<1000,"Only available for data with less than 5000 observations")),
         checkboxGroupInput("selecobs",NULL,choices = rownames(data),selected = rownames(data))
     )
-
+    
   })
-  mytips<-paste0(do.call(paste0,args=list("'",lapply(transf_df,function(x) x$tooltip), sep="'")),collapse=",")
-  js_transf <- paste("
-var mytips = [",mytips,"];
-$('#transf').on('shown.bs.select', function() {
-  var $lis = $($(this).data('selectpicker').selectpicker.current.elements);
-  $lis.each(function(i) {
-    $(this).attr('title', mytips[i]);
-  });
-});")
   output$scale_center<-renderUI({
     req(isTRUE(input$scale))
     span(
@@ -9338,7 +9335,7 @@ $('#transf').on('shown.bs.select', function() {
         checkboxInput("center", 'Center', T, width="65px")
       ),
       tipify(icon("fas fa-question-circle"),"If center is TRUE then centering is done by subtracting the column means (omitting NAs) of x from their corresponding columns, and if center is FALSE, no centering is done."),
-
+      
     )
   })
   output$tool4_2<-renderUI({
@@ -9367,49 +9364,44 @@ $('#transf').on('shown.bs.select', function() {
       )
     )
   })
-output$split_factor<-renderUI({
-  req(input$split_options=='Balanced sampling')
-  inline(pickerInput("splitfactor","Factor",choices=colnames(attr(vals$saved_data[[input$data_upload]],"factors")), width ='150px'))
-
-})
+  output$split_factor<-renderUI({
+    req(input$split_options=='Balanced sampling')
+    inline(pickerInput("splitfactor","Factor",choices=colnames(attr(vals$saved_data[[input$data_upload]],"factors")), width ='150px'))
+    
+  })
   output$edit_fac_ord<-renderUI({
     req(input$tag_fun=='level order')
     div(class="cogs_in",
-      splitLayout(  cellWidths = c("80%","20%"),style="margin: 5px;overflow-x: scroll;height:150px;overflow-y: scroll;",
-                    div(uiOutput("toorder_tag"),style="font-size: 11px;margin-top: 5px"),
-                    div(style="margin-top: 24px; margin-bottom: 25px;",
-                        tipify(
-                          actionButton("tag_order_apply",icon("fas fa-magic")),"Use this button to apply changes"
-                        )
-                    )
-      )
+        splitLayout(  cellWidths = c("80%","20%"),style="margin: 5px;overflow-x: scroll;height:150px;overflow-y: scroll;",
+                      div(uiOutput("toorder_tag"),style="font-size: 11px;margin-top: 5px")
+                      
+        )
     )
   })
-
-output$edit_fac_labels<-renderUI({
-  req(input$tag_fun=='label')
-  div(
-    inline(  uiOutput("tag_edit_level")),
-    inline(  uiOutput("tag_edit_newlevel")),
-    inline(div(style="margin-top: 24px; position: fixed; right: 0px",align="right",
-               tipify(
-                 actionButton("tag_edit_apply",icon("fas fa-magic")),"Use this button to apply changes"
-               )
-    ))
-  )
-})
-
-
+  output$edit_fac_labels<-renderUI({
+    req(input$tag_fun=='label')
+    div(
+      inline(  uiOutput("tag_edit_level")),
+      inline(  uiOutput("tag_edit_newlevel")),
+      inline(div(style="margin-top: 24px; position: fixed; right: 0px",align="right",
+                 tipify(
+                   actionButton("tag_edit_apply",icon("fas fa-magic")),"Use this button to apply changes"
+                 )
+      ))
+    )
+  })
+  
+  
   seldata <- reactive({
     req(input$data_upload)
     data <-  vals$saved_data[[input$data_upload]]
     try({
-
+      
       factors<-attr(data,"factors")
       if(length(input$filter_data)>0) {
         if (input$filter_data != "none")
         { if(length(input$cutlevel_obs)>0){
-
+          
           pic <-which(as.character(factors[, input$filter_data]) %in% as.character(input$cutlevel_obs))
           data = data[pic,, drop=F ]}}
       }
@@ -9418,10 +9410,10 @@ output$edit_fac_labels<-renderUI({
         {
           pic<-rownames(vals$saved_data[[input$filter_datalist]])
           data=na.omit(data[pic,,drop=F])
-
+          
         }
       }
-
+      
       if(length(input$selecvar) >0){
         if (any(input$selecvar%in%colnames(data))) {
           pic<-which(colnames(data)%in%input$selecvar)
@@ -9429,25 +9421,25 @@ output$edit_fac_labels<-renderUI({
             data <- data[,pic, drop=F]
         }
       }
-
+      
       if (length(input$selecobs) > 0) {data <- data[input$selecobs, ]}
-
+      
       if(length(vals$seltree)>0){
         data<-data[   vals$seltree,]}
-
+      
     })
     data
   })
   data.rares<-reactive({
     try({
-
-
+      
+      
       #vals$bagdata <- isolate(0)
       data0 = seldata()
       data=data.frame(retype(data0))
       rownames(data)<-rownames(data0)
       if (isTRUE(input$na.omit)) {data <- na.omit(data)}
-
+      
       if (length(input$transf) > 0) {
         if(isTRUE(input$scale)){
           if(isTRUE(input$center)){
@@ -9456,10 +9448,10 @@ output$edit_fac_labels<-renderUI({
             data = data.frame(scale(data, center = F))
           }
         }
-
-
+        
+        
       }
-
+      
       if(length(input$rareabund)>0){
         if(isTRUE(input$rareabund)){
           data = pctRares(data, input$pct_rare/100)
@@ -9475,7 +9467,7 @@ output$edit_fac_labels<-renderUI({
           data = singles(data)
         }
       }
-
+      
       if (length(input$transf) > 0) {
         if (input$transf == "log2") {data = decostand(data, "log", na.rm = T, logbase = 2)}
         if (input$transf == "log10") {data = decostand(data, "log", na.rm = T, logbase = 10)}
@@ -9504,8 +9496,8 @@ output$edit_fac_labels<-renderUI({
         }
         data = data.frame(data)
       }
-
-
+      
+      
       remove_IDs<-which(rowSums(is.na(data))==ncol(data))
       if(length(remove_IDs)>0){
         data<-data[-remove_IDs,]}
@@ -9514,63 +9506,67 @@ output$edit_fac_labels<-renderUI({
       nrow_g<-nrow(data)
       ncol_o<-attr(data,'nvar_ori')
       ncol_g<-ncol(data)
-
-      newattribs<-isolate(
-        t(data.frame(
-          Subobs=if(nrow_g<nrow_o){paste(nrow_o,"::",nrow_g)} else {nrow_o},
-          Subvars=if(ncol_g<ncol_o){paste(paste(ncol_o,"::",ncol_g))}else{ncol_g},
-          Transf = if(is.null(input$transf)){"None"}else{input$transf},
-          Removed = if(is.null(input$rares)){"None"}else{input$rares},
-          Scale = if(is.null(input$scale)){"None"}else{input$scale},
-          Center = if(is.null(input$center)){"FALSE"}else{input$center},
-          NA.omit = if(is.null(input$na.omit)){"FALSE"}else{input$na.omit},
-          Data_imp="None",
-          Factor_imp="None"
-        ))
+      
+      
+      newattribs<- list(
+        Subobs=nrow_o,
+        Subvars=ncol_o,
+        Transf = 'None',
+        Removed = 'None',
+        Scale ='None',
+        Center ='None',
+        NA.omit = 'None',
+        Data_imp="None",
+        Factor_imp="None"
       )
-
-      attr_data<-cbind(attr(data, "transf"),newattribs)
+      
+      
+      if(nrow_g<nrow_o){ newattribs$Subobs<-paste(nrow_o,"::",nrow_g)} 
+      if(ncol_g<ncol_o){ newattribs$Subvars<-paste(paste(ncol_o,"::",ncol_g))}
+      if(!is.null(input$transf)){newattribs$Transf}
+      if(!is.null(input$rares)){ newattribs$Removed<- input$rares}
+      if(!is.null(input$scale)){newattribs$Scale<-input$scale}
+      if(!is.null(input$center)){newattribs$Center<-input$center}
+      if(!is.null(input$na.omit)){  newattribs$NA.omit<-input$na.omit}
+      
+      newattribs<-data.frame(current=do.call(rbind,newattribs))
+      
+      transf0<-attr(data, "transf")
+      if(is.null(transf0)){
+        attr_data<-newattribs
+      }else{
+        attr_data<-cbind(transf0[,-which(colnames(transf0)=="current")],newattribs)
+      }
       colnames(attr_data)<-paste0("change", 1:ncol(attr_data))
       colnames(attr_data)[ncol(attr_data)]<-"current"
-
-
+      
+      
       attr(data, "transf") <-attr_data
       attr(data, "nobs_ori") <-nrow_o
       attr(data, "nvar_ori") <-ncol_o
-
+      
       #if(nrow(attr(data, "transf"))==2){attr(data, "transf")<-attr(data, "transf")[-1,]}
       attr(data,"factors")<-attr(data,"factors")[rownames(data),,drop=F]
       attr(data,"coords")<-attr(data,"coords")[rownames(data),,drop=F]
-
-
-
+      
+      
+      
       # validate(need(!any(unlist(lapply(vals$saved_data, function(x) identical(data,x)))),"you already have  the selected results in  your Data bank"))
-
+      if(length(input$tag_edit)>0){
+        if(length(input$rank_list_2)>0){
+          oldfac<-factors[,input$tag_edit]
+          newfac<-factor(oldfac, labels=input$rank_list_2, levels=input$rank_list_2)
+          factors[,input$tag_edit]<-newfac
+          attr(data,"factors")<-factors
+          
+        }
+      }
       data
-
+      
     })
   })
-
-
-
-
-  output$fac_levels<- renderUI({
-    data<-vals$saved_data[[input$data_upload]]
-    lev<-levels(attr(data, 'data.factors')[,input$sel_ommitedfac])
-    fluidRow(
-      p(strong("Levels:"), length(lev)),
-      renderPrint({
-        lev
-      })
-    )
-
-  })
-
-
-
-
-treefalse<-reactiveValues(df=F)
-
+  treefalse<-reactiveValues(df=F)
+  
   observeEvent(input$data_upload,{
     treefalse$df<-F
     vals$tree<-NULL
@@ -9586,7 +9582,7 @@ treefalse<-reactiveValues(df=F)
       
       pic<-which(unlist(lapply(lis, function(x) length(x[[1]])))<100)
       validate(need(length(pic)>0,"Only available for factors with less than 100 levels."))
-   
+      
       try({
         lis<-lis[names(pic)]
         df<-do.call(rbind,lapply(lis,function(x) {
@@ -9596,40 +9592,37 @@ treefalse<-reactiveValues(df=F)
         vals$tree<-gettree(df)
         treefalse$df<-T
         vals$tree
-
+        
       })
     })
-
-
+    
+    
   })
-observeEvent(input$tree,{
-  req(isTRUE(treefalse$df))
-  req(length(get_selected(input$tree))>0)
-  factors<-attr(vals$saved_data[[input$data_upload]],"factors")
-  vals$seltree<-get_selfactors(get_selected(input$tree),factors)
-
-})
-
-
-
-
-
+  observeEvent(input$tree,{
+    req(isTRUE(treefalse$df))
+    req(length(get_selected(input$tree))>0)
+    factors<-attr(vals$saved_data[[input$data_upload]],"factors")
+    vals$seltree<-get_selfactors(get_selected(input$tree),factors)
+    
+  })
   output$cutlevel_obs<-renderUI({
     div(id="filter_cut",
         column(12,checkboxGroupInput('cutlevel_obs',NULL,levels(
           attr(vals$saved_data[[input$data_upload]],"factors")
         ))),
-
-
-      bsTooltip("filter_cut","The factor level to restric the observations")
-
-
+        
+        
+        bsTooltip("filter_cut","The factor level to restric the observations")
+        
+        
     )
   })
   output$data_create<-renderUI({
+    req(length(vals$hand_save)>0)
     req(input$hand_save=="create")
+    
     data_store$df<-F
-
+    
     res<-switch (vals$hand_save,
                  "Save new som in" = textInput("model_newname", NULL,paste("Som", length(attr(getdata_som(),"som"))+1)),
                  "Save changes"= textInput("data_newname", NULL,bag_name()),
@@ -9638,11 +9631,11 @@ observeEvent(input$tree,{
                  "Save Clusters"= textInput("hc_newname", NULL,bag_hc()),
                  "Create data list from aggregation results"= textInput("agg_newname", NULL,bag_agg()),
                  "Add an Extra-Layer-Attribute to the Datalist"=textInput("extra_layer_newname", NULL,bag_extralayer()),
-
+                 
                  "Save diversity results"= textInput("div_newname", NULL,bag_divname()),
                  "Save rarefied data"= textInput("rare_newname", NULL,bag_name()),
                  "Create a datalist with the variables selected in the Random Forest Explainer"= textInput("rf_newname", NULL,bag_rfname()),
-
+                 
                  "Create a datalist with the model errors"= textInput("rferrors_newname", NULL,bag_rferrosname()),
                  "Create a datalist with the prediction errors"= textInput("rf_pred_errors_newname", NULL,bag_rfpredname()),
                  "Create a datalist with the RF predictions"= textInput("rf_predictions_newname", NULL,bag_rfpredictions()),
@@ -9656,27 +9649,27 @@ observeEvent(input$tree,{
                  "Save som predictions"= textInput("predsom_newname", NULL,predsom_name()),
                  "Save errors from som predictions (X)"= textInput("predsom_eX_newname", NULL,bag_sompred_eX()),
                  "Save errors from som predictions (Y)"= textInput("predsom_eY_newname", NULL,bag_sompred_eY()),
-
+                 
                  "Save new rf in"= textInput("rf_newname", NULL,bag_RFname()),
                  "Save interpolation model"=
                    {
-
+                     
                      textInput("interps_newname", NULL,bag_mapname())
                    },
                  "Save discrete model"=
                    {
-
+                     
                      textInput("discrete_newname", NULL,bag_mapname())
                    },
                  "Save raster"=
                    {
-
+                     
                      textInput("interps_newname", NULL,bag_mapname())
                    },
                  "Merge Datalists"= textInput("merge_newname", NULL,paste("Datalist_merged", length(vals$saved_data)+1))
-
-
-
+                 
+                 
+                 
     )
     data_store$df<-T
     res
@@ -9689,152 +9682,24 @@ observeEvent(input$tree,{
         input_id = "rank_list_2",
         class="custom-sortable"
       )
-
+      
     )
   })
-
-observeEvent(input$data_upload,
-             output$filterby_indvars<-renderUI({
-
-               data<-vals$saved_data[[input$data_upload]]
-               validate(need(ncol(data)<1000,"Individual selection not available for data with more than 1000 columns"))
-               div(style="margin-top: 10px;overflow-x: scroll;overflow-y: scroll;",
-                   div("Individual selection:"),
-                   div(class="cogs_in",
-                       div(class="cogs_in2",checkboxInput("check_fac",strong('Select/Unselect all'),T)),
-                       div(style=" margin-top: 10px;height:140px;",
-                           checkboxGroupInput("selecvar",NULL,choices = colnames(data),selected = colnames(data)))
-                   )
-               )
-             }))
-
-  output$conversion_options<-renderUI({
-    data<-vals$saved_data[[input$data_upload]]
-    num<-data[,which(unlist(lapply(data, function(x) is.numeric(x)))), drop=F]
-    if(length(attr(data,"data.factors"))>0){
-      fac=attr(data,"data.factors") }else { fac=data.frame()}
-
-
-    fluidRow(
-      if(length(attr(data,"data.factors"))>0){
-        fluidRow(
-          column(12,strong("Factors were removed from the Data-Attribute")),
-          column(12,"A Data-Attribute can handle only numeric variables. Use the 'Factor to Numeric' option to explore and include the ommited factors as numeric variables")
-        )
-      },
-      if(ncol(num)>=1 & ncol(fac)>=1){
-        radioButtons("convertion_type","Type:",choices=c("Numeric to Factor", "Factor to Numeric"))
-      } else if(ncol(num)>=1 & !ncol(fac)>=1){
-        radioButtons("convertion_type","Type:",choices=c("Numeric to Factor"))
-      } else if(!ncol(num)>=1 & ncol(fac)>=1){
-        radioButtons("convertion_type","Type:",choices=c("Factor to Numeric"))
-      },
-      conditionalPanel("input.convertion_type=='Numeric to Factor'",{
-        splitLayout(style="height:200px;overflow-y: scroll",
-                    checkboxGroupInput("vars_num","Select the variables:", choices=colnames(num), selected=NULL),
-                    actionButton("convert_num", icon("fas fa-random"))
-        )
-
-      })
-    )
-  })
-  output$conversion_tools<-renderUI({
-    data<-vals$saved_data[[input$data_upload]]
-    req(input$convertion_type=="Factor to Numeric")
-    fluidRow(
-      radioGroupButtons("hand_facs",NULL,
-                        choiceValues   = list("Plot","Binary","Ordinal"), choiceNames=list(span("Explore the ommited factors"),span("Binary Tranformation",pophelp(NULL,"Creates a single binary column per factor level, with 1 indicating the class of that particular observation"), style="padding: 10px"), span("Ordinal Tranformation",pophelp(NULL,"Transform factors into ordinal variables"), style="padding: 10px"))),
-      conditionalPanel("input.hand_facs=='Plot'",{
-        fluidRow(
-          column(12,
-                 splitLayout(cellWidths = c('25%','25%',"50%"),
-                             selectInput("sel_ommitedfac", strong("Factor", pophelp(NULL, "Select the factor to see its count")),choices=colnames(attr(data,"data.factors")), selectize=T),
-                             column(12,
-                                    strong("Palette"),
-                                    pickerInput(inputId = "fac_palette",
-                                                label = NULL,
-                                                choices =     vals$colors_img$val[getgrad_col()],
-                                                choicesOpt = list(content =     vals$colors_img$img[getgrad_col()]), options=list(container="body")))
-                             ,
-                             column(12,style="height:100px;overflow-y: scroll",
-
-
-                                    uiOutput("fac_levels"))
-
-                 ),
-                 h5(strong(
-                   "Counting of factors:"
-                 )),
-                 renderPlot(pfactors(
-                   attr(data, 'data.factors')[input$sel_ommitedfac], palette=input$fac_palette, newcolhabs=vals$newcolhabs
-                 ))
-          )
-        )
-      }),
-      conditionalPanel("input.hand_facs=='Binary'",{
-        fluidRow(
-          splitLayout(cellWidths = c('40%','40%',"20%"),
-                      column(12,style="height:200px;overflow-y: scroll;overflow-x: scroll",
-                             checkboxGroupInput("to_classmat","Select the factors:", choices=colnames(attr(data,"data.factors")))
-                      ),
-                      column(12,style="height:200px;overflow-y: scroll;overflow-x: scroll",
-                             uiOutput("binary_preview")),
-                      column(12,popify(actionButton("insert_classMat",div(strong('Include new variables'),style='white-space: normal;'), icon=icon("fas fa-arrow-right"), width="100px"),NULL,"Click to insert the new variables in the Data-Attribute"))
-
-
-          )
-
-          #p("Any changes you make in this Panel affects the current Datalist, until you close the Panel"),
-
-
-
-        )
-      }),
-      conditionalPanel("input.hand_facs=='Ordinal'",{
-        data<-vals$saved_data[[input$data_upload]]
-        fluidRow(
-          column(12, selectInput("to_ordinal","Select the factors:", choices=colnames(attr(data,"data.factors"))) ) ,
-          uiOutput("ordinal_out")
-
-          #p("Any changes you make in this Panel affects the current Datalist, until you close the Panel"),
-
-
-
-        )
-      })
-
-
-
-    )
-  })
-  output$toorder_in <- renderUI({
-    fluidRow(
-      rank_list(
-        text = "Drag the levels in any desired order",
-        labels = levels(attr(vals$saved_data[[input$data_upload]],"data.factors")[,input$to_ordinal]),
-        input_id = "rank_list_1",
-        class="custom-sortable"
-      ),
-      tags$style(
-        HTML("
-          .custom-sortable .rank-list-item {
-            height: 25px;
-          padding:5px;
-           background-color: #BDB;
-          border: 1px solid white;
-          }
-        ")
-      )
-    )
-  })
-  output$binary_preview<-renderUI({
-    data<-vals$saved_data[[input$data_upload]]
-    fluidRow(column(12,
-                    h5(strong("New binary variables:")),
-                    renderPrint({
-                      req(length(input$to_classmat)>0)
-                      colnames(getclassmat(attr(data, 'data.factors')[,input$to_classmat,drop=F]))})))
-  })
+  observeEvent(input$data_upload,
+               output$filterby_indvars<-renderUI({
+                 
+                 data<-vals$saved_data[[input$data_upload]]
+                 validate(need(ncol(data)<1000,"Individual selection not available for data with more than 1000 columns"))
+                 div(style="margin-top: 10px;overflow-x: scroll;overflow-y: scroll;",
+                     div("Individual selection:"),
+                     div(class="cogs_in",
+                         div(class="cogs_in2",checkboxInput("check_fac",strong('Select/Unselect all'),T)),
+                         div(style=" margin-top: 10px;height:140px;",
+                             checkboxGroupInput("selecvar",NULL,choices = colnames(data),selected = colnames(data)))
+                     )
+                 )
+               }))
+  
   output$data_over<-renderUI({
     data_overwritte$df<-F
     req(input$hand_save=="over")
@@ -9859,11 +9724,11 @@ observeEvent(input$data_upload,
                  'Create a datalist with the prediction errors' = selectInput("rf_pred_errors_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
                  'Create a datalist with the RF predictions' = selectInput("rf_predictions_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
                  'Create a datalist with the variables included in the N most frequent interactions in the RF' = selectInput("rfinter_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
-
+                 
                  'Save errors from som predictions (Y)' = selectInput("predsom_eY_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
                  'Save errors from som predictions (X)' = selectInput("predsom_eX_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
-
-
+                 
+                 
                  'Create a datalist from the selected observations' = selectInput("selobs_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
                  'Add an Extra-Layer-Attribute to the Datalist' = selectInput("extra_layer_over", NULL,choices=c(names(attr(vals$saved_data[[input$data_map]],"extra_shape"))),selectize=T),
                  'Create factor using breakpoints from the dissimilarity profile' =  selectInput("bp_over", NULL,choices=c(colnames(attr(vals$saved_data[[input$data_upload]],"factors"))),selectize=T),
@@ -9874,7 +9739,7 @@ observeEvent(input$data_upload,
                    }else{
                      column(12,verbatimTextOutput("nopredictions"))
                    }
-
+                   
                  },
                  'Save new rf in' = {
                    if(length(attr(getdata_rf(),"rf"))>0){
@@ -9889,7 +9754,7 @@ observeEvent(input$data_upload,
                    }else{
                      column(12,verbatimTextOutput("nointerpsmodel"))
                    }
-
+                   
                  },
                  'Save discrete model'= {
                    if(length(vals$saved_maps)>0){
@@ -9897,7 +9762,7 @@ observeEvent(input$data_upload,
                    }else{
                      column(12,verbatimTextOutput("nointerpsmodel"))
                    }
-
+                   
                  },
                  'Save raster'={
                    if(length(vals$saved_maps)>0){
@@ -9905,7 +9770,7 @@ observeEvent(input$data_upload,
                    }else{
                      column(12,verbatimTextOutput("nointerpsmodel"))
                    }
-
+                   
                  },
                  "Merge Datalists"= selectInput("merge_over", NULL,choices=c(names(vals$saved_data)),selectize=T)
     )
@@ -9925,9 +9790,9 @@ observeEvent(input$data_upload,
       n_sample<-round(nrow(data)*input$splitperc_data/100)
       if (!is.na(input$seed_test)) {set.seed(input$seed_test)}
       res<-sample(1:nrow(data),n_sample)
-
+      
     }
-
+    
     res
   })
   get_partition<-reactive({
@@ -9940,68 +9805,20 @@ observeEvent(input$data_upload,
     res$Partition<-as.factor( res$Partition)
     res
   })
-  getordinal_factors<-reactive({
-    data=attr(vals$saved_data[[input$data_upload]],"data.factors")
-    res<-data[,input$to_ordinal]
-    res<-factor(res, labels=input$rank_list_1, levels=input$rank_list_1)
-    res<-as.numeric(res)
-    res
-
-  })
-  getlevels<-reactive({
-    req(input$to_ordinal)
-    data.frame(label=levels(attr(vals$saved_data[[input$data_upload]],"data.factors")[,input$to_ordinal]))
-  })
-  savebinary<-reactive({
-    data=vals$saved_data[[input$data_upload]]
-    data.factors<-attr(data, 'data.factors')
-    data.factors[,input$to_classmat]<-NULL
-    temp<-cbind(data,getclassmat(attr(data, 'data.factors')[,input$to_classmat,drop=F]))
-    temp<-data_migrate(data,temp,input$data_newname)
-    attr(temp, 'data.factors')<-data.factors
-    if(input$hand_save=="create"){
-      vals$saved_data[[input$data_newname]]<-temp
-      vals$cur_data<-input$data_newname
-    } else{
-      vals$saved_data[[input$data_over]]<-temp
-      vals$cur_data<-input$data_over
-    }
-    vals$new_facts<-NULL
-
-
-
-  })
-  saveordinal<-reactive({
-    data=vals$saved_data[[input$data_upload]]
-    data.factors<-attr(data, 'data.factors')
-    data.factors[,input$to_ordinal]<-NULL
-    temp<-cbind(data,vals$new_facts)
-    temp<-data_migrate(data,temp,input$data_newname)
-    attr(temp, 'data.factors')<-data.factors
-    if(input$hand_save=="create"){
-      vals$saved_data[[input$data_newname]]<-temp
-      vals$cur_data<-input$data_newname
-    } else{
-      vals$saved_data[[input$data_over]]<-temp
-      vals$cur_data<-input$data_over
-    }
-    vals$new_facts<-NULL
-
-  })
   save_bpfac<-reactive({
     vals$bagbp0<-vals$bagbp0+1
     dp<-getDP()
     if(input$hand_save=="create"){
       attr(vals$saved_data[[input$data_upload]],"factors")[rownames(vals$splitBP),input$bp_newname]<-as.vector(vals$splitBP)
       attr(vals$saved_data[[input$data_upload]],"factors")[,input$bp_newname]<-as.factor(attr(vals$saved_data[[input$data_upload]],"factors")[,input$bp_newname])
-
+      
     } else{
       attr(vals$saved_data[[input$data_upload]],"factors")[input$bp_over]<-as.vector(vals$splitBP)
       attr(vals$saved_data[[input$data_upload]],"factors")[,input$bp_over]<-as.factor(attr(vals$saved_data[[input$data_upload]],"factors")[,input$bp_over])
-
+      
     }
-
-
+    
+    
   })
   bag_partition<-reactive({
     bag<-1
@@ -10016,7 +9833,7 @@ observeEvent(input$data_upload,
       }
     }
     paste("Partition",bag)
-
+    
   })
   savepart<-reactive({
     data<-getdata_upload()
@@ -10045,11 +9862,11 @@ observeEvent(input$data_upload,
                    data_name=input$data_upload,
                    k=input$na_knn)
       transf<-attr(data,"transf")
-
+      
       transf["Data_imp",'current']<-input$na_method
       attr(data,"transf")<-transf
     }
-
+    
     data_cogs$df<-data
   })
   observeEvent(input$go_na,{
@@ -10059,12 +9876,12 @@ observeEvent(input$data_upload,
       data<-nafactor(data=data,
                      na_method=input$na_method
       )
-
+      
       transf["Factor_imp",ncol(transf)]<-input$na_method
       attr(data,"transf")<-transf
     }
     data_cogs$df<-data
-
+    
   })
   observeEvent(input$check_fac,{
     if(isTRUE(input$check_fac)){
@@ -10077,10 +9894,10 @@ observeEvent(input$data_upload,
       updateCheckboxGroupInput(session,
                                "selecvar",NULL,
                                choices = colnames(vals$saved_data[[input$data_upload]])
-
+                               
       )
     }
-
+    
   })
   observeEvent(input$check_obs,{
     if(isTRUE(input$check_obs)){
@@ -10093,28 +9910,20 @@ observeEvent(input$data_upload,
       updateCheckboxGroupInput(session,
                                "selecobs",NULL,
                                choices = rownames(vals$saved_data[[input$data_upload]])
-
+                               
       )
     }
-
+    
   })
   observeEvent(input$data_upload,{
     res<-try({ncol(vals$saved_data[[input$data_upload]][,input$selecvar])},T)
     if(class(res)=="try-error"){toggleDropdownButton('dropID_tool2')
       update_selecvar$df<-T
-
+      
     }
   })
-  observeEvent(input$tag_order_apply,{
-    factors<-attr(getdata_upload(),"factors")
-    oldfac<-factors[,input$tag_edit]
-    newfac<-factor(oldfac, labels=input$rank_list_2, levels=input$rank_list_2)
-    factors[,input$tag_edit]<-newfac
-    attr(vals$saved_data[[input$data_upload]],"factors")<-factors
-    toggleDropdownButton('dropID_tool6')
-  })
   observeEvent(input$tag_edit_apply,{
-
+    
     #input$tag_edit<-'season'
     # input$tag_edit_level<-"Spring"
     #input$tag_edit_newlevel<-'Primavera'
@@ -10127,7 +9936,7 @@ observeEvent(input$data_upload,
     newfactor[oldfactor==input$tag_edit_level]<-input$tag_edit_newlevel
     attr(vals$saved_data[[input$data_upload]],"factors")[,input$tag_edit]<- as.factor(newfactor)
     toggleDropdownButton('dropID_tool6')
-
+    
   })
   observeEvent(input$undo_na,{
     data_cogs$df<-vals$saved_data[[input$data_upload]]
@@ -10135,91 +9944,15 @@ observeEvent(input$data_upload,
   observeEvent(input$data_upload,{
     if(length(input$selecvar)>0)
       updateCheckboxGroupInput(session,"selecvar", choices=colnames(vals$saved_data[[input$data_upload]]))
-
+    
   })
-  observeEvent(input$convert_factor,{
-
-
-    showModal(
-      div(id="fac_convert",modalDialog(
-
-        column(12,style="background: white",
-               column(12,
-                      column(12,strong("Datalist:"),code(input$data_upload)),
-
-                      uiOutput("conversion_options"),
-                      uiOutput("conversion_tools"))
-
-        ),
-        title="Numeric/Factor conversion",
-        size="xl",
-        easyClose = T
-
-
-      ))
-    )
-
-  })
-  observeEvent(input$convert_num,{
-    newnum<-data<-vals$saved_data[[input$data_upload]]
-    newfac<-data[,input$vars_num, drop=F]
-    newnum[,input$vars_num]<-NULL
-    attr(newnum, "data.factors")<- if(length(attr(data, "data.factors"))>0){
-      cbind(
-        attr(data, "data.factors"),newfac
-      )
-    } else{
-      newfac
-    }
-    vals$saved_data[[input$data_upload]]<-newnum
-
-
-
-  })
-  observeEvent(input$create_ordinal,{
-    res<-getordinal_factors()
-    data=attr(vals$saved_data[[input$data_upload]],"data.factors")
-    if(is.null( vals$new_facts)){
-      res0<-data.frame(matrix(NA,nrow=nrow(data)))
-      colnames(res0)<-input$to_ordinal
-      rownames(res0)<-rownames(data)
-      vals$new_facts<-res0
-    }
-    vals$new_facts[input$to_ordinal]<-res
-  })
-  savechanges_comb<-reactive({
-   # saveRDS(reactiveValuesToList(vals),"vals.rds")
-   # saveRDS(reactiveValuesToList(input),"input.rds")
-    #saveRDS(reactiveValuesToList(data_cogs),"data_cogs.rds")
-
-   # vals<-readRDS("input.rds")
-    #input<-readRDS("vals.rds")
-   # data_cogs<-readRDS("data_cogs.rds")
-
-
-    temp<-data_cogs$df
-    data<-data_cogs$df
-    data.factors<-attr(data,"data.factors")
-
-
-    attr(temp, 'data.factors')<-data.factors
-    if(input$hand_save=="create"){
-      temp<-data_migrate(data,temp,input$data_newname)
-      vals$saved_data[[input$data_newname]]<-temp
-      vals$cur_data<-input$data_newname
-    } else{
-      temp<-data_migrate(data,temp,input$data_over)
-      vals$saved_data[[input$data_over]]<-temp
-      vals$cur_data<-input$data_over
-    }
-    vals$new_facts<-NULL
-updateButton(session,"cogs",F)
-  })
+  
+  
   bag_name<-reactive({
     bag<-ncol(attr(getdata_upload(), "transf") )
     name0<-paste(gsub(".csv","",attr(getdata_upload(), "filename")))
-
-
+    
+    
     name1<-paste0(name0," (",bag,")")
     if(name1%in%names(vals$saved_data))
     {
@@ -10230,16 +9963,16 @@ updateButton(session,"cogs",F)
       }
     }
     paste0(name0," (",bag,")")
-
+    
   })
-## menu_explore
+  ## menu_explore
   getdata_upload0<-reactive({
     if(isTRUE(last_cog())){
       data_cogs$df
     }else{
       req(input$data_upload0)
       vals$saved_data[[input$data_upload0]]
-
+      
     }
   })
   output$rda_X<-renderUI({
@@ -10251,11 +9984,11 @@ updateButton(session,"cogs",F)
     dp_w<-if(is.na(input$dp_w)){NULL} else{input$dp_w}
     dp<-DP_smw()
     colnames(dp)[2]<-"SampleID"
-
+    
     sim1o<-getord()
     yo<-data.frame(sim1o$yo)
     bps<-suppressWarnings(bp(dp))
-
+    
     to_split<-c(1,rep(1:(length(bps)+1),
                       diff(c(1,bps, nrow(yo)))))
     splits<-lapply(split(yo,to_split),function(x) rownames(x))
@@ -10264,8 +9997,8 @@ updateButton(session,"cogs",F)
     for(i in 1:length(splits)){
       data_empty[splits[[i]],1]<-i
     }
-
-
+    
+    
     vals$splitBP<- data_empty
     dp
   })
@@ -10277,10 +10010,10 @@ updateButton(session,"cogs",F)
             'tools_saveBP',span("+ Save Breakpoints",icon("fas fa-save"))),"Save breakpoints from DP",
           "this action divides the observations according to the breakpoints and assigns a factor to each split", options=list(container="body")
         )
-
+        
       }
     }
-
+    
   })
   output$fac_bp<-renderUI({
     fluidRow(
@@ -10293,19 +10026,19 @@ updateButton(session,"cogs",F)
     req(input$segrda_symbol_factor)
     col<-getcolhabs(vals$newcolhabs,input$segrda_colpalette,2)
     req(col[1]!=col[2])
-
+    
     if(col[1]!=col[2]){
-
+      
       data = vals$saved_data[[input$data_upload0]]
       attr(data,"factors")[rownames(getord()$yo), input$segrda_symbol_factor]
-
+      
     }else{NULL}
   })
   segrda_text_factor <- reactive({
     if(isFALSE(input$segrda_show_labels)){NULL} else{
       data = vals$saved_data[[input$data_upload0]]
       attr(data,"factors")[rownames(getord()$yo), input$segrda_labfactor]}
-
+    
   })
   output$segrda_X<-renderUI({
     pickerInput("segrda_X",span("X Data", tiphelp("Response data")), choices=names(vals$saved_data)[-which(names(vals$saved_data)%in%input$data_upload0)])
@@ -10314,7 +10047,7 @@ updateButton(session,"cogs",F)
     cur<-input$data_upload0
     updatePickerInput(session,"data_upload0",NULL,choices=names(vals$saved_data), selected=input$segrda_X)
     updatePickerInput(session,"segrda_X",strong("Y Datalist:", tiphelp("Response data")), choices=names(vals$saved_data)[-which(names(vals$saved_data)%in%input$data_upload0)],selected=cur)
-
+    
   })
   output$stats_pdesc<-renderUI({
     column(12,style="background: white;",
@@ -10322,18 +10055,18 @@ updateButton(session,"cogs",F)
            column(12,
                   splitLayout(
                     column(12,
-
+                           
                            p(strong("Aggregate:"),popify(a(icon("fas fa-question-circle")),
                                                          "Aggregate","The process involves two stages. First, collate individual cases of the Data-Attribute together with a grouping variable (unselected factors). Second, perform which calculation you want on each group of cases (selected factors)", options=list(container="body"))),
-
+                           
                            p(em(input$data_upload0,"::","Factor-Attribute::", style="color: gray")),
                            checkboxGroupInput('fac_descs', NULL, choices=colnames(
                              attr(getdata_upload0(),"factors")), selected = colnames(
                                attr(getdata_upload0(),"factors"))[1:(length(colnames(
                                  attr(getdata_upload0(),"factors")))-1)])
-
+                           
                     ),
-
+                    
                     column(12,
                            selectInput("spread_measures","function:",choices=c("sum","mean","median","var","sd","range","min","max"), selectize=T, selected="mean"),
                            popify(bsButton("tools_saveagg", icon("fas fa-file-signature"),style  = "button_active", type="action",value=FALSE, block=T),NULL,
@@ -10342,12 +10075,12 @@ updateButton(session,"cogs",F)
                     )
                   )
            ),
-
-
+           
+           
            column(12,style="overflow-x: scroll;height:250px;overflow-y: scroll;",uiOutput("desc_dataout"))
     )
   })
-
+  
   output$panel_main<-renderUI({
     req(input$data_upload0)
     # border_alert<-border_alert()
@@ -10374,7 +10107,7 @@ updateButton(session,"cogs",F)
                                  style="color: #05668D",
                                  uiOutput('omds_dist'),
                                  uiOutput('mds_options')
-
+                                 
                                )
                              ),
                              mainPanel(
@@ -10393,7 +10126,7 @@ updateButton(session,"cogs",F)
                                  style="color: #05668D",
                                  uiOutput('opca_biplot'),
                                  uiOutput('pca_options')
-
+                                 
                                )
                              ),
                              mainPanel(
@@ -10413,7 +10146,7 @@ updateButton(session,"cogs",F)
                                  style="color: #05668D",
                                  uiOutput('orda_options'),
                                  uiOutput('rda_options')
-
+                                 
                                )
                              ),
                              mainPanel(
@@ -10426,7 +10159,7 @@ updateButton(session,"cogs",F)
                          uiOutput("stats_csegrda")
                 )
     )
-
+    
   })
   output$stats_crda<-renderUI({
     validate(need(length(vals$saved_data)>1, "This functionality requires at least two datalist as explanatory and response data."))
@@ -10441,12 +10174,12 @@ updateButton(session,"cogs",F)
              ),
              inline(uiOutput("rda_X"))
            )
-
+           
     )
   })
   output$stats_csegrda<-renderUI({
     validate(need(!anyNA(getdata_upload0()), "This functionality does not support missing values; Please use the transformation tool to the handle missing values."))
-
+    
     validate(need(length(vals$saved_data)>1, "This functionality requires at least two datalist as explanatory and response data."))
     div(style="background: white",
         p(strong("Segmented Redundancy Analysis")),
@@ -10472,13 +10205,13 @@ updateButton(session,"cogs",F)
                                     )),
                            tabPanel("SMW",
                                     uiOutput("segrda_smw")
-
+                                    
                            ),
                            tabPanel("DP",
                                     uiOutput("segrda_dp")
-
+                                    
                            ),
-
+                           
                            tabPanel("pwRDA",
                                     p(strong("Piecewise RDA")),
                                     uiOutput("pw_out")))))
@@ -10487,8 +10220,8 @@ updateButton(session,"cogs",F)
     cur<-input$data_upload0
     updatePickerInput(session,"data_upload0",NULL,choices=names(vals$saved_data), selected=input$rda_X)
     updatePickerInput(session,"rda_X",strong("Y Datalist:", tiphelp("Response data")), choices=names(vals$saved_data)[-which(names(vals$saved_data)%in%input$data_upload0)],selected=cur)
-
-
+    
+    
   })
   output$omds_dist<-renderUI({
     if(is.null(vals$cur_dist_mds)){vals$cur_dist_mds="Choose one"}
@@ -10516,7 +10249,7 @@ updateButton(session,"cogs",F)
              checkboxInput("rda_scale",span("Scale variables",tiphelp("Scale variables to unit variance (like correlations)")), value=T, width = "100px")
         )
       ),
-
+      
       div(
         span("+",
              inline(radioButtons("rda_view",NULL,choices=c(
@@ -10547,7 +10280,7 @@ updateButton(session,"cogs",F)
               ),
               "Download selected results"
             )
-
+            
           )
         )
       }),
@@ -10585,9 +10318,9 @@ updateButton(session,"cogs",F)
                        )
                      )
                    ),
-
-
-
+                   
+                   
+                   
                    div(
                      span("+ Variable Color:",
                           inline(
@@ -10608,7 +10341,7 @@ updateButton(session,"cogs",F)
           })
         )
       })
-
+      
     )
   })
   output$mds_options<-renderUI({
@@ -10675,9 +10408,9 @@ updateButton(session,"cogs",F)
         actionLink(
           'mds_downp',span("+ Download",icon("fas fa-download")), style="button_active"
         )
-
+        
       )
-
+      
     )
   })
   output$mds_fac_palette<-renderUI({
@@ -10766,9 +10499,9 @@ updateButton(session,"cogs",F)
         actionLink(
           'pca_downp',span("+ Download",icon("fas fa-download")), style="button_active"
         )
-
+        
       )
-
+      
     )
   })
   output$pca_fac_palette<-renderUI({
@@ -10790,7 +10523,7 @@ updateButton(session,"cogs",F)
     if(isFALSE(input$pca_show_labels)){NULL} else{
       data = getdata_upload0()
       attr(data,"factors")[rownames(data), input$pca_labfactor]}
-
+    
   })
   pca_symbol<-reactive({
     if(isFALSE(input$pca_show_symbols)){NA}else{as.numeric(input$pca_symbol)}
@@ -10859,9 +10592,9 @@ updateButton(session,"cogs",F)
         actionLink(
           'rda_downp',span("+ Download",icon("fas fa-download")), style="button_active"
         )
-
+        
       )
-
+      
     )
   })
   output$rda_fac_palette<-renderUI({
@@ -10883,7 +10616,7 @@ updateButton(session,"cogs",F)
     if(isFALSE(input$rda_show_labels)){NULL} else{
       data = getdata_upload0()
       attr(data,"factors")[rownames(data), input$rda_labfactor]}
-
+    
   })
   rda_symbol<-reactive({
     if(isFALSE(input$rda_show_symbols)){NA}else{as.numeric(input$rda_symbol)}
@@ -10908,7 +10641,7 @@ updateButton(session,"cogs",F)
     psummary(data)
   },striped=T, spacing ="xs")
   output$plotoutput <- renderImage({
-
+    
     fheight <- input$fheight
     fwidth <- input$fwidth
     fres <- as.numeric(input$fres)
@@ -10934,29 +10667,26 @@ updateButton(session,"cogs",F)
     if(vals$hand_plot=="BMUs predictions"){replayPlot(vals$bmus_pred_plot)}
     if(vals$hand_plot=="property plot") {replayPlot(vals$pprop_plot)}
     if(vals$hand_plot=="Dendrogram") {replayPlot(vals$pdend_plot)}
-
-    if(vals$hand_plot=="screeplot_accRF data"){
-      plot_accuclus(accRFdata(), sugg = sugg_accRF_data())}
-    if(vals$hand_plot=="screeplot_accRF som"){
-      plot_accuclus(accRFmodel(), sugg = sugg_accRF_model())}
+    
+    
     if(vals$hand_plot=="screeplot_WSS data"){
       elbow_plot(WSSdata(), sugg = sugg_WSS_data())}
     if(vals$hand_plot=="screeplot_WSS som"){
       elbow_plot(WSSmodel(), sugg = sugg_WSS_model())}
-
+    
     if(vals$hand_plot=="Hcut"){hc_plot(phc())}
-
+    
     if(vals$hand_plot=="codebook clusters"){replayPlot(vals$pclus_plot)}
     if(vals$hand_plot=="Minimal Depth distribution"){plot(vals$rfd_res)}
-
+    
     if(vals$hand_plot=="Multi-way importance"){
       plot(vals$rfm_res)
     }
     if(vals$hand_plot=="RF - Partial Dependence"){
       plot(rfbiplot1$df)
     }
-
-
+    
+    
     if(vals$hand_plot=="Decision Tree") {replayPlot(vals$ptree_plot)}
     if(vals$hand_plot=="Map"){
       if(input$saved_maps=="new map"){plot(vals$map_res)} else{
@@ -10978,10 +10708,10 @@ updateButton(session,"cogs",F)
     if(vals$hand_plot=="RF interactions"){plot(rf_inter$df)}
     if(vals$hand_plot=="RF ranking comparations"){replayPlot(rf_rank$df)}
     if(vals$hand_plot=="RF measure comparations"){replayPlot(rf_rel$df)}
-
-
+    
+    
     dev.off()
-
+    
     return(list(src = paste0(vals$hand_plot,".png",sep=""),
                 contentType = "image/png",
                 width = round((input$fwidth*as.numeric(input$fres))/2.54, 0),
@@ -10998,12 +10728,12 @@ updateButton(session,"cogs",F)
     data=getdata_upload0()
     factors<-data[,unlist(lapply(data,is.factor))]
     numerics<-data[,unlist(lapply(data,is.numeric))]
-
+    
     d=1:ncol(data)
     res<-split(d, ceiling(seq_along(d)/50))
     options_num<-lapply(res,function (x) range(x))
     options_show=as.vector(do.call(c,lapply(options_num, function(x) paste(x[1], x[2], sep = "-"))))
-
+    
     fluidRow(
       column(12,
              splitLayout(cellWidths = c("10%","90%"),
@@ -11014,19 +10744,19 @@ updateButton(session,"cogs",F)
       column(12,renderPrint(class(getdata_upload0()))),
       column(12,plotOutput("summ_num", height = '700px'))
     )
-
-
-
+    
+    
+    
   })
   output$stats_fac <- renderUI({
     column(12,
            column(12,
-
+                  
                   h5(strong("Factors:")),
                   h5(strong("Structure:")),
                   verbatimTextOutput('strlabels'),
-
-
+                  
+                  
            ),
            column(12,
                   column(12,actionButton('downp_stats_fac',icon("fas fa-image"),icon("fas fa-download"), style="button_active")),
@@ -11038,16 +10768,16 @@ updateButton(session,"cogs",F)
                  min = 1,
                  max = 13,
                  {
-
+                   
                    nas=sum(is.na(unlist(data)))
                    incProgress(1)
-
+                   
                    n=data.frame(rbind(Param=paste('Missing values:', nas)))
                    incProgress(1)
                    a<-data.frame(rbind(Param=paste('nrow:', nrow(data)),paste('ncol:', ncol(data))))
                    incProgress(1)
-
-
+                   
+                   
                    ppsummary("-------------------")
                    incProgress(1)
                    ppsummary(n)
@@ -11056,11 +10786,11 @@ updateButton(session,"cogs",F)
                    ppsummary(a)
                    ppsummary("-------------------")
                    incProgress(1)
-
-
+                   
+                   
                  })
-
-
+    
+    
   })
   output$summ_num<-renderPlot({
     data=getdata_upload0()
@@ -11068,11 +10798,11 @@ updateButton(session,"cogs",F)
     res<-split(d, ceiling(seq_along(d)/50))
     options_num<-lapply(res,function (x) range(x))
     options_show=as.vector(do.call(c,lapply(options_num, function(x) paste(x[1], x[2], sep = "-"))))
-
-
+    
+    
     options_num_sel<-options_num[[which(options_show==input$splitdata)]]
-
-
+    
+    
     data<-data[,options_num_sel[1]:options_num_sel[2], drop=F]
     str_numerics(data)
     vals$varplot<-recordPlot()
@@ -11081,7 +10811,7 @@ updateButton(session,"cogs",F)
     data=getdata_upload0()
     factors<-data[,unlist(lapply(data,is.factor))]
     str_factors(factors,newcolhabs=vals$newcolhabs)
-
+    
   })
   mds.reactive <- reactive({
     req (input$distance %in%c("bray","euclidean","jaccard"))
@@ -11114,18 +10844,18 @@ updateButton(session,"cogs",F)
     }
     vals$pmds_plot<-recordPlot()
     res
-
-
-
-
+    
+    
+    
+    
   })
   output$mdscustom <- renderPlot({plot_mds()})
   output$stats_ppca <- renderUI({
     validate(need(!anyNA(getdata_upload0()), "This functionality does not support missing values; Please use the transformation tool to the handle missing values."))
-
-
+    
+    
     column(12,renderPlot({
-
+      
       suppressWarnings({
         ppca(
           getdata_upload0(),
@@ -11145,9 +10875,9 @@ updateButton(session,"cogs",F)
         )
       })
       vals$ppca_plot<-recordPlot()
-
+      
     }))
-
+    
   })
   output$stats_pmds <- renderUI({
     validate(need(!anyNA(getdata_upload0()), "This functionality does not support missing values; Please use the transformation tool to the handle missing values."))
@@ -11155,7 +10885,7 @@ updateButton(session,"cogs",F)
       column(12,
              column(12,plotOutput("mdscustom")))
     )
-
+    
     res
   })
   res_pfac<-reactive({
@@ -11168,17 +10898,17 @@ updateButton(session,"cogs",F)
     column(
       12, style = "background: white;",
       fluidRow(
-
+        
         column(12,
                h5(strong(
                  "numeric variables:"
                ))),
         column(6, verbatimTextOutput("psummary")),
         column(12,uiOutput("Locate_NA"))
-
-
-
-
+        
+        
+        
+        
       )
     )
   })
@@ -11214,8 +10944,8 @@ updateButton(session,"cogs",F)
                       "Datalist"=datalist_render(getdata_upload0())
     )
     )
-
-
+    
+    
   })
   plotbox<-reactive({
     res <- getbox()
@@ -11253,12 +10983,12 @@ updateButton(session,"cogs",F)
                font_xlab=input$box_xlab_font,
                horizontal=input$box_horiz
     )
-
+    
     vals$pbox_plot<-recordPlot()
     boxp
   })
   labbox<-reactive({
-
+    
     if(isTRUE(input$showout)){data.frame(attr(getdata_upload0(),"factors")[as.character(input$out_label)]
     )} else{
       NULL
@@ -11337,7 +11067,7 @@ updateButton(session,"cogs",F)
                       tipify(numericInput("boxmar_l",NULL,value=5,step=0.1, width="30px"),"left", placement = "right"),
                       tipify(numericInput("boxmar_t",NULL,value=5,step=0.1, width="30px"),"top", placement = "right"),
                       tipify(numericInput("boxmar_r",NULL,value=5,step=0.1, width="30px"),"right", placement = "right"))),
-
+             
              div(span("+",inline(
                checkboxInput("box_horiz","Horizontal",F, width="95px")
              ))),
@@ -11355,11 +11085,11 @@ updateButton(session,"cogs",F)
                  })
                )))
              }),
-
+             
              div(span("+",inline(
                checkboxInput("varwidth","Varwidth",F, width="95px")
              ),tipify(icon("fas fa-question-circle"),"Drawn boxes with widths proportional to the square-roots of the number of observations in the groups", options =list(container="body")))),
-
+             
              div(span("+ Line width:",inline(
                numericInput("box_lwd",NULL,value=1.2,step=0.1, width="75px")
              ))),
@@ -11392,7 +11122,7 @@ updateButton(session,"cogs",F)
                              ))))
                     )
              ),
-
+             
              column(12,
                     fluidRow(
                       div(uiOutput('box_yaxis')),
@@ -11405,14 +11135,14 @@ updateButton(session,"cogs",F)
                              div(span("+ Label size:",inline(
                                numericInput("box_ylab_size",NULL,value=1,step=.1, width="75px")
                              ))),
-
+                             
                              div(span("+ Label-font:",inline(
                                pickerInput("box_ylab_font",NULL,choices=c("plain","bold","italic","bold_italic"), width="80px")
                              ))),
                              div(span("+ Label adjust:",inline(
                                numericInput("box_ylab_adj",NULL,value=3,step=.1, width="75px")
                              ))),
-
+                             
                              div(span("+ Axis size:",inline(
                                numericInput("box_ysize",NULL,value=1,step=.1, width="75px")
                              ))),
@@ -11427,14 +11157,14 @@ updateButton(session,"cogs",F)
                     )
              ),
              column(12,style="border-top: 1px solid #05668D;",
-
+                    
                     span("+ Tick size:",inline(
                       numericInput("box_tick",NULL,value=-0.02,step=0.01, width="75px")
                     ))),
              column(12,style="border-top: 1px solid #05668D;",
                     fluidRow(
                       div(
-
+                        
                         span("+",inline(
                           checkboxInput("showboxleg","Show legend:",F, width="95px")
                         ))),
@@ -11454,27 +11184,27 @@ updateButton(session,"cogs",F)
                       actionLink(
                         'downp_box',span("+ Download",icon("fas fa-download")), style="button_active"
                       )
-
+                      
                     ))
-
-
+             
+             
     )
-
+    
   })
   output$box_y_rotation<-renderUI({
     req(isFALSE(input$box_horiz))
     div(span("+ Axis rotation:",inline(
       pickerInput("box_srt_y",NULL,choices=c("horizontal","vertical"), width="75px")
     )))
-
+    
   })
   observeEvent(input$box_horiz,{
     if(isTRUE(input$box_horiz)){
-
+      
       #updateNumericInputIcon(session,"box_xlab.adj", value=200)
       updateNumericInputIcon(session,"box_xlab_adj", value=5)
       updateNumericInputIcon(session,"boxmar_l", value=7)
-
+      
     }
   })
   output$box_xaxis<-renderUI({
@@ -11500,16 +11230,16 @@ updateButton(session,"cogs",F)
     } else{
       x<-input$box_y
       y<-input$box_factor
-
+      
     }
     a<-paste(y,"~",x)
     if(input$filter_box1!='none'){b=paste0("[",input$filter_box1,"::",input$filter_box2,"]")} else{b=NULL}
     paste(a,b)
   })
-
+  
   output$stats_rda<-renderUI({
     validate(need(!anyNA(getdata_upload0()), "This functionality does not support missing values; Please use the transformation tool to the handle missing values."))
-
+    
     column(12,style="background: white;",
            column(12,uiOutput("rda_out"))
     )
@@ -11553,7 +11283,7 @@ updateButton(session,"cogs",F)
     )
     vals$rda_plot<-recordPlot()
     rda
-
+    
   })
   output$rda_out<-renderUI({
     req(input$rda_view)
@@ -11568,12 +11298,12 @@ updateButton(session,"cogs",F)
                 "Observation scores"=res$sites,
                 "Linear constraints"=res$constraints,
                 "Biplot"=res$biplot,
-
+                
                 "Importance (unconstrained)"=res$cont$importance,
                 "Importance (constrained)"=res$concont$importance
-
+                
     )
-
+    
     res[,1:input$rda_axes]
   })
   output$rda_print<-renderPrint({  rda_summary()})
@@ -11596,11 +11326,11 @@ updateButton(session,"cogs",F)
         sim1o$yo<-x
       }
     sim1o
-
+    
   })
   output$ord_segrda<-renderUI({
     req(isTRUE(input$segrda_ord))
-
+    
     fluidRow(
       renderPlot({
         sim1o<-getord()
@@ -11652,7 +11382,7 @@ updateButton(session,"cogs",F)
         actionButton("remove_windows",tipify(icon("fas fa-eraser"),"restart"), style="button_active")
       )
     )
-
+    
   })
   output$segrda_smw<-renderUI({
     div(
@@ -11669,8 +11399,8 @@ updateButton(session,"cogs",F)
           )
         }))
       ),
-
-
+      
+      
       sidebarLayout(
         sidebarPanel(uiOutput('side_smw'),
                      br(),
@@ -11678,12 +11408,12 @@ updateButton(session,"cogs",F)
                          actionButton("go_smw",strong( img(src=smw_icon,height='20',width='20'),"run SMW"), style="button_active")
                      )
         ),
-
-
+        
+        
         mainPanel( uiOutput("go_smw")),
       )
-
-
+      
+      
     )
   })
   output$side_smw<-renderUI({
@@ -11710,16 +11440,16 @@ updateButton(session,"cogs",F)
                 )
               ),
               if(length(vals$smw_dp)>0){
-
+                
                 tipify(
                   actionLink(
                     'downp_we',span("+ Download",icon("fas fa-download")), style="button_active"
                   ),
                   "Download plot", options=list(container="body")
                 )
-
+                
               }
-
+              
     )
   })
   bag_smw<-reactiveValues(df=F)
@@ -11729,9 +11459,9 @@ updateButton(session,"cogs",F)
     sim1o<-getord()
     xo<-sim1o$xo ## ordered explanatory matrix.
     yo<-sim1o$yo ## ordered community matrix (untransformed)
-
+    
     y=yo;ws=getpool(); dist=input$smw_dist;rand=input$smw_rand;n.rand=input$smw_nrand
-
+    
     if (n.rand < 2) {
       stop("number of randomizations not alowed")
     }
@@ -11741,8 +11471,8 @@ updateButton(session,"cogs",F)
     rand <- match.arg(rand, c("shift", "plot"))
     argg <- c(as.list(environment()), list())
     smw <- list()
-
-
+    
+    
     withProgress(message = paste0("SMW analysis (", 1, "/", length(ws), "); w =",
                                   ws[1]),
                  min = 1,
@@ -11758,22 +11488,22 @@ updateButton(session,"cogs",F)
                                   max = n.rand,{
                                     for (b in 1:n.rand) {
                                       if (rand == "shift") {
-
+                                        
                                         comm.rand <- apply(yo, 2, function(sp) sp[sample(seq_yo)])
                                         rdp[b] <- smw.root2(data.frame(comm.rand),
                                                             w1, dist)[3]
-
+                                        
                                       } else if (rand == "plot") {
-
+                                        
                                         comm.rand <- t(apply(yo, 1, function(sp) sp[sample(seq_yo)]))
                                         rdp[b] <- smw.root2(data.frame(comm.rand),
                                                             w1, dist)[3]
                                       }
-
+                                      
                                       incProgress(1)
                                     }
                                   })
-
+                     
                      rownames(rdp) <- DPtable[,1]
                      Dmean <- apply(rdp, 1, mean)
                      SD <- apply(rdp, 1, sd)
@@ -11788,34 +11518,34 @@ updateButton(session,"cogs",F)
                                                    ws[j+1]))
                    }
                  })
-
-
+    
+    
     names(smw) <- paste("w", ws, sep = "")
     class(smw) <- c("smw")
     vals$smw_dp<-isolate(smw)
-
+    
   })
   output$go_smw<-renderUI({
     validate(need(length(vals$smw_dp)==length(getpool()),"Please click 'run SMW' button"))
     validate(need(!is.null(getpool()),"The window pool is empty. Use the arrow button to include the window sizes"))
     validate(need(length(vals$smw_dp)>0,"Please click 'run SMW' button"))
-
-
-
+    
+    
+    
     fluidRow(
       column(12,
              uiOutput("smw_warning"),
              renderPlot({
-
-
-
+               
+               
+               
                if(length(getpool())>1){w.effect=TRUE
                main="Window size effect"} else{w.effect=F
                main="Dissimilary Profile"}
-
+               
                suppressWarnings(plot( vals$smw_dp, w.effect =w.effect  , main=main))
                vals$plot_we<-recordPlot()
-
+               
              })
       )
     )
@@ -11828,7 +11558,7 @@ updateButton(session,"cogs",F)
   })
   max_seq<-reactive({
     validate(need(any(DP_smw()[,5]!='ns'),"DP without any significant dissimilarity value: no breakpoint could be determined."))
-
+    
     df<-DP_smw()[,c(1,5)]
     colnames(df)<-c("a","b")
     new=transform(df, Counter = ave(a, rleid(b), FUN = seq_along))
@@ -11837,9 +11567,9 @@ updateButton(session,"cogs",F)
       min( new[new[,2]=="*",3][new[new[,2]=="*",3]!=1])} else{
         min(new[new[,2]=="*",3])
       }
-
-
-
+    
+    
+    
     max_seq
   })
   output$plot_dp<-renderPlot({
@@ -11847,7 +11577,7 @@ updateButton(session,"cogs",F)
     if(bag_smw$df==T){
       updateNumericInput(session,"dp_seq.sig", value=attr(max_seq,"min"))
       bag_smw$df<-F}
-
+    
     validate(need(input$dp_seq.sig<=max_seq,paste(
       "DP shows '", sum(DP_smw()[,5]!="ns"),"' significant dissimilarity values but no breakpoint could be determined for seq.sig='",input$dp_seq.sig,"The maximum value for this input must be","max_seq"
     )))
@@ -11862,12 +11592,12 @@ updateButton(session,"cogs",F)
              seq.sig=input$dp_seq.sig, bg= getcolhabs(vals$newcolhabs,input$dp_palette,nlevels(as.factor(vals$splitBP[,1]))),bg_alpha=input$dp_bg,cols=c(getcolhabs(vals$newcolhabs,input$dp_dcol,1),getcolhabs(vals$newcolhabs,input$dp_scol,1),getcolhabs(vals$newcolhabs,input$dp_bcol,1)))
       )
     )
-
+    
     if(isTRUE(updp$df)){
       updateTabsetPanel(session,'segrda_panels','pwRDA')
       updp$df<-F
     }
-
+    
     vals$plot_dp<-recordPlot()
   })
   DP_smw<-reactive({
@@ -11904,12 +11634,12 @@ updateButton(session,"cogs",F)
       w[which(( w %% 2) != 0)]<-w[which(( w %% 2) != 0)]+1} else{
         w<-vals$segrda_windows
       }
-
+    
     w
-
+    
   })
   output$side_dp<-renderUI({
-
+    
     validate(need(length(vals$smw_dp)>0,"You need to run SMW analysis first"))
     fluidRow(
       class="map_control_style",style="color: #05668D",
@@ -11981,7 +11711,7 @@ updateButton(session,"cogs",F)
                                 )
                            )
                          ),
-
+                         
                          div(
                            span("+ size",
                                 inline(
@@ -11989,7 +11719,7 @@ updateButton(session,"cogs",F)
                                 )
                            )
                          ),
-
+                         
                          div(
                            span("+ diss col",
                                 inline(
@@ -12020,7 +11750,7 @@ updateButton(session,"cogs",F)
                                 )
                            )
                          ),
-
+                         
                          div(
                            span("+ bg",
                                 inline(numericInput("dp_bg", NULL,value=0.5,min=0,max=1,step=0.05, width="75px"))
@@ -12035,7 +11765,7 @@ updateButton(session,"cogs",F)
                        )
       )
     )
-
+    
   })
   output$segrda_dp<-renderUI({
     validate(need(length(vals$smw_dp)>0,"You need to run SMW analysis first"))
@@ -12054,11 +11784,11 @@ updateButton(session,"cogs",F)
           })
         )
       )
-
-
-
-
-
+      
+      
+      
+      
+      
     )
   })
   observeEvent(input$tools_saveBP,{
@@ -12086,7 +11816,7 @@ updateButton(session,"cogs",F)
         title="index for extracting SMW results"
       )
     )
-
+    
   })
   observeEvent(input$dp_sig_help,{
     showModal(
@@ -12096,14 +11826,14 @@ updateButton(session,"cogs",F)
                p(strong("sd:"),span("consider dissimilarity discontinuities that exceed mean plus one standard deviation")),
                p(strong("sd2:"),span("consider dissimilarity discontinuities that exceed mean plus two standard deviation")),
                p(strong("tail1:"),span("Consider dissimilarity discontinuities that exceed 95 percent confidence limits"))
-
+               
         ),
         easyClose = T,
         size="m",
         title="Significance test fort the SMW results"
       )
     )
-
+    
   })
   observeEvent(input$inc_bp,{
     vals$bag_user_bp<-c(vals$bag_user_bp,input$pw_user)
@@ -12113,7 +11843,7 @@ updateButton(session,"cogs",F)
     req(!isFALSE(vals$splitBP))
     suppressWarnings(bp(getDP()))})
   output$pw_out<-renderUI({
-
+    
     div(
       span(
         inline(
@@ -12144,19 +11874,19 @@ updateButton(session,"cogs",F)
                 )
               )
             )
-
+            
           })
         ),
-
-
+        
+        
         inline(numericInput('pw_nrand', 'n.rand', value=99, width="75px")),
         inline(actionButton("run_pwrda",strong(img(src=pw_icon,height='20',width='20'),"run pwRDA"), style="button_active"))
-
+        
       ),
-
+      
       uiOutput('pwRDA_out')
-
-
+      
+      
     )
   })
   observeEvent(input$remove_breaks,{
@@ -12213,7 +11943,7 @@ updateButton(session,"cogs",F)
                        ),
                        "Download selected results", options=list(container="body")
                      )
-
+                     
                    )
                  )
                }),
@@ -12251,9 +11981,9 @@ updateButton(session,"cogs",F)
                                 )
                               )
                             ),
-
-
-
+                            
+                            
+                            
                             div(
                               span("+ Variable Color:",
                                    inline(
@@ -12263,7 +11993,7 @@ updateButton(session,"cogs",F)
                             )
                      )
                    }),
-
+                   
                    div(
                      span("+",
                           inline(checkboxInput('segrda_show_symbols',"Symbol" ,T, width='75px')))),
@@ -12297,7 +12027,7 @@ updateButton(session,"cogs",F)
                             div(span("+ Factor:",
                                      inline(tipify(pickerInput("segrda_labfactor",NULL,choices = colnames(attr(getdata_upload0(),"factors")), width="125px"),  "label classification factor")
                                      ))),
-
+                            
                             div(span("+ Lab Color:",
                                      inline(tipify(
                                        pickerInput(
@@ -12320,7 +12050,7 @@ updateButton(session,"cogs",F)
                                      inline(
                                        tipify(numericInput("segrda_cextext",NULL,value = 1,min = 0.1,max = 3,step = .1),  "label text size")
                                      )))
-
+                            
                      )
                    }),
                    div(
@@ -12337,16 +12067,16 @@ updateButton(session,"cogs",F)
   output$fac_palette_pw<-renderUI({
     col<-getcolhabs(vals$newcolhabs,input$segrda_colpalette,2)
     req(col[1]!=col[2])
-
+    
     div(
       span("+ Factor:",
            inline(tipify(pickerInput("segrda_symbol_factor",NULL,choices = rev(colnames(attr(getdata_upload0(),"factors"))), width='125px'), "symbol classification factor"))))
   })
   observeEvent(input$run_pwrda,{
-
+    
     output$ppwRDA<-renderPlot({
       req(length(segrda_model()$rda.pw)>0)
-
+      
       segrda<-prda(segrda_model()$rda.pw,
                    key = segrda_symbol_factor(),
                    points =input$segrda_show_symbols,
@@ -12361,7 +12091,7 @@ updateButton(session,"cogs",F)
                    n.sp=input$segrda_spnum,
                    sp.display=input$segrda_sp_display,
                    pch.sp=as.numeric(input$segrda_spshape),
-
+                   
                    col.sp=getcolhabs(vals$newcolhabs,input$segrda_spcolor,1),
                    textcolor=input$segrda_labcolor,
                    scaling=input$segrda_scaling,
@@ -12371,7 +12101,7 @@ updateButton(session,"cogs",F)
       )
       vals$seg_rda_plot<-recordPlot()
       segrda
-
+      
     })
   })
   segrda_symbol<-reactive({
@@ -12386,7 +12116,7 @@ updateButton(session,"cogs",F)
   segrda_model<-eventReactive(input$run_pwrda,{
     validate(need(length(getBP())>0, "No breakpoints found"))
     sim1o<-getord()
-
+    
     model=suppressMessages(
       pwRDA2(sim1o$xo,sim1o$yo , BPs=getBP(),n.rand = input$pw_nrand)
     )
@@ -12400,12 +12130,12 @@ updateButton(session,"cogs",F)
                 "Observation scores"=res$sites,
                 "Linear constraints"=res$constraints,
                 "Biplot"=res$biplot,
-
+                
                 "Importance (unconstrained)"=res$cont$importance,
                 "Importance (constrained)"=res$concont$importance
-
+                
     )
-
+    
     res[,1:input$segrda_axes]
   })
   output$segrda_print<-renderPrint({  segrda_summary()})
@@ -12424,8 +12154,8 @@ updateButton(session,"cogs",F)
   output$desc_facout<-renderUI({
     factors<-attr(getdata_upload0(),"factors")
     facs<-colnames(factors)
-
-
+    
+    
     colla<-factors[,facs[which(!facs%in%input$fac_descs)]]
     list(
       column(12,strong("Aggregated by:")),
@@ -12456,13 +12186,13 @@ updateButton(session,"cogs",F)
     df<-dfnum
     df<-data_migrate(data,df,"Aggregated_results")
     rownames(dffac)<-rownames(df)
-
-
+    
+    
     attr(df,"factors")<-dffac
     attr(df,"coords")<-coords
-
+    
     #if(anyNA(df)){df<-"Requires groups with at least two counts "}
-
+    
     df
   })
   output$stats_pbox<-renderUI({
@@ -12471,7 +12201,7 @@ updateButton(session,"cogs",F)
     )
   })
   output$strlabels <- renderPrint({
-
+    
     ppsummary("----------------")
     ppsummary(paste("Missing values:",sum(is.na(attr(getdata_upload0(),"factors")))))
     ppsummary("----------------")
@@ -12479,19 +12209,19 @@ updateButton(session,"cogs",F)
   })
   fn_download <- function()
   {
-
+    
     fheight <- input$fheight
     fwidth <- input$fwidth
     fres <- as.numeric(input$fres)
-
+    
     if(input$fformat=="pdf") fheight <- round(fheight*0.3937,2)
     if(input$fformat=="pdf") fwidth <- round(fwidth*0.3937,2)
-
+    
     if(input$fformat=="png") png(fn_downloadf(), height=fheight, width=fwidth, res=fres, units="cm", pointsize = input$pointsize)
     if(input$fformat=="tiff") tiff(fn_downloadf(), height=fheight, width=fwidth, res=fres, units="cm",compression="lzw", pointsize = input$pointsize)
     if(input$fformat=="jpeg") jpeg(fn_downloadf(), height=fheight, width=fwidth, res=fres, units="cm",quality=100, pointsize = input$pointsize)
     if(input$fformat=="pdf") pdf(fn_downloadf(), height=fheight, width=fwidth, pointsize = input$pointsize)
-
+    
     switch (vals$hand_plot,
             "variable summary" = {
               data=getdata_upload0()
@@ -12505,7 +12235,7 @@ updateButton(session,"cogs",F)
             "histogram" ={
               phist(getdata_upload0())
             },
-
+            
             "boxplot" ={replayPlot(vals$pbox_plot)},
             "pca"= {replayPlot(vals$ppca_plot)},
             "mds"= {replayPlot(vals$pmds_plot)},
@@ -12516,10 +12246,8 @@ updateButton(session,"cogs",F)
             "BMUs predictions"={replayPlot(vals$bmus_pred_plot)},
             "property plot"={replayPlot(vals$pprop_plot)},
             "Dendrogram"={replayPlot(vals$pdend_plot)},
-            "screeplot_accRF data"={
-              plot_accuclus(accRFdata(), sugg = sugg_accRF_data())},
-            "screeplot_accRF som"={
-              plot_accuclus(accRFmodel(), sugg = sugg_accRF_model())},
+            
+            
             "screeplot_WSS data"={
               elbow_plot(WSSdata(), sugg = sugg_WSS_data())},
             "screeplot_WSS som"={
@@ -12551,8 +12279,8 @@ updateButton(session,"cogs",F)
             "RF - Partial Dependence"=plot(rfbiplot1$df)
     )
   }
-
-
+  
+  
   getbox <- reactive({
     req(input$box_factor)
     req(input$box_y)
@@ -12562,20 +12290,20 @@ updateButton(session,"cogs",F)
     pic<-1:nrow(data)
     x <- labels[input$box_factor]
     y <- data[input$box_y]
-
+    
     if (input$filter_box1 != "none") {
       filtro <- as.character(input$filter_box1)
       filtro2 <- as.character(input$filter_box2)
       pic <- which(as.character(labels[, filtro]) == filtro2)
-
-
+      
+      
     }
     res = cbind(x,y)[pic,]
     res[,1]<-factor(res[,1])
     res
   })
-
-
+  
+  
   getdown<-reactive({
     switch(vals$hand_down,
            "data"=vals$saved_data[[input$data_bank]],
@@ -12587,12 +12315,7 @@ updateButton(session,"cogs",F)
            "pcorr"=vals$pcorr_results,
            "screeplot_WSS data"=WSSdata(),
            "screeplot_WSS som"=WSSmodel(),
-           "screeplot_accRF data"={
-             rfs<-accRFdata()
-             rfs$acutable},
-           "screeplot_accRF som"={
-             rfs<-accRFmodel()
-             rfs$acutable},
+           
            "rda"={data.frame(rda_summary())},
            "segRDA"={data.frame(segrda_summary())},
            "DP smw"={data.frame(DP_smw())},
@@ -12612,19 +12335,17 @@ updateButton(session,"cogs",F)
            ),
            "RF table classification"=data.frame(rf_tableClass()),
            "RF table Regression"=data.frame(rf_tableReg()),
-
+           
     )
   })
-
-
-
+  
+  
+  
   outputOptions(output, "side_map00", suspendWhenHidden = FALSE)
   outputOptions(output, "plot_data_WSS", suspendWhenHidden = FALSE)
   outputOptions(output, "plot_model_WSS", suspendWhenHidden = FALSE)
-  outputOptions(output, "plot_data_accRF", suspendWhenHidden = FALSE)
-  outputOptions(output, "plot_model_accRF", suspendWhenHidden = FALSE)
-
-  ########################
+  
+  
   tunesom<-reactiveValues(
     finetopo=F,
     finesom=F,
@@ -12644,8 +12365,8 @@ updateButton(session,"cogs",F)
     topo="hexagonal",
     sugtopo=T
   )
-
-
+  
+  
   observeEvent(  list(getdata_som(),input$sugtopo),{
     req(input$tabs=="menu_som")
     req(input$sugtopo)
@@ -12664,10 +12385,10 @@ updateButton(session,"cogs",F)
       } else{
         updateCheckboxInput(session, "sugtopo", NULL, TRUE)
       }
-
+      
     }
   })
-
+  
   observeEvent(input$ydim, {
     if (length(   names(vals$saved_data)) > 0) {
       dim = topo.reactive()
@@ -12677,21 +12398,21 @@ updateButton(session,"cogs",F)
       } else {
         updateCheckboxInput(session, "sugtopo", NULL, TRUE)
       }
-
-
+      
+      
     }
   })
-
+  
   topo.reactive <- reactive({
     req(input$tabs=="menu_som")
     req(input$som_test_pick)
-
+    
     topology(getdata_som(), dist = input$distmethod)
   })
-
+  
   getdata_som<-reactive({
-
-req(input$tabs=="menu_som")
+    
+    req(input$tabs=="menu_som")
     req(input$data_som)
     data_o<-data<-vals$saved_data[[input$data_som]]
     factors<-attr(data,"factors")
@@ -12708,11 +12429,11 @@ req(input$tabs=="menu_som")
         attr(data,"test_data")<-data_o[-trains,]
       }
     }
-
+    
     validate(need(length(data)>0,"no data found"))
     attr(data,"test_data")<-data
-
- data
+    
+    data
   })
   predsom.reactive<-reactive({
     checkpredsom()
@@ -12723,7 +12444,7 @@ req(input$tabs=="menu_som")
                     value = "predsom_tab01",
                     uiOutput("pred_som_results")
                   ),
-
+                  
                   tabPanel(
                     strong("3.2. BMUs"),style="background: white",
                     value = "predsom_tab03",
@@ -12733,7 +12454,7 @@ req(input$tabs=="menu_som")
                     strong("3.3. Property"),style="background: white",
                     value = "predsom_tab04",
                     uiOutput("pred_property"))
-
+                  
       )
     } else{
       tabsetPanel(id="predsom_tab",
@@ -12742,7 +12463,7 @@ req(input$tabs=="menu_som")
                     value = "predsom_tab01",
                     uiOutput("pred_som_results")
                   ),
-
+                  
                   tabPanel(
                     strong("3.2. BMUs"),style="background: white",
                     value = "predsom_tab03",
@@ -12762,8 +12483,8 @@ req(input$tabs=="menu_som")
       )
     }
   })
-
-
+  
+  
   output$side_predsom_cm<-renderUI({
     fluidRow(class="map_control_style",style="color: #05668D",
              div(
@@ -12797,24 +12518,24 @@ req(input$tabs=="menu_som")
                actionLink(
                  'downp_confsom',span("+ Download",icon("fas fa-download"),icon("fas fa-image")), style="button_active"
                )
-
+               
              )
     )
   })
-
+  
   getobs_som<-reactive({
     datalist<-vals$saved_data
     datalist=lapply(datalist,function(x) attr(x,"factors"))
-
+    
     res0<-unlist(
       lapply(datalist, function (x){
         res<-any(colnames(x)%in%names(pred_som()$predictions[-1]))
-
+        
       })
     )
     names(res0[res0==T])
   })
-
+  
   output$predsom_cm<-renderUI({
     column(12, style = "background: Snow;",
            sidebarLayout(
@@ -12823,7 +12544,7 @@ req(input$tabs=="menu_som")
            )
     )
   })
-
+  
   output$predsom_tabs<-renderUI({
     validate(need(length(vals$som_results)>0,"No trained model in selected Datalist"))
     predsom.reactive()})
@@ -12831,10 +12552,10 @@ req(input$tabs=="menu_som")
     fluidRow(
       plotOutput("predsom_confusion"),
       renderPrint(confusionMatrix(get_predsom_cm()))
-
+      
     )
   })
-
+  
   get_predsom_cm<-reactive({
     factors<-attr(vals$saved_data[[input$predsom_newY]],"factors")
     obs<-if(input$sompred_type=="Datalist"){
@@ -12851,13 +12572,13 @@ req(input$tabs=="menu_som")
     vals$conf_som<-res
     res
   })
-
+  
   output$bmu_p_tools<-renderUI({
     column(12,
            fluidRow(
              popify(bsButton("downp_bmu_pred", span(icon("fas fa-download"),icon("fas fa-image")),style = "button_active"),NULL,"download BMU plot",
                     options=list(container="body")
-
+                    
              )
            )
     )
@@ -12873,17 +12594,17 @@ req(input$tabs=="menu_som")
                plotOutput('bmu_pCodes')
              ),
            ))
-
-
+    
+    
   })
-
+  
   output$pop_bmu_p<-renderUI({
     fluidRow(
       class="map_control_style",style="color: #05668D",
       div(span("+ Display:",
                inline(radioButtons("bmu_p_dotlabel", NULL, choices = c("labels", "symbols"),selected=bmu_p_dotlabel$df, inline=T, width="100px"
                ))
-
+               
       )),
       conditionalPanel("input.bmu_p_dotlabel=='labels'",{
         div(span("+ Labels:",inline(
@@ -12913,12 +12634,12 @@ req(input$tabs=="menu_som")
                       label = NULL,
                       choices = df_symbol$val,
                       choicesOpt = list(content = df_symbol$img),
-
+                      
                       selected=bmu_p_symbol$df, width = '75px')
         )))
       })
       ,
-
+      
       div(span("+ Size:", inline(tipify(
         numericInput("bmu_p_symbol_size",NULL,value = vals$bmu_p_symbol_size,min = 0.1,max = 3,step = .1, width = '75px'),"symbol size"
       )))),
@@ -12928,10 +12649,10 @@ req(input$tabs=="menu_som")
                              label = NULL,
                              choices = vals$colors_img$val,
                              choicesOpt = list(content = vals$colors_img$img),
-
+                             
                              selected=bmu_p_bgpalette$df, width = '75px')
                ))),
-
+      
       div(span("+ Transparency:",inline(
         tipify(
           numericInput("bmu_p_bg_transp",NULL,
@@ -12947,10 +12668,10 @@ req(input$tabs=="menu_som")
                     selected= vals$colors_img$val[getsolid_col()] [7], width = '75px')
       )))
     )
-
-
-
-
+    
+    
+    
+    
   })
   bmu_pred_points<-reactive({
     if(bmu_p_dotlabel$df == 'symbols'){ T} else {F}
@@ -12983,7 +12704,7 @@ req(input$tabs=="menu_som")
       )
     )
   })
-
+  
   bmu_p_factors_reac<-reactive({
     factors<-attr(getdata_som(),"factors")
     m<-vals$som_results
@@ -13007,7 +12728,7 @@ req(input$tabs=="menu_som")
       predict=pred_som(),
       alpha_bg=vals$bmu_p_bg_transp,
       border=getcolhabs(vals$newcolhabs,input$bmu_p_border_grid,1),
-
+      
       pred_col=as.character(bmu_p_test$df),
       newcolhabs=vals$newcolhabs
     )
@@ -13029,7 +12750,7 @@ req(input$tabs=="menu_som")
       inline(radioButtons("som_type", NULL, choices=c("Unsupervised", "Supervised"), inline=T, selected=vals$cur_somtype))
     )
   })
-
+  
   observeEvent(input$som_type,{
     vals$cur_somtype<-input$som_type
   })
@@ -13068,64 +12789,64 @@ req(input$tabs=="menu_som")
       p(style="margin-top: -10px",strong("Y:"),em(input$som_type2,";"),em(attr(vals$som_results,"Method"))),
       p(style="margin-top: -10px",strong("Test Partition:"),em(attr(vals$som_results,"test_partition"))),
       p(style="margin-top: -10px",strong("Som-Attribute:"), em(input$som_models)),
-
-
+      
+      
     )
   })
   output$som_inputs<-renderUI({
     div(class='choosechannel',
         div(class="well3",
-          span(strong("X:"), inline(uiOutput("som_x")),
-               inline(uiOutput("som_partition"))
-          )
+            span(strong("X:"), inline(uiOutput("som_x")),
+                 inline(uiOutput("som_partition"))
+            )
         ),
         uiOutput("som_datalist_y"),
-
-
+        
+        
         inline(uiOutput("som_models")),
         inline(uiOutput('save_som')),
         inline(uiOutput("som_cur"))
-
+        
     )
   })
   observeEvent(input$data_som,{
     req(input$som_tab)
     re$df<-input$som_tab
-
+    
   })
-
+  
   observe({
     req(!is.null(re$df))
     if(length(attr(vals$saved_data[[input$data_som]],"som"))>0)
       updateTabsetPanel(session,"som_tab",re$df)
-
+    
   })
-
-
+  
+  
   observeEvent(input$som_tab,{
     vals$cursomtab<-switch(input$som_tab,
                            "som_tab1"="som_tab1",
                            "som_tab2"="som_tab2",
                            "som_tab3"="som_tab3") })
-
-
+  
+  
   output$som_datalist_y<-renderUI({
-   if(is.null(vals$cur_datasomY)){vals$cur_datasomY<-names(vals$saved_data)[1]}
-
+    if(is.null(vals$cur_datasomY)){vals$cur_datasomY<-names(vals$saved_data)[1]}
+    
     req(input$som_type=='Supervised')
     req(input$som_tab=="som_tab1")
     div(strong("Y:"), class="well3",
-      span(
-        inline(
-          div(
-            div("Y Datalist:"),
-            pickerInput("data_somY",NULL, choices =names(vals$saved_data), selected=vals$cur_datasomY, width="250px", options=list(container="body"))
-          )
-        ),
-        inline(uiOutput("som_y")),
-        inline(uiOutput("som_y_sel"))
-
-      ))
+        span(
+          inline(
+            div(
+              div("Y Datalist:"),
+              pickerInput("data_somY",NULL, choices =names(vals$saved_data), selected=vals$cur_datasomY, width="250px", options=list(container="body"))
+            )
+          ),
+          inline(uiOutput("som_y")),
+          inline(uiOutput("som_y_sel"))
+          
+        ))
   })
   output$som_x<-renderUI({
     div(
@@ -13137,12 +12858,12 @@ req(input$tabs=="menu_som")
     req(input$som_tab)
     if(is.null(vals$cur_som_type2)){vals$cur_som_type2<-"Numeric"}
     if(input$som_tab=="som_tab1"){
-
+      
       req(input$som_type=='Supervised')
-div(
-  div("Y Attribute:"),
- div( pickerInput("som_type2",NULL, choices=c("Numeric","Factors"), selected=vals$cur_som_type2, width="100px"))
-)
+      div(
+        div("Y Attribute:"),
+        div( pickerInput("som_type2",NULL, choices=c("Numeric","Factors"), selected=vals$cur_som_type2, width="100px"))
+      )
     }
   })
   output$som_y_sel<-renderUI({
@@ -13178,7 +12899,7 @@ div(
     }
   })
   output$som_test_ref<-renderUI({
-
+    
     req(input$som_test_pick!="None")
     req(input$data_som)
     if(is.null(vals$cur_testsom)){vals$cur_testsom<-1}
@@ -13186,34 +12907,34 @@ div(
     fac<-attr(vals$saved_data[[input$data_som]],"factors")[,input$som_test_pick]
     choices<-levels(fac)
     if(input$som_tab=="som_tab1"){
-     div(
-       div(span("Test reference", tiphelp("choose the level as reference for the test data. Data referring to the level of the chosen factor will not be considered in the training, and can be be later used to generate predictions"))),
-       div(
-         pickerInput("som_test_ref",NULL, choices=choices, selected=vals$cur_testsom,width="150px",)
-       )
-     )} else{NULL}
+      div(
+        div(span("Test reference", tiphelp("choose the level as reference for the test data. Data referring to the level of the chosen factor will not be considered in the training, and can be be later used to generate predictions"))),
+        div(
+          pickerInput("som_test_ref",NULL, choices=choices, selected=vals$cur_testsom,width="150px",)
+        )
+      )} else{NULL}
   })
-
-
+  
+  
   output$som_panels<-renderUI({
     req(length(vals$saved_data)>0)
     div(
-
+      
       tabsetPanel(
-      id = "som_tab",selected=vals$cursomtab,
-      tabPanel(
-        strong("1. Training"), value = "som_tab1",
-        uiOutput("training_panel")
-      ),
-      tabPanel(value = "som_tab2",
-               strong("2. Results"),
-               uiOutput("results_panel")),
-      tabPanel(value = "som_tab3",style="background: white",
-               strong("3. Predict"),
-               uiOutput('predsom_panel'),
-               uiOutput('predsom_tabs')
+        id = "som_tab",selected=vals$cursomtab,
+        tabPanel(
+          strong("1. Training"), value = "som_tab1",
+          uiOutput("training_panel")
+        ),
+        tabPanel(value = "som_tab2",
+                 strong("2. Results"),
+                 uiOutput("results_panel")),
+        tabPanel(value = "som_tab3",style="background: white",
+                 strong("3. Predict"),
+                 uiOutput('predsom_panel'),
+                 uiOutput('predsom_tabs')
+        )
       )
-    )
     )})
   output$som_topo<-renderUI({
     column(12,
@@ -13234,10 +12955,10 @@ div(
                                          ), "Click for more details")))),
                     column(12,
                            withSpinner(type=8,color="SeaGreen",uiOutput("somgridtopo"))
-
+                           
                            ,
                            column(12,
-
+                                  
                                   span(class="finesom_btn",
                                        bsButton("finetopo",tipify(span("Fine tuning*"), "show all parameters available"), type="toggle", value=tunesom$finetopo)
                                   ),
@@ -13245,43 +12966,43 @@ div(
   })
   output$training_panel<-renderUI({
     div(id = "train_tab0",    style = "background: white;",
-             column(12,    style = "background: white;",
-                    column( 12,
-                            splitLayout(
-                              uiOutput("som_topo"),
-                              column(12,br(),
-                                     strong("2.2. Set the training parameters",
-                                            actionLink("supersomhelp", tipify(
-                                              icon("fas fa-question-circle"), "Click for more details"
-                                            ))),
-                                     column(12, style = "background: white;",
-                                            fluidRow(uiOutput("somcontrol")
-
-
-
-                                            ))
-                              )
-                            )
-                    )
-             )
+        column(12,    style = "background: white;",
+               column( 12,
+                       splitLayout(
+                         uiOutput("som_topo"),
+                         column(12,br(),
+                                strong("2.2. Set the training parameters",
+                                       actionLink("supersomhelp", tipify(
+                                         icon("fas fa-question-circle"), "Click for more details"
+                                       ))),
+                                column(12, style = "background: white;",
+                                       fluidRow(uiOutput("somcontrol")
+                                                
+                                                
+                                                
+                                       ))
+                         )
+                       )
+               )
+        )
     )
   })
-
-
+  
+  
   observeEvent(input$finesom,{
     tunesom$finesom<-input$finesom
   })
-
+  
   output$results_panel<-renderUI({
     validate(need(length(vals$som_results)>0,"No trained model in selected Datalist"))
-
-
+    
+    
     validate(need(!is.null(vals$saved_data),"no data found"))
     div(style = "background: WhiteSmoke;",
         tabsetPanel(id="som_res",
                     tabPanel(value= 'train_tab1',"3.1. Parameters",
                              column(12, style = "background: white; margin-top: 10px",
-
+                                    
                                     column(12,
                                            splitLayout(uiOutput('som_errors'),
                                                        div(
@@ -13315,12 +13036,12 @@ div(
         )
     )
   })
-
+  
   output$predsom_panel<-renderUI({
     validate(need(length(vals$som_results)>0,"No trained model in selected Datalist"))
     data=getdata_som()
     test<-attr(vals$som_results,"test_partition")
-
+    
     column(12,style="background: white",
            splitLayout(cellWidths = c("30%",'40%','10%'),
                        if(test!="None"){
@@ -13328,11 +13049,11 @@ div(
                        } else{ radioButtons("sompred_type","New data (X):",choices=c("Datalist"),inline=T) },
                        conditionalPanel("input.sompred_type =='Datalist'",{
                          div(selectInput("predsom_new","Datalist",choices=names(vals$saved_data[getobs_somX()])))})
-
+                       
            )
     )
   })
-
+  
   getobs_somX<-reactive({
     datalist<-vals$saved_data
     m<-vals$som_results
@@ -13344,8 +13065,8 @@ div(
     )
     names(res0[res0==T])
   })
-
-
+  
+  
   output$predsom_var<-renderUI({
     selectInput("predsom_var","variable",colnames(test_som()))
   })
@@ -13355,7 +13076,7 @@ div(
       pred_tab<-vals$saved_data[[input$predsom_new]]}
     pred_tab
   })
-
+  
   checkpredsom<-reactive({
     req(input$predsom_new)
     check<-vals$saved_data[[input$data_som]]
@@ -13365,14 +13086,14 @@ div(
     #validate(need(isTRUE(res0[[input$predsom_new]]),paste("Variables from Datalist",input$predsom_new, "incompatible with the Training data", input$data_som)))
     choices
   })
-
+  
   output$pred_som_results<-renderUI({
-
+    
     #validate(need(res[[input$predsom_new]],"Incompatible variables"))
-
+    
     column(12,style="background: white",
            uiOutput("pred_som_results_control")
-
+           
     )
   })
   output$pred_som_results_control<-renderUI({
@@ -13394,7 +13115,7 @@ div(
       } else{
         cur_predsom_res3$df<-vals$som_results
       }
-
+      
     }
   })
   output$som_pred_results<-renderUI({
@@ -13434,10 +13155,10 @@ div(
                uiOutput("predsom_newY2"),
                uiOutput("pred_som_results_out")
              )
-
+             
            )
-
-
+           
+           
     )
   })
   output$predsom_newY2<-renderUI({
@@ -13452,13 +13173,13 @@ div(
          )
     )
   })
-
+  
   errors_somX_sp<-reactive({
     m<-vals$som_results
     predX<- correctsom()$predX
-
+    
     observed<-newdata_som()
-
+    
     rmse_res<- mse_res<-mape_res<-mae_res<-list()
     for(i in 1:ncol(observed))
     {
@@ -13473,12 +13194,12 @@ div(
     mse<-data.frame(MSE=do.call(c,mse_res))
     rownames(mape)<- rownames(mse)<-rownames(rmse)<-  rownames(mae)<-colnames(observed)
     data.frame(mae=mae,mse=mse,rmse=rmse)
-
+    
   })
   errors_somY_sp<-reactive({
     m<-vals$som_results
     predY<- correctsom()$predY
-
+    
     observed<-newdata_somY()
     rmse_res<- mse_res<-mape_res<-mae_res<-list()
     for(i in 1:ncol(observed))
@@ -13494,47 +13215,47 @@ div(
     mse<-data.frame(MSE=do.call(c,mse_res))
     rownames(mape)<- rownames(mse)<-rownames(rmse)<-  rownames(mae)<-colnames(observed)
     data.frame(mae=mae,mse=mse,rmse=rmse)
-
+    
   })
   errors_somX<-reactive({
     m<-vals$som_results
     predX<- correctsom()$predX
-
+    
     observed<-newdata_som()
     res0<-matrix(NA,nrow(observed),3, dimnames = list(c(rownames(observed)),c('mae','mse','rmse')))
-
-
+    
+    
     for(i in 1:nrow(observed))
     {
-
+      
       res0[i,"mae"]<-mae(as.numeric(observed[i,]),as.numeric(predX[i,]))
       res0[i,"mse"]<-mse(as.numeric(observed[i,]),as.numeric(predX[i,]))
       res0[i,"rmse"]<-rmse(as.numeric(observed[i,]),as.numeric(predX[i,]))
-
-
+      
+      
     }
     res0
-
+    
   })
   errors_somY<-reactive({
     m<-vals$som_results
     predX<- correctsom()$predY
-
+    
     observed<-newdata_somY()
     res0<-matrix(NA,nrow(observed),3, dimnames = list(c(rownames(observed)),c('mae','mse','rmse')))
-
-
+    
+    
     for(i in 1:nrow(observed))
     {
-
+      
       res0[i,"mae"]<-mae(as.numeric(observed[i,]),as.numeric(predX[i,]))
       res0[i,"mse"]<-mse(as.numeric(observed[i,]),as.numeric(predX[i,]))
       res0[i,"rmse"]<-rmse(as.numeric(observed[i,]),as.numeric(predX[i,]))
-
-
+      
+      
     }
     res0
-
+    
   })
   newdata_somY<-reactive({
     req(input$sompred_type)
@@ -13546,12 +13267,12 @@ div(
       }
     newdata
   })
-
+  
   getobs_som2<-reactive({
     datalist<-vals$saved_data
     m<-vals$som_results
-
-
+    
+    
     res0<-unlist(
       lapply(datalist, function (x){
         res<-colnames(x)%in%colnames(m$data[[2]])
@@ -13560,9 +13281,9 @@ div(
     )
     names(res0[res0==T])
   })
-
-
-
+  
+  
+  
   output$savesom_pred<-renderUI({
     req(input$predsom_results=='Data predictions (X)'|input$predsom_results=='Data predictions (Y)'|input$predsom_results=='Obs errors (Y)'|input$predsom_results=='Obs errors (X)')
     div(
@@ -13574,7 +13295,7 @@ div(
       )
     )
   })
-
+  
   correctsom<-reactive({
     som_pred<-pred_som()
     m<-vals$som_results
@@ -13590,8 +13311,8 @@ div(
            div(uiOutput("corrected_predsom_warning")),
            div(uiOutput("dt_predsom_res_va"))
     )})
-
-
+  
+  
   output$dt_predsom_res_va<-renderUI({
     req(length(get_sompred_results())>0)
     validate(need(ncol(get_sompred_results())<1000,"Too big. download the table to view it"))
@@ -13601,8 +13322,8 @@ div(
         DT::dataTableOutput("DT_predsom_res")
       )
     )
-
-
+    
+    
   })
   output$DT_predsom_res<-DT::renderDataTable({
     req(length(get_sompred_results())>0)
@@ -13614,15 +13335,15 @@ div(
     som_pred<-pred_som()
     m<-vals$som_results
     obs=attr(m,"sup_test")
-
+    
     predX<- correctsom()$predX
     predY<- correctsom()$predY
     if(length(predY)>0){
       #colnames(predY)<-gsub("Y.","", colnames(predY))
     }
-
-
-
+    
+    
+    
     res<-switch(input$predsom_results,
                 'BMUs'={
                   bmu<-data.frame(bmu_test=som_pred$unit.classif)
@@ -13637,14 +13358,14 @@ div(
                 "Obs errors (Y)"={data.frame(errors_somY())},
                 "Var errors (X)"={data.frame(errors_somX_sp())},
                 "Var errors (Y)"={data.frame(errors_somY_sp())}
-
+                
     )
     res
   })
-
-
-
-
+  
+  
+  
+  
   newdata_som<-reactive({
     req(input$sompred_type)
     m<-vals$som_results
@@ -13663,7 +13384,7 @@ div(
     attr(som_pred,"coords")<-attr(m,"coords")
     som_pred
   })
-
+  
   predsom_war<-reactiveValues(df=F)
   output$corrected_predsom_warning<-renderUI({
     req(input$sompred_type=="Partition")
@@ -13675,32 +13396,32 @@ div(
     fluidRow("samples", strong(paste0(rownames(attr(correctsom(),"newx")), collapse="; ")),"were allocated to units which no training data were mapped, leading to NA values in the predictions.To avoid the NA values, predictions for these observations were estimated using the neighboring units."
     )
   })
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
   output$pred_property<-renderUI({
-
-
-
+    
+    
+    
     column(12,style="background: white",
-
+           
            uiOutput("predsom_var"),
            plotOutput("predsom_property"))
   })
-
-
+  
+  
   output$predsom_property<-renderPlot({
     req( input$predsom_var)
     som_pred<-pred_som()
     plot(vals$som_results, type = "property", main = input$predsom_var, property = som_pred$unit.predictions[[1]][,input$predsom_var], palette.name=coolBlueHotRed,cex=0.5,shape="straight",keepMargins = TRUE)})
-
+  
   observeEvent(input$sugtopo,{
     tunesom$sugtopo<-input$sugtopo
   })
-
+  
   observeEvent(input$topo,{
     tunesom$topo<-input$topo
   })
@@ -13725,15 +13446,15 @@ div(
   observeEvent(input$neighbourhood.fct,{
     tunesom$neighbourhood.fct<-input$neighbourhood.fct
   })
-
+  
   observeEvent(input$toroidal,{
     tunesom$toroidal<-input$toroidal
   })
-
+  
   observeEvent(input$distmethod,{
     tunesom$distmethod<-input$distmethod
   })
-
+  
   observeEvent(input$xdim,{
     tunesom$xdim<-input$xdim
   })
@@ -13746,8 +13467,8 @@ div(
   observeEvent(input$rlen,{
     tunesom$rlen<-input$rlen
   })
-
-
+  
+  
   somcontrol<-reactive({
     fluidRow(
       column(12,
@@ -13762,7 +13483,7 @@ div(
                numericInput("seed", strong("seed",tipify(icon("fas fa-question-circle"),"A numeric value. If supplied, it ensure that you get the same result if you start with that same seed each time you run the som analysis.")), value =tunesom$seed, min=0, step=1)),
              uiOutput("trainsom")))
   })
-
+  
   output$trainsom<-renderUI({
     if(input$distmethod=="BrayCurtis"){
       validate(need(!anyNA(getdata_som()),"NA values not allowed with BrayCurtis distance"))
@@ -13773,22 +13494,22 @@ div(
                   popify(actionButton("trainSOM", h4(icon("fas fa-braille"),"train SOM",
                                                      icon("fas fa-arrow-circle-right")), style = "background: #05668D; color: white"),"TrainSOM","Train the Data-Attribute from the selected Datalist")),
            column(3, align = "right", actionButton("resetsom", "reset")),
-
+           
            column(12,
                   span(class="finesom_btn",
                        tipify(bsButton("finesom","Fine tuning*", type="toggle", value=tunesom$finesom),"show all parameters available")
                   )),
            column(12,uiOutput("finetuning_som"))
     )
-
+    
   })
-
+  
   observeEvent(input$data_som,{
     if(anyNA(getdata_som())){
       updateSelectInput(session,"distmethod")
     }
   })
-
+  
   output$finetuning_som<-renderUI({
     req(isTRUE(input$finesom))
     div(id="finesom_out",
@@ -13799,7 +13520,7 @@ div(
           numericInput(inputId = "r2",label = "r2",value = tunesom$r2,step = 0.01 )),
         splitLayout(selectInput("mode", "mode", choices = c("online","batch", "pbatch"), selected=tunesom$mode),
                     numericInput("maxna","maxNA.fraction",value = tunesom$maxna,step = 0.01)))
-
+    
   })
   output$somcontrol<-renderUI({
     fluidRow(
@@ -13814,45 +13535,45 @@ div(
                          selectInput("topo","topo",choices = c("hexagonal", "rectangular"),selected=tunesom$topo)),
              column(10, plotOutput("showgrid", height = "150px")),
              column(2, align = "right", actionButton("resettopo", "reset"))
-
+             
     )
   })
   observeEvent(input$finetopo,{
     tunesom$finetopo<-input$finetopo
   })
-
+  
   output$finetopo_out<-renderUI({
     req(isTRUE(input$finetopo))
     splitLayout(id="finetopo_out",
                 selectInput("neighbourhood.fct",label = "neighbourhood.fct",choices = c("bubble","gaussian"),selected=tunesom$neighbourhood.fct),
                 selectInput("toroidal",label = "toroidal",choices = c(F, T), selected=tunesom$toroidal))
-
+    
   })
-
-
+  
+  
   output$somgridtopo<-renderUI({topocontrol()})
   toroidal<-reactive({
     switch (tunesom$toroidal,
             'TRUE' = TRUE,
             "FALSE" = FALSE)
   })
-
-
-
+  
+  
+  
   observe({
     req(input$xdim)
     req(input$ydim)
     tunesom$r1<-as.vector(quantile(unit.distances(
       kohonen::somgrid(input$xdim,input$ydim,topo = input$topo,toroidal = toroidal(), neighbourhood.fct=input$neighbourhood.fct)), 2 / 3))
   })
-
-
-
-
-
-
-#vals<-readRDS("vals2.rds")
-
+  
+  
+  
+  
+  
+  
+  #vals<-readRDS("vals2.rds")
+  
   cutsom.reactive<-reactive({
     #saveRDS(reactiveValuesToList(input),"input.rds")
     #saveRDS(reactiveValuesToList(vals),"vals2.rds")
@@ -13891,8 +13612,8 @@ div(
     if(length(dist.fcts)>1){
       dist.fcts<-paste0(dist.fcts[1],dist.fcts[2], sep="/")
     }
-
-
+    
+    
     Parameters<-
       rbind(
         n.obs,
@@ -13910,9 +13631,9 @@ div(
   output$train.summary<-renderTable({
     train.summary()
   }, rownames = T, colnames = F,striped=T, spacing ="xs")
-
+  
   savesompred<-reactive({
-
+    
     data=vals$saved_data[[input$data_som]]
     som_pred<-pred_som()
     predX<- correctsom()$predX
@@ -13924,7 +13645,7 @@ div(
     newsaveX<-paste0(input$predsom_newname,"_X")
     saved_sompred$df[[newsaveX]]<-1
     vals$saved_data[[newsaveX]]<-predX
-
+    
     if(input$hand_save=="create"){
       if(attr(vals$som_results,"Method")!="Unsupervised"){
         predY<- correctsom()$predY
@@ -13933,9 +13654,9 @@ div(
           predY<-data_migrate(data,predY,newsave)
           vals$saved_data[[newsave]]<-predY
         } else{
-
+          
           attr(vals$saved_data[[newsaveX]],"factors")<-predY
-
+          
         }
       }
     } else {
@@ -13950,7 +13671,7 @@ div(
       vals$saved_data[[input$predsom_over]]<-pred_data}
     updateTabsetPanel(session,'som_tab','som_tab3')
   })
-
+  
   savesom<-reactive({
     temp<-vals$som_results
     bmu<-temp$unit.classif
@@ -13969,7 +13690,7 @@ div(
       attr(vals$saved_data[[input$data_som]],"som")[input$model_over]<-temp
       attr(vals$saved_data[[input$data_som]],"factors")[names(bmu),input$model_over]<-bmu
       cur<-input$model_over
-
+      
     }
     vals$cur_train<-cur
     updateTabsetPanel(session, "som_tab", vals$cursomtab)
@@ -14005,12 +13726,12 @@ div(
   })
   observeEvent(input$resettopo, {
     tunesom$sugtopo=T
-
+    
     tunesom$toroidal="FALSE"
     tunesom$topo="hexagonal"
     tunesom$neighbourhood.fct='bubble'
   })
-
+  
   observeEvent(input$tools_savesom,{
     if(input$tools_savesom %% 2){
       vals$hand_save<-"Save new som in"
@@ -14021,7 +13742,7 @@ div(
       showModal(
         hand_save_modal())}
   })
-
+  
   observeEvent(input$trainSOM,{
     data = getdata_som()
     data_o<-vals$saved_data[[input$data_som]]
@@ -14049,7 +13770,7 @@ div(
                        mode = tunesom$mode,
                        maxNA.fraction = tunesom$maxna
                      ))
-
+                     
                    } else {
                      sup_test<-get_sup_som_test()
                      if(is.na(input$seed)==F){set.seed(input$seed)}
@@ -14075,14 +13796,14 @@ div(
                      ))
                      attr(m,"sup_test")<-sup_test
                      attr(m,"supervisor")<-input$data_somY
-
+                     
                    }
-
-
-
-
-
-
+                   
+                   
+                   
+                   
+                   
+                   
                    #updateTabItems(session, "tabs", "training")
                    #updateTabsetPanel(session, "som_tab", "results")
                    #updateTabsetPanel(session, "som_tab", "results")
@@ -14091,23 +13812,23 @@ div(
                      validate(paste(m[[1]], "Please decrease your alpha (learning rate)"))
                    }
                    attr(m,'mode')<-input$mode
-
+                   
                    names(m$unit.classif)<-rownames(m$data[[1]])
-
+                   
                    if(input$som_test_pick!="None"){
                      attr(m,"test_partition")<-paste(input$som_test_pick,"::",input$som_test_ref)
                      attr(m,"test")<-data_o[test,]
-
+                     
                    } else{
-
+                     
                      attr(m,"test_partition")<-"None"
-
+                     
                    }
                    attr(m,"Method")<-if(input$som_type=="Unsupervised"){"Unsupervised"} else{
                      input$data_somY
                    }
-
-
+                   
+                   
                    attr(m,"Datalist")<-input$data_som
                    attr(m,"Partition")<-paste("Test data:",input$som_test_pick,"::",input$som_test_ref)
                    attr(m,"som_type2")<-input$som_type2
@@ -14115,12 +13836,12 @@ div(
                      if(input$som_type2=="Factors"){attr(m,"faclist")<-attr(get_supsom_list(),"faclist")}}
                    attr(m,"coords")<-attr(data,"coords")
                    vals$som_unsaved<-m
-
+                   
                    m
-
-
+                   
+                   
                  })
-
+    
   })
   observeEvent(input$resettopo, {
     output$somgridtopo<-renderUI({topocontrol()})})
@@ -14138,9 +13859,9 @@ div(
   observeEvent(input$som_test_pick,{
     updateTabsetPanel(session,'som_tab', 'som_tab1')})
   observeEvent(input$tools_savesom_pred,{
-
+    
     if(input$predsom_results=="Data predictions (X)"|input$predsom_results=="Data predictions (Y)")  {
-
+      
       vals$hand_save<-"Save som predictions"
       vals$hand_save2<-NULL
       mess<-"Creates a Datalist with the SOM predictions"
@@ -14155,7 +13876,7 @@ div(
         mess<-paste(mess,"The defined name will be automatically followed by the '_X' tag")
       }
       vals$hand_save3<-em(mess)}
-
+    
     if(input$predsom_results=="Obs errors (X)"){
       vals$hand_save<-"Save errors from som predictions (X)"
       vals$hand_save2<-NULL
@@ -14168,18 +13889,19 @@ div(
     }
     showModal(hand_save_modal())
   })
-
-
+  
+  
   #### PREVIEW-PLOT
-
+  
   ## DOWNLOAD FUNCTION
-
-
-#mybooks_teste<-readRDS('vals.rds')
-#for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
-#updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
-
-
+  
+  
+ # mybooks_teste<-readRDS('vals.rds')
+#  for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
+ # updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
+  
+  
+  
 }
 
 
