@@ -8483,7 +8483,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   getdatalist<-reactive({
     data=dataraw()
     factors<-attr(data,"factors")
-    factors_in<-if(length(input$labels$datapath)!=0){read_labels()[rownames(data),,drop=F]} else{
+    factors_in<-if(length(input$labels$datapath)!=0 & input$up_or_ex == 'upload'){read_labels()[rownames(data),,drop=F]} else{
      df<-data.frame(id= rownames(data))
      rownames(df)<- rownames(data)
      df
