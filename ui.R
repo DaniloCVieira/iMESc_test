@@ -141,6 +141,9 @@ dashboardBody(
     fluidRow(id="header_app",
              class='myClass',' An Interactive Machine Learning App for Environmental Science')
   ),
+  
+
+  tags$head(tags$script(HTML("$(document).on('.dataTables_filter').addClass('pull-left');"))),
   tags$head(tags$script(HTML(js_getid))),
   tags$head(tags$script(HTML('
         $(document).on("keydown", function (e) {
@@ -180,7 +183,7 @@ fluidPage(
 
 
   div(id="teste",class="needed",
-    style = "margin-left: -15px; margin-right:-15px;",
+    style = "margin-left: -10px; margin-right:-15px;",
     uiOutput("menutitle"),
     tabsetPanel(
       type = "hidden",

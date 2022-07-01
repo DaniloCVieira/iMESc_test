@@ -68,7 +68,44 @@ box-shadow: 0 1px 2px 0px grey;
   border:none;
   
 }
+#intert_btns{
+  margin: 0px;
+  padding: 0px;
+  display: inline-block;
+}
+#intert_btns .btn{
+width: 120px;
+}
+.dataTables_filter{
+float: left !important;
+margin-left: 50px;
+}
 
+.page {
+  display: block;
+
+  margin: 0px;
+  padding: 5px;
+  padding-top: 0px;
+  min-height: 500px;
+
+}
+.modal-header{
+  background: Teal;
+  color: white;
+-webkit-box-shadow: inset 0px 0px 3px 0px Grey;
+}
+#insert_dialog .modal-dialog{
+  width: 700px;
+ 
+}
+#insert_dialog .modal-content{
+    height: 600px;
+}
+
+#import_dialog .modal-content {
+  
+}
 #upload_tools .btn-radio_cogs{
   color: #05668D;
 border: 0px solid;
@@ -583,7 +620,7 @@ background-color: Grey;
   z-index: 99999;
 padding:0px;
 margin:0px;
-  width: 130px;
+  width: 150px;
 
 }
 
@@ -719,8 +756,9 @@ right: 5px;
 height: 30px;
 }
 #data_change{
-  display: block;
-width: 250px;
+  display: inline-block;
+width: 260px;
+height: 30px;
   background-color: Grey;
   z-index: 99999999;
 
@@ -1228,3 +1266,158 @@ padding-left: 5px;
 background: white;
   -webkit-box-shadow: inset 0px 0px 5px #797979ff;
 }
+
+
+         .insert_c0 label {
+               margin: 0px;
+     
+
+         }
+      #insert_req .shiny-input-container div{
+               margin: 0px;
+      padding: 0px;
+      border-width: 0px 0px 0px 5px;
+  border-style: solid;
+  border-image: 
+    linear-gradient(
+      to right, 
+      SeaGreen, 
+      rgba(0, 0, 0, 0)
+    ) 2 100%;
+      }
+    #insert_opt .shiny-input-container div{
+               margin: 0px;
+     
+      border-width: 0px 0px 0px 5px;
+  border-style: solid;
+  border-image: 
+    linear-gradient(
+      to right, 
+      #05668D, 
+      rgba(0, 0, 0, 0)
+    ) 2 100%;
+         }
+         .insert_c0 .form-control{
+          border-radius: 0px 0px 0px 0px;
+            margin: 0px;
+      padding: 0px;
+  padding-left: 5px;
+      height: 35px;
+         }
+          .insert_c0{
+         width: 900px
+          }
+      .insert_c0 div {
+      margin-bottom: 0px;
+
+        border-radius: 0px 0px 0px 0px;
+        vertical-align: top;
+      }
+         .insert_c0 .btn {
+          height: 35px;
+        border-radius: 0px 0px 0px 0px;
+  
+         }
+         .req_border1{
+         width: 200px;
+         border-bottom: 2px dashed SeaGreen;border-left: 2px dashed SeaGreen;
+         height: 30px;
+         padding-left: 50px
+         }
+  .insert_radio{
+width: 300px;
+  color: SeaGreen; font-size: 15px;
+
+height: 25px
+
+  
+  }
+.insert_radio_border_bottom{
+background: linear-gradient(to bottom,Grey , white);
+height: 5px;
+width: 600px;
+margin: 0px
+}
+.insert_radio_border_top{}
+.req_border0{
+ width: 200px;
+       
+         height: 15px;
+         padding-left: 50px
+}
+      .req_border2{
+         width: 200px;
+         border-bottom: 2px dashed #05668D;border-left: 2px dashed #05668D;
+         height: 30px;
+         padding-left: 50px
+         }
+      .req_border11{
+ 
+         width: 40px;
+         border-bottom: 2px dashed SeaGreen;border-left: 2px dashed SeaGreen;
+         height: 50px;
+      padding-left: 50px
+      
+      }
+       .req_border12{
+      
+         width: 40px;
+         border-bottom: 2px dashed  #05668D;border-left: 2px dashed  #05668D;
+         height: 50px;
+      padding-left: 50px
+      
+      }
+      
+      
+         .insert_form {
+       
+           margin: 0px;
+       margin-top: 10px;
+         padding: 0px;
+         width: 220px ;
+  height: 380px;
+  border: 0px solid blue;
+         }
+         .topa { display: inline-block; 
+            height: 70px}
+      
+  .topa4 {
+
+  margin-left: 20px;
+border-left: 2px dashed Gainsboro;
+  display: inline-block; 
+            height: 380px}
+.topa5{
+
+border: 0px solid orange;
+}  
+.insert_e{
+ font-style: italic;
+ display: inline-block; 
+            height: 55px;
+margin-top: 5px;
+
+
+
+}
+
+      .topa2 {
+  margin-top: 10px;
+  display: inline-block; 
+            height: 380px;
+border: 0px solid purple;
+      }
+      .topa1 {display: inline-block; 
+            height: 70px; width: 380px}
+  
+  .topa3{ height: 75px;
+    margin-top:; 5px
+  }
+        
+  .topa7{ height: 75px;}
+     .topa6 {
+  margin-top: 10px;
+  display: inline-block; 
+            height: 400px;
+border: 0px solid purple;
+      }

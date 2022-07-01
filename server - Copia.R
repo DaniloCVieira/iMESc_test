@@ -4602,145 +4602,125 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   
   output$upload_input2<-renderUI({
     div(class="insert_c0",
-        
-        
-        div(
-          inline(
-            div(class="insert_col1",
-                div(class="topa",
-                    div(strong("Required:"), style="color: SeaGreen;"),
-                    div(style="margin-left: 50px",div(class="req_border1"))
-                )
+      div(
+        inline(
+          div(class="insert_col1",
+            div(class="topa",
+              div(strong("Required:"), style="color: SeaGreen;"),
+              div(style="margin-left: 50px",div(class="req_border1"))
             )
-          ),
-          inline(div(
+          )
+        ),
+        inline(
+          div(
             div(class="topa1",
                 div(strong("Name the datalist"), style="color: SeaGreen;"),
                 div(inline(uiOutput("datalistname"))),
                 
-                div(  class="topa5",
-                      div(class="topa4",
-                          div(
-                            
-                            inline(
-                              div(class="topa2",
-                                  div(
-                                    
-                                    div(class="topa3",div(class="req_border11")),
-                                    div(class="topa3",div(class="req_border12")),
-                                    div(class="topa3",div(class="req_border12")),
-                                    div(class="topa3",div(class="req_border12")),
-                                    div(class="topa3",div(class="req_border12"))
-                                    
-                                    
-                                  )
-                              )
+                div(
+                  class="topa5",
+                  div(class="topa4",
+                      div(
+                        inline(
+                          div(class="topa2",
+                            div(
+                              div(class="topa3",div(class="req_border11")),
+                              div(class="topa3",div(class="req_border11")),
+                              div(class="topa3",div(class="req_border12")),
+                              div(class="topa3",div(class="req_border12")),
+                              div(class="topa3",div(class="req_border12"))
+                            )
+                          )
+                        ),
+                        inline(
+                          div(class='insert_form',
+                            div(id="insert_req",
+                                div(style="color:  SeaGreen;",
+                                        div(strong("Data-Attribute:",style="color:  SeaGreen"),
+                                            popify(actionLink('uphelp', icon("fas fa-question-circle")),"Upload the observations",textupload(), trigger = "hover")),
+                                        if(length(input$up_or_ex)>0){
+                                          if(input$up_or_ex=='upload') {
+                                            div(style="width: 200px",
+                                              inline(fileInput(inputId = "filedata",label = NULL,accept = c(".csv"), placeholder=if(length(input$filedata$datapath)>0){input$filedata$name})),
+                                              inline(bsButton("reset_insert_1",icon("fas fa-undo"), style="button_change")))
+                                          }else{div(class="insert_e","nematodes from Araca Bay, Brazil")}
+                                        }
+                                ),
+                                div(
+                                  style="color:  SeaGreen;",
+                                  div(strong("Factor-Attribute:",style="color:  SeaGreen"),
+                                      popify(actionLink('labhelp', icon("fas fa-question-circle")),"Upload the factors",textlab(), trigger = "hover",options=list(container="body"))),
+                                  if(length(input$up_or_ex)>0){
+                                    if(input$up_or_ex=='upload'){
+                                      div(style="width: 200px",
+                                          inline(fileInput(inputId = "labels",label = NULL,accept = c(".csv"), placeholder=if(length(input$labels$datapath)>0){input$labels$name})),
+                                          bsButton("reset_insert_2",icon("fas fa-undo"), style="button_change"))
+                                    }else{div(class="insert_e","sampling factors")}
+                                  }
+                                )
                             ),
-                            inline(
-                              div(class='insert_form',
-                                  div(id="insert_req",
-                                      div(    style="color:  SeaGreen;",
-                                              div(strong("Data-Attribute:",style="color:  SeaGreen"),
-                                                  popify(actionLink('uphelp', icon("fas fa-question-circle")),"Upload the observations",textupload(), trigger = "hover", placement ="right")),
-                                              if(length(input$up_or_ex)>0){
-                                                if(input$up_or_ex=='upload') {
-                                                  fileInput(inputId = "filedata",label = NULL,accept = c(".csv"), placeholder=if(length(input$filedata$datapath)>0){input$filedata$name})
-                                                }else{div(class="insert_e","nematodes from Araca Bay, Brazil")}
-                                              }
-                                      )
-                                     
-                                  ),
-                                  div(id="insert_opt",
-                                      div(
-                                        style="color:  #05668D;",
-                                        div(strong("Factor-Attribute:",style="color:  #05668D"),
-                                            popify(actionLink('labhelp', icon("fas fa-question-circle")),"Upload the factors",textlab(), trigger = "hover", placement ="right")),
-                                        if(length(input$up_or_ex)>0){
-                                          if(input$up_or_ex=='upload'){
-                                            fileInput("labels", NULL, accept = c(".csv"),placeholder=if(length(input$labels$datapath)>0){input$labels$name})
-                                          }else{div(class="insert_e","sampling factors")}
-                                        }
-                                      ),
-                                      div(
-                                        style="color:  #05668D;",
-                                        div(strong(span("*",style="font-size: 15px"),"Coords-Attribute:"),
-                                            popify(actionLink('cohelp', icon("fas fa-question-circle")),"Upload the coordinates", textcoords(), trigger = "hover", placement ="right")),
-                                        if(length(input$up_or_ex)>0){
-                                          if(input$up_or_ex=='upload'){
-                                            fileInput(inputId = "coords",label =  NULL,accept = c(".csv"),placeholder=if(length(input$coords$datapath)>0){input$coords$name})
-                                          } else {
-                                            div(class="insert_e","sampling coordinates")}
-                                        }
-                                        
-                                      ),
-                                      div(
-                                        style="color:  #05668D;",
-                                        div(strong(span("*",style="font-size: 15px"),"Base shape:",actionLink("basehelp", tipify(icon("fas fa-question-circle"),"Click for more details")))),
-                                        if(length(input$up_or_ex)>0){
-                                          if(input$up_or_ex=='upload'){
-                                            fileInput(inputId = "base_shape",label = NULL,placeholder=if(length(input$base_shape$datapath)>0){input$base_shape$name})
-                                          }else {div(class="insert_e","base shape of the Araca Bay")}
-                                        }
-                                        
-                                        
-                                      ),
-                                      div(
-                                        style="color:  #05668D;",
-                                        div(strong(span("*",style="font-size: 15px"),"Layer shape:",actionLink("layerhelp", tipify(icon("fas fa-question-circle"),"Click for more details")))),
-                                        if(length(input$up_or_ex)>0){
-                                          if(input$up_or_ex=='upload'){
-                                            fileInput(inputId = "layer_shape",label = NULL,placeholder=if(length(input$layer_shape$datapath)>0){input$layer_shape$name})
-                                          }else{div(class="insert_e","layer shape of the Araca Bay")}
-                                        }
-                                      )
-                                  )
+                            div(id="insert_opt",
+                                div(
+                                  style="color:  #05668D;",
+                                  div(strong("Coords-Attribute*:"),
+                                      popify(actionLink('cohelp', icon("fas fa-question-circle")),"Upload the coordinates", textcoords(), trigger = "hover",options=list(container="body"))),
+                                  if(length(input$up_or_ex)>0){
+                                    if(input$up_or_ex=='upload'){
+                                      div(style="width: 200px",
+                                          inline(fileInput(inputId = "coords",label = NULL,accept = c(".csv"), placeholder=if(length(input$coords$datapath)>0){input$coords$name})),
+                                          bsButton("reset_insert_3",icon("fas fa-undo"), style="button_change"))
+                                    } else {
+                                      div(class="insert_e","sampling coordinates")}
+                                  }
                                   
-                              )
-                            ),
-                            inline(
-                              uiOutput("insert_reset_btns")
+                                ),
+                                div(
+                                  style="color:  #05668D;",
+                                  div(strong("Base shape*:",actionLink("basehelp", tipify(icon("fas fa-question-circle"),"Click for more details")))),
+                                  if(length(input$up_or_ex)>0){
+                                    if(input$up_or_ex=='upload'){
+                                      div(style="width: 200px",
+                                          inline(fileInput(inputId = "base_shape",label = NULL,accept = c(".csv"), placeholder=if(length(input$base_shape$datapath)>0){input$base_shape$name})),
+                                          bsButton("reset_insert_4",icon("fas fa-undo"), style="button_change"))
+                                    }else {div(class="insert_e","base shape of the Araca Bay")}
+                                  }
+                                  
+                                  
+                                ),
+                                div(
+                                  style="color:  #05668D;",
+                                  div(strong("Layer shape*:",actionLink("layerhelp", tipify(icon("fas fa-question-circle"),"Click for more details")))),
+                                  if(length(input$up_or_ex)>0){
+                                    if(input$up_or_ex=='upload'){
+                                      div(style="width: 200px",
+                                          inline(fileInput(inputId = "layer_shape",label = NULL,accept = c(".csv"), placeholder=if(length(input$layer_shape$datapath)>0){input$layer_shape$name})),
+                                          bsButton("reset_insert_5",icon("fas fa-undo"), style="button_change"))
+                                    }else{div(class="insert_e","layer shape of the Araca Bay")}
+                                  }
+                                )
                             )
                             
                             
-                          )))
+                          )
+                        )
+                        
+                      ))
+                )
                 
             )
-          ))
-        ),
-        
-        div(style="width: 150px; margin-top: 20px",
-            div(strong("Optional:",style="color: #05668D")),
-            div(style="margin-left: 50px; margin-bottom: 60px",div(class="req_border2")),
-            em(span("*",style="font-size: 15px"),"Required for the spatial tools menu", style="margin-left: 10px")
+          )
         )
-        
+      ),
+      
+      div(style="width: 150px; margin-top: 100px",
+          div(strong("Optional:",style="color: #05668D")),
+          div(style="margin-left: 50px; margin-bottom: 10px",div(class="req_border2")),
+          em("*Required for the spatial tools menu", style="margin-left: 10px")
+      )
+      
+      
     )
   }) 
-  
-  output$insert_reset_btns<-renderUI({
-    div(class="topa6",
-        div(
-         div(class="topa7",
-             if(length(input$filedata$datapath)>0){  bsButton("reset_insert_1",icon("fas fa-undo"), style="button_change")}),
-          div(class="topa7",
-              if(length(input$labels$datapath)>0){bsButton("reset_insert_2",icon("fas fa-undo"), style="button_change")}),
-          div(class="topa7",
-              if(length(input$coords$datapath)>0){bsButton("reset_insert_3",icon("fas fa-undo"), style="button_change")}),
-         div(class="topa7",
-             if(length(input$base_shape$datapath)>0){bsButton("reset_insert_4",icon("fas fa-undo"), style="button_change")}),
-         div(class="topa7",
-             if(length(input$layer_shape$datapath)>0){bsButton("reset_insert_5",icon("fas fa-undo"), style="button_change")}),
-          bsTooltip("reset_insert_1","reset"),
-          bsTooltip("reset_insert_2","reset"),
-          bsTooltip("reset_insert_3","reset"),
-          bsTooltip("reset_insert_4","reset"),
-          bsTooltip("reset_insert_5","reset"),
-          
-          
-          
-        )
-    )
-  })
   
   observeEvent(input$reset_insert_1,{
     runjs("Shiny.setInputValue('filedata', null);")
@@ -4758,7 +4738,6 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   observeEvent(input$reset_insert_5,{
     runjs("Shiny.setInputValue('layer_shape', null);")
   })
-  
   output$insert_page2<-renderUI({
     div(
       div(
@@ -5185,10 +5164,10 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     
     
   })
-  read_labels <- reactive({
+  labels <- reactive({
     vals$loadlabel<-0
     if (input$up_or_ex == 'upload') {
-      #validate(need(length(input$labels$datapath)!=0,"Factor file is required"))
+      validate(need(length(input$labels$datapath)!=0,"Factor file is required"))
       labels <-
         data.frame(fread(input$labels$datapath, stringsAsFactors = T,na.strings=c("","NA")))
       rownames(labels) <- labels[, 1]
@@ -5795,7 +5774,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   
   observeEvent(input$insert_end,{
     if(input$up_or_ex=="upload"){
-     # validate(need(length(input$labels$datapath)>0,"error"))
+      validate(need(length(input$labels$datapath)>0,"error"))
       validate(need(length(input$filedata$datapath)>0,"error"))
     }
     datalist<-getdatalist()
@@ -8483,11 +8462,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   getdatalist<-reactive({
     data=dataraw()
     factors<-attr(data,"factors")
-    factors_in<-if(length(input$labels$datapath)!=0){read_labels()[rownames(data),,drop=F]} else{
-     df<-data.frame(id= rownames(data))
-     rownames(df)<- rownames(data)
-     df
-    }
+    factors_in<-labels()[rownames(data),,drop=F]
     if (any(names(datastr(data)$type.vars) == "factor")){
       
       for(i in 1:ncol(data)){
@@ -14001,9 +13976,9 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   ## DOWNLOAD FUNCTION
   
   
-  #mybooks_teste<-readRDS('vals.rds')
-  #for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
-  #updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
+  mybooks_teste<-readRDS('vals.rds')
+  for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
+  updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
   
   
   

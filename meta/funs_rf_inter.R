@@ -43,31 +43,36 @@ container_global_caret<-function(table){
 }
 
 caret_global_stats<-function(models){
-  pic<-which(unlist(lapply(models,function(x)class(x)[1]=="train")))
-  class_models<-names(models)[which(unlist(lapply(models[pic],function(m) m$modelType=="Classification")))]
-  regs_models<-names(models)[which(unlist(lapply(models[pic],function(m) m$modelType=="Regression")))]
-  global_train<-lapply(models[pic],rf_global_train)
+  pic<-which(unlist(lapply(models, function(x) class(x)[1]))=="train")
+  
+  models<-models[pic]
+  class_models<-names(models)[which(unlist(lapply(models,function(m) m$modelType=="Classification")))]
+  regs_models<-names(models)[which(unlist(lapply(models,function(m) m$modelType=="Regression")))]
+  global_train<-lapply(models,rf_global_train)
   ncol_train<-lapply(global_train,ncol)
   global_test<-rf_global_predall(models)
   if(length(global_test)>0){
-  res00<-list()
-  i=1
-  for(i in 1:length(global_test)){
-    res00[[names(global_test)[i]]]<- data.frame(c(global_train[[which(names(global_train)==names(global_test)[i])]],global_test[[i]]))
-  }
-  global_train[names(res00)]<-res00}
+    res00<-list()
+    i=1
+    for(i in 1:length(global_test)){
+      res00[[names(global_test)[i]]]<- data.frame(c(global_train[[which(names(global_train)==names(global_test)[i])]],global_test[[i]]))
+    }
+    global_train[names(res00)]<-res00}
   class<-data.frame(rbindlist(global_train[class_models], fill = TRUE))
   rownames(class)<-class_models
   regs<-data.frame(rbindlist(global_train[regs_models], fill = TRUE))
   rownames(regs)<-regs_models
   attr(class,"ncol_train")<-do.call(c,ncol_train[ rownames(class)])
   attr(regs,"ncol_train")<-do.call(c,ncol_train[ rownames(regs)])
-
+  
   list(
     class=class,
     regs=regs
   )
-}
+  
+  
+  
+  }
 rf_global_train<-function(m){
   nobs=nrow(m$trainingData)
   Y=attr(m,"Y")

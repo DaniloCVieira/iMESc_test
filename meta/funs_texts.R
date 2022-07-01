@@ -331,7 +331,7 @@ datalist_render<-function(datalist=NULL,bagdata=F)
   layer_shape=attr(data,"layer_shape")
   data.factors=attr(data,"data.factors")
   transf=attr(data,"transf")
-   column(12,
+   div(
      column(12,style="background: #e6e6e6ff;color: black;border: 1px dashed black;margin: 10px 10px 10px 10px",
             h5(strong("Datalist:"),if(length(datalist_name)>0) {em(datalist_name, style="color: #05668D")})),
      column(12,
