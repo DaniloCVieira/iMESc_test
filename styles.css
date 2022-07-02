@@ -588,14 +588,16 @@ background-color: Grey;
   margin: 0px;
 }
 
-
+.dlinks_all a{
+  width: 180px;
+}
 .dlinks_all,.ddlinks_all,.dflinks_all{
   display: none;
     background: Gainsboro;
         padding: 5px;
         padding-top: 10px;
         width: 50px;
-        height: 130px;
+        height: 165px;
         margin-left: -5px;
    
 }
@@ -620,7 +622,7 @@ background-color: Grey;
   z-index: 99999;
 padding:0px;
 margin:0px;
-  width: 150px;
+  width: 180px;
 
 }
 

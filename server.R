@@ -2770,10 +2770,13 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                 actionLink("dcogs3","Bind Variables/Factors")
             ),
             div(class="dlinks",
-                actionLink("dcogs4","Remove factors")
+                actionLink("dcogs4","Numeric/Factor convertion")
             ),
             div(class="dlinks",
-                actionLink("dcogs5","Delete Datalist")
+                actionLink("dcogs5","Remove factors")
+            ),
+            div(class="dlinks",
+                actionLink("dcogs6","Delete Datalist",style="color: red")
             )
         )
     )
@@ -2938,7 +2941,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                 
     )
   })
-  observeEvent(input$dcogs4,{
+  observeEvent(input$dcogs5,{
     showModal(
       remove_factors()  
     )
@@ -2948,7 +2951,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       remove_factors()  
     )
   })
-  observeEvent(input$dcogs5,{
+  observeEvent(input$dcogs6,{
     showModal(
       modalDialog(size="s",easyClose = T,
                   title=strong("Are you sure?"),
@@ -3133,6 +3136,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       
     )
   })
+ 
   import_npage <- 2
   import_rv <- reactiveValues(page_imp = 1)
   import_diag0<-reactive({
@@ -3199,6 +3203,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   
   
   observeEvent(input$dcogs3,{
+    import_rv$page_imp<-1
     showModal(
       import_diag0()
     )
@@ -4501,15 +4506,19 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   observeEvent(input$bank_button, {
     showModal(insert_modal())
+    insert_rv$page<-1
   })
   observeEvent(input$layer_back, {
     showModal(insert_modal())
+    insert_rv$page<-1
   })
   observeEvent(input$base_back, {
     showModal(insert_modal())
+    insert_rv$page<-1
   })
   observeEvent(input$shp_back,{
     insert_modal()
+    insert_rv$page<-1
   })
   
   insert_npages <- 2
@@ -4560,6 +4569,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     actionButton("insert_end", "Insert Datalist >")
   })
   output$insert_next_btn<-renderUI({
+    req(length(input$filedata$datapath)>0|input$up_or_ex=='use example data')
     req(insert_rv$page<insert_npages)
     actionButton("insert_next", "Next >")
   })
@@ -5188,19 +5198,20 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   read_labels <- reactive({
     vals$loadlabel<-0
     if (input$up_or_ex == 'upload') {
-      #validate(need(length(input$labels$datapath)!=0,"Factor file is required"))
-      labels <-
-        data.frame(fread(input$labels$datapath, stringsAsFactors = T,na.strings=c("","NA")))
-      rownames(labels) <- labels[, 1]
-      #colnames(labels)[1]<-"id"
-      labels[, 1] <- NULL
-      labels[which(unlist(lapply(labels, is.numeric)))] <-
-        do.call("data.frame", lapply(labels[which(unlist(lapply(labels, is.numeric)))], function(x) as.factor(x)))
-      
-      
-      
-      
-    } else {
+      if(length(input$labels$datapath)!=0){
+        labels <-
+          data.frame(fread(input$labels$datapath, stringsAsFactors = T,na.strings=c("","NA")))
+        rownames(labels) <- labels[, 1]
+        #colnames(labels)[1]<-"id"
+        labels[, 1] <- NULL
+        labels[which(unlist(lapply(labels, is.numeric)))] <-
+          do.call("data.frame", lapply(labels[which(unlist(lapply(labels, is.numeric)))], function(x) as.factor(x)))
+      } else{
+        req(length(dataraw())>0)
+        labels<-data.frame(id= as.factor(rownames(dataraw())))
+        rownames(labels)<- rownames(dataraw())
+        
+      } } else {
       labels <-data.frame(fread("meta/factors_araca.csv", stringsAsFactors = T,na.strings=c("","NA")))
       #labels <-data.frame(fread("DADOS SANSED_OFICIAL CENPES.csv", stringsAsFactors = T))
       
@@ -8483,11 +8494,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   getdatalist<-reactive({
     data=dataraw()
     factors<-attr(data,"factors")
-    factors_in<-if(length(input$labels$datapath)!=0 & input$up_or_ex == 'upload'){read_labels()[rownames(data),,drop=F]} else{
-     df<-data.frame(id= rownames(data))
-     rownames(df)<- rownames(data)
-     df
-    }
+    factors_in<-read_labels()[rownames(data),,drop=F]
     if (any(names(datastr(data)$type.vars) == "factor")){
       
       for(i in 1:ncol(data)){
@@ -8977,29 +8984,35 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     div(
       id="tool6",
       class="tools_content",
-      div(radioGroupButtons("tag_fun","Edit:",choiceValues =c('label',"level order",'convert'), selected=vals$cur_tag_fun, width="350px",justified =T,choiceNames=c("Label","Levels","Convert") )),
-      
-      inline(
-        div(class="tool6_1",
-            conditionalPanel("input.tag_fun!='convert'",{
-              inline(pickerInput("tag_edit","Factor",rev(colnames(factors)), selected=cur_tag$df, width="125px"))
-            })
-            
-            
-            
-        )
-      ),
-      
-      uiOutput("edit_fac_labels"),
-      uiOutput("edit_fac_ord"),
-      
-      div(style="margin-top: 20px",
-          tipify(bsButton("convert_factor","Numeric/Factor conversion",style  = "button_active"),"Open the toolbox to transform data-attribute factors into numeric values and vice versa")
+      div(id="tool6_1",
+          
+          
+          inline(pickerInput("tag_fun","Edit factor levels:",choices =c('label',"order"), selected=vals$cur_tag_fun, width="125px" )),
+          
+          inline(
+            div(class="tool6_1",
+                conditionalPanel("input.tag_fun!='convert'",{
+                  inline(pickerInput("tag_edit","Factor",rev(colnames(factors)), selected=cur_tag$df, width="125px"))
+                })
+                
+                
+                
+            )
+          ),
+          
+          uiOutput("edit_fac_labels"),
+          uiOutput("edit_fac_ord")
       )
       
-      
-    )
+      )
   })
+  
+
+  
+
+  
+  
+
   output$tool7<-renderUI({
     
     module_ui_cc("cc")
@@ -9075,7 +9088,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     
   })
   output$conversion_options<-renderUI({
-    data<-vals$saved_data[[input$data_upload]]
+    data<-vals$saved_data[[input$data_bank]]
     div(
       div(class="well3",
           p(
@@ -9106,7 +9119,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   output$numfac <- DT::renderDataTable({
     req(length(input$vars_num)>0)
-    table<-vals$saved_data[[input$data_upload]][input$vars_num]
+    table<-vals$saved_data[[input$data_bank]][input$vars_num]
     table<-do.call(cbind,lapply(table, function (x) as.factor(x)))
     DT::datatable(table,
                   options=list(
@@ -9116,7 +9129,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   }, rownames = TRUE,class ='compact cell-border')
   
   output$conversion_tools<-renderUI({
-    data<-vals$saved_data[[input$data_upload]]
+    data<-vals$saved_data[[input$data_bank]]
     req(input$convertion_type=="Factor to Numeric")
     div(
       radioGroupButtons("hand_facs",NULL,
@@ -9141,7 +9154,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
         )
       }),
       conditionalPanel("input.hand_facs=='Ordinal'",{
-        data<-vals$saved_data[[input$data_upload]]
+        data<-vals$saved_data[[input$data_bank]]
         div(
           selectInput("to_ordinal","Select the factors:",choices=colnames(attr(data,"factors"))) ,
           uiOutput("ordinal_out")
@@ -9158,7 +9171,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     )
   })
   output$binary_preview<-renderUI({
-    data<-vals$saved_data[[input$data_upload]]
+    data<-vals$saved_data[[input$data_bank]]
     fluidRow(column(12,
                     h5(strong("New binary variables:")),
                     renderPrint({
@@ -9169,7 +9182,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     fluidRow(
       rank_list(
         text = "Drag the levels in any desired order",
-        labels = levels(attr(vals$saved_data[[input$data_upload]],"factors")[,input$to_ordinal]),
+        labels = levels(attr(vals$saved_data[[input$data_bank]],"factors")[,input$to_ordinal]),
         input_id = "rank_list_1",
         class="custom-sortable"
       ),
@@ -9202,7 +9215,12 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     column(12,
            strong(paste("pre-saved:")),
            fluidRow(
-             tags$style('#order_out td {padding: 0}'),
+             tags$style('#order_out td {padding: 3px;
+                     text-align: left;
+                     font-size:12px}'),
+             tags$style('#order_out th {padding: 3px;
+                     text-align: left;
+                     font-size:12px}'),
              inline(
                DT::dataTableOutput("order_out")
              )
@@ -9214,7 +9232,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   output$order_out<-DT::renderDataTable(data.frame(vals$new_facts),options = list(pageLength = 20,info = FALSE,lengthMenu = list(c(20,-1),c( "20","All")),autoWidth=T),rownames = TRUE,class ='cell-border compact stripe')
   
   getordinal_factors<-reactive({
-    data=attr(vals$saved_data[[input$data_upload]],"factors")
+    data=attr(vals$saved_data[[input$data_bank]],"factors")
     res<-data[,input$to_ordinal]
     res<-factor(res,labels=input$rank_list_1,levels=input$rank_list_1)
     res<-as.numeric(res)
@@ -9226,7 +9244,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     data.frame(label=levels(attr(vals$saved_data[[input$data_upload]],"factors")[,input$to_ordinal]))
   })
   savebinary<-reactive({
-    data=vals$saved_data[[input$data_upload]]
+    data=vals$saved_data[[input$data_bank]]
     factors<-attr(data,"factors")
     factors[,input$to_classmat]<-NULL
     temp<-cbind(data,getclassmat(attr(data,"factors")[,input$to_classmat,drop=F]))
@@ -9245,7 +9263,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     
   })
   saveordinal<-reactive({
-    data=vals$saved_data[[input$data_upload]]
+    data=vals$saved_data[[input$data_bank]]
     factors<-attr(data,"factors")
     
     temp<-cbind(data,vals$new_facts)
@@ -9315,13 +9333,13 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     )
   })
   
-  observeEvent(input$convert_factor,{
+  observeEvent(input$dcogs4,{
     
     
     showModal(
       div(id="fac_convert",modalDialog(
         div(style="background: white",
-            p(strong("Datalist:"),code(input$data_upload)),
+            p(strong("Datalist:"),code(input$data_bank)),
             div(style="margin: 5px",
                 uiOutput("conversion_options"),
                 uiOutput("conversion_tools")
@@ -9340,7 +9358,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     
   })
   observeEvent(input$convert_num,{
-    newnum<-data<-vals$saved_data[[input$data_upload]]
+    newnum<-data<-vals$saved_data[[input$data_bank]]
     newfac<-data[,input$vars_num,drop=F]
     newnum[,input$vars_num]<-NULL
     attr(newnum,"factors")<-if(length(attr(data,"factors"))>0){
@@ -9350,14 +9368,14 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     } else{
       newfac
     }
-    vals$saved_data[[input$data_upload]]<-newnum
+    vals$saved_data[[input$data_bank]]<-newnum
     
     
     
   })
   observeEvent(input$create_ordinal,{
     res<-getordinal_factors()
-    data=attr(vals$saved_data[[input$data_upload]],"factors")
+    data=attr(vals$saved_data[[input$data_bank]],"factors")
     if(is.null( vals$new_facts)){
       res0<-data.frame(matrix(NA,nrow=nrow(data)))
       colnames(res0)<-input$to_ordinal
@@ -9480,7 +9498,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     
   })
   output$edit_fac_ord<-renderUI({
-    req(input$tag_fun=='level order')
+    req(input$tag_fun=='order')
     div(class="cogs_in",
         splitLayout(  cellWidths = c("80%","20%"),style="margin: 5px;overflow-x: scroll;height:150px;overflow-y: scroll;",
                       div(uiOutput("toorder_tag"),style="font-size: 11px;margin-top: 5px")
@@ -9723,6 +9741,21 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
         
     )
   })
+  bag_name_new<-reactive({
+    bag<-1
+    name0<-input$data_bank
+    name1<-paste(name0,bag)
+    if(name1%in%names(vals$saved_data))
+    {
+      repeat{
+        bag<-bag+1
+        name1<-paste(name0,bag)
+        if(!name1%in%names(vals$saved_data)) break
+      }
+    }
+    paste(name0,bag)
+    
+  })
   output$data_create<-renderUI({
     req(length(vals$hand_save)>0)
     req(input$hand_save=="create")
@@ -9732,8 +9765,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     res<-switch (vals$hand_save,
                  "Save new som in" = textInput("model_newname", NULL,paste("Som", length(attr(getdata_som(),"som"))+1)),
                  "Save changes"= textInput("data_newname", NULL,bag_name()),
-                 "Include binary columns in the Data-Attribute"= textInput("data_newname", NULL,bag_name()),
-                 "Include ordinal variables in the Data-Attribute"= textInput("data_newname", NULL,bag_name()),
+                 "Include binary columns in the Data-Attribute"= textInput("data_newname", NULL,bag_name_new()),
+                 "Include ordinal variables in the Data-Attribute"= textInput("data_newname", NULL,bag_name_new()),
                  "Save Clusters"= textInput("hc_newname", NULL,bag_hc()),
                  "Create data list from aggregation results"= textInput("agg_newname", NULL,bag_agg()),
                  "Add an Extra-Layer-Attribute to the Datalist"=textInput("extra_layer_newname", NULL,bag_extralayer()),
