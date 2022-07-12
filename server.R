@@ -15,7 +15,7 @@ server <- function(input, output, session) {
     val = palette
   )
   
-  
+
   for(i in 1:length(palette))  {
     palette1<-base64enc::dataURI(file = paste0('meta/palette',i,".png"),
                                  mime = "image/png")
@@ -31,6 +31,7 @@ server <- function(input, output, session) {
   
   myBookmarks<-vals<-reactiveValues(
     temp_path=paste0(if(!length(grep("connect/apps",getwd()))>0){(getwd())} else{"/srv/shiny-server/MyShinyApp"},'/mybooks.rds'),
+    cutfacs=F,
     map_data_raster=NULL,
     DT_results=0,
     saved_data=list(),
@@ -421,12 +422,12 @@ server <- function(input, output, session) {
   })
   output$scatter_3d<-renderUI({
     req(input$cmap=='discrete')
-    req(input$choices_map=="Data-Attribute")
+    req(input$choices_map=="Numeric-Attribute")
     inline(tipify(bsButton("scatter_3d",icon("fas fa-cube"), style="button_active", type="toggle"),"3D mode"))})
   output$stack_scatter_3d<-renderUI({
     
     req(input$cmap=='discrete')
-    # req(input$choices_map=="Data-Attribute")
+    # req(input$choices_map=="Numeric-Attribute")
     inline(tipify(bsButton("stack_scatter_3d",icon("fas fa-layer-group"), style="button_active", type="toggle"),"3D stack"))
   })
   observeEvent(input$scatter_3d,{
@@ -701,7 +702,7 @@ server <- function(input, output, session) {
                pickerInput(
                  "choices_map",
                  "Target:",
-                 choices = c("Data-Attribute","Factor-Attribute"),
+                 choices = c("Numeric-Attribute","Factor-Attribute"),
                  selected=vals$cur_choices_map, width="130px")
              ),
              inline( uiOutput("map_get")),
@@ -741,7 +742,7 @@ server <- function(input, output, session) {
   output$map_get<-renderUI({
     choices=  switch(input$choices_map,
                      'Factor-Attribute'=rev(colnames(attr(getdata_map(),"factors"))),
-                     'Data-Attribute'=colnames(getdata_map()))
+                     'Numeric-Attribute'=colnames(getdata_map()))
     inline(pickerInput("var_map",label = "select a variable",choices = choices,selected=vals$cur_var_map, width="200px"))
   })
   vars_fac<-reactiveValues(df=0)
@@ -1283,7 +1284,7 @@ server <- function(input, output, session) {
     paste(name0,bag)
   })
   ss3d_add<-reactive({
-    if(input$choices_map=="Data-Attribute"){
+    if(input$choices_map=="Numeric-Attribute"){
       ss<-getdata_map()[filtermap(),input$var_map, drop=F]
     } else{
       ss<-attr(getdata_map(),"factors")[filtermap(),input$var_map, drop=F]
@@ -1722,7 +1723,7 @@ server <- function(input, output, session) {
   })
   output$breaks_map<-renderUI({
     req(input$cmap=="discrete")
-    req(input$choices_map=="Data-Attribute")
+    req(input$choices_map=="Numeric-Attribute")
     req(input$var_map)
     vector<-getdata_map()[filtermap(),input$var_map]
     my<-pretty(pretty(vector))
@@ -1814,7 +1815,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                
                column(12,
                       '+ Size::',inline(uiOutput("map_pt_range"))),
-               if(input$choices_map=='Data-Attribute' & isFALSE(input$scatter_3d)){
+               if(input$choices_map=='Numeric-Attribute' & isFALSE(input$scatter_3d)){
                  fluidRow(
                    column(12,
                           span("+",checkboxInput("scale_map","Scale", T, width="75px")),
@@ -1835,7 +1836,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     
   })
   output$map_pt_range<-renderUI({
-    if(input$choices_map=="Data-Attribute"){
+    if(input$choices_map=="Numeric-Attribute"){
       div(
         "min:",
         inline(numericInput("pt_points_min",NULL, 0, width="45px", min=0, step=0.1)),
@@ -1873,7 +1874,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   output$map_1d_idw<-renderUI({
     req(input$cmap=="interpolation")
-    req(input$choices_map=="Data-Attribute")
+    req(input$choices_map=="Numeric-Attribute")
     #req(isFALSE(input$surface_map)|is.null(input$surface_map))
     column(12," + IDW ",
            column(12, uiOutput("interp_inputs")))
@@ -1985,7 +1986,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     )
   })
   output$interp_inputs<-renderUI({
-    req(input$choices_map=="Data-Attribute")
+    req(input$choices_map=="Numeric-Attribute")
     fluidRow(
       column(12, tipify(icon("fas fa-question-circle",style="color: gray"),"for local kriging, the number of nearest observations that should be used for a kriging prediction or simulation, where nearest is defined in terms of the space of the spatial locations. By default (empty), all observations are used", placement = "bottom", options=list(container="body")),"+ nmax:",
              numericInput(
@@ -2185,13 +2186,13 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(isFALSE(stopbigmap$df))
     
     
-    if(input$choices_map=="Data-Attribute"){
+    if(input$choices_map=="Numeric-Attribute"){
       if(input$cmap=='discrete'){
         disc_data_map()
       }
       if(input$cmap=='interpolation'){interp_data_map()}
       if(input$cmap=='raster'){
-        validate(need(input$choices_map=="Data-Attribute","This functionality is currently only available for Data-Attribute"))
+        validate(need(input$choices_map=="Numeric-Attribute","This functionality is currently only available for Numeric-Attribute"))
         vals$map_res<-raster_map()}
     }
     if(input$choices_map=='Factor-Attribute'){
@@ -2201,7 +2202,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     
     
     if(input$cmap=='raster'){
-      validate(need(input$choices_map=="Data-Attribute","Raster tool currently only available for the Data-Attribute"))}
+      validate(need(input$choices_map=="Numeric-Attribute","Raster tool currently only available for the Numeric-Attribute"))}
     fluidRow(
       uiOutput('map_out1'),
       uiOutput("scatter_out"),
@@ -2219,7 +2220,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(input$saved_maps=="new map"|isTRUE(input$edit_map))
     fluidRow(
       conditionalPanel(
-        "input.cmap=='interpolation'& input.choices_map=='Data-Attribute'",{
+        "input.cmap=='interpolation'& input.choices_map=='Numeric-Attribute'",{
           div(renderPlot(vals$map_data_interp))
         }),
       
@@ -2229,7 +2230,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
         }),
       
       conditionalPanel(
-        "input.cmap=='discrete'& input.choices_map=='Data-Attribute'",{
+        "input.cmap=='discrete'& input.choices_map=='Numeric-Attribute'",{
           div(renderPlot(suppressWarnings(print(vals$map_data_disc))))
         }),
       
@@ -2238,7 +2239,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
           div(renderPlot(vals$map_fac_disc))
         }),
       conditionalPanel(
-        "input.cmap=='raster'& input.choices_map=='Data-Attribute'",{
+        "input.cmap=='raster'& input.choices_map=='Numeric-Attribute'",{
           div(
             
             renderPlot(vals$map_data_raster))
@@ -2258,7 +2259,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     em(a("color z by:"))
   })
   output$scatter_4D<-renderUI({
-    selected<-if(input$choices_map=="Data-Attribute"){
+    selected<-if(input$choices_map=="Numeric-Attribute"){
       "Variable"
     } else{'Factor' }
     req(isTRUE(input$scatter_4D))
@@ -2464,7 +2465,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     
     column(12,
            
-           
+           uiOutput("radio_cogs_teste"),
            gettitle())
   })
   observe(vals$saved_divset_value<-isolate(length(vals$saved_data)+1))
@@ -2672,7 +2673,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     pickerInput("na_method", span("Method",actionLink("na_help",icon("fas fa-question-circle"), type="toggle")),c("median/mode","knn","bagImpute","medianImpute"), width="120px")
   })
   observeEvent(input$na_targ,{
-    choices=if(input$na_targ=="Data-Attribute"){
+    choices=if(input$na_targ=="Numeric-Attribute"){
       c("median/mode","Knn","bagImpute","medianImpute")
     } else{
       c("median/mode")
@@ -2686,19 +2687,19 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
              
              div(
                strong("median/mode:"),
-               p('Data-Attribute columns are imputed with the median;'),
+               p('Numeric-Attribute columns are imputed with the median;'),
                p('Factor-Attribute columns are imputed with the mode')
                
              ),
              div(
                strong("Knn"),
-               p('k-nearest neighbor imputation is only available for the Data-Attribute. It is carried out by finding the k closest samples (Euclidian distance) in the dataset. This method automatically center and scale your data.')),
+               p('k-nearest neighbor imputation is only available for the Numeric-Attribute. It is carried out by finding the k closest samples (Euclidian distance) in the dataset. This method automatically center and scale your data.')),
              div(
                strong("bagImpute"),
-               p('Only available for the Data-Attribute. Imputation via bagging fits a bagged tree model for each predictor (as a function of all the others). This method is simple, accurate and accepts missing values, but it has much higher computational cost. ')),
+               p('Only available for the Numeric-Attribute. Imputation via bagging fits a bagged tree model for each predictor (as a function of all the others). This method is simple, accurate and accepts missing values, but it has much higher computational cost. ')),
              div(
                strong("medianImpute"),
-               p('Only available for the Data-Attribute. Imputation via medians takes the median of each predictor in the training set, and uses them to fill missing values. This method is simple, fast, and accepts missing values, but treats each predictor independently, and may be inaccurate.'))
+               p('Only available for the Numeric-Attribute. Imputation via medians takes the median of each predictor in the training set, and uses them to fill missing values. This method is simple, fast, and accepts missing values, but treats each predictor independently, and may be inaccurate.'))
              
       )
     )
@@ -2752,31 +2753,30 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     column(12, class="databank_page",style="margin-left: 5px",
            uiOutput("bank_tools"),
            
-           uiOutput("view_out"))
+           uiOutput("view_out")
+           )
   })
   
   output$datalist_cogs<-renderUI({
     req(length(vals$saved_data)>0)
     div(id="dcogs",
-        div(class="dcogs0",span(icon("fas fa-cog"),style="padding-left: 7px")),
-        div(class='dlinks_all',
+        div(id="dcogs0",class="dcogs0",span(icon("fas fa-cog"),style="padding-left: 7px")),
+        div(id="dlinks_all",class='dlinks_all',
             div(class="dlinks",
-                actionLink("dcogs1","Rename")
+                actionLink("dcogs1","Rename Datalist")
             ),
             div(class="dlinks",
                 actionLink("dcogs2","Merge Datalists")
             ),
             div(class="dlinks",
-                actionLink("dcogs3","Bind Variables/Factors")
+                actionLink("dcogs3","Exchange Factor/Variables")
+            ),
+      
+            div(class="dlinks",
+                actionLink("dcogs6","Edit Datalist columns")
             ),
             div(class="dlinks",
-                actionLink("dcogs4","Numeric/Factor convertion")
-            ),
-            div(class="dlinks",
-                actionLink("dcogs5","Remove factors")
-            ),
-            div(class="dlinks",
-                actionLink("dcogs6","Delete Datalist",style="color: red")
+                actionLink("dcogs7","Delete Datalist",style="color: red")
             )
         )
     )
@@ -2798,7 +2798,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                           inline(
                             uiOutput("bank_input")
                           ),
-                          span(inline(    uiOutput("datalist_cogs"))),
+                   
                           inline(
                             uiOutput("tools_bank")
                           )
@@ -2876,7 +2876,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
           
         )
       ),
-      bsPopover("001",NULL,paste0(span("Data-Attribute", style="color: red"))),
+      bsPopover("001",NULL,paste0(span("Numeric-Attribute", style="color: red"))),
       bsPopover("c002",NULL,"Factor-Attribute"),
       bsPopover("003",NULL,"Coords-Attribute"),
       bsPopover("004",NULL,"Shapes-Attribute"),
@@ -2923,35 +2923,237 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                {vals$curview_databank<-input$view_datalist})
   
   output$merge_button<-renderUI({
-    
-    
-    req(length(input$merge_datalist_in)>1)
-    div( validate(need(length(input$merge_datalist_in)>1,"Select at least two Datalists to merge")),
-         actionButton("merge_datalist_go",icon('fas fa-compress-alt')),"Click to the merge"
+    dis<-if(length(input$merge_datalist_in)>1){F} else{T}
+ 
+    div( 
+         bsButton("merge_datalist_cancel","< Cancel", class="button_change"),
+         inline(div(
+           next_title=if(isTRUE(dis)){"Select at least two Datalists"} else{ NULL},
+           bsButton("merge_datalist_go", "Confirm >", class="button_change", disabled = dis),
+         )),
     )
   })
-  remove_factors<- reactive({
+  observeEvent(input$merge_datalist_cancel,
+               removeModal())
+  
+
+  output$editfac_datalist<-renderUI({
+    div(
+      pickerInput("editfac","Datalist:",choices=names(vals$saved_data), width="200px")
+    )
+  })
+  edit_factors<- reactive({
     modalDialog(size="m",easyClose = T,
-                title="Remove Factor:",
-                div(
-                  div(strong("Datalist:"), em(input$data_bank,style="color: SeaGreen")),
-                  checkboxGroupInput("remove_factor", "select a factor", choices=colnames(attr(vals$saved_data[[input$data_bank]],"factors"))),
-                  tipify(actionButton("delete_factor_yes",icon("fas fa-trash-alt")),"Click to remove")
+                title="Edit Factors:",
+                footer = uiOutput("editfac_btns"),
+                div(id="edifac_inps",
+                    renderPrint(colnames(vals$edifac)),
+                    uiOutput("editfac_datalist"),
+                    uiOutput("editfac_cols")
                 )
                 
     )
   })
-  observeEvent(input$dcogs5,{
-    showModal(
-      remove_factors()  
+  output$editfac_btns<-renderUI({
+    div(
+      actionButton("editfac_go","Confirm"),
+      actionButton("editfac_end","Cancel")
     )
   })
-  observeEvent(input$dfcogs3,{
+  bag_newfac<-reactiveValues(df=0)
+  output$editfac_cols<-renderUI({
+    bag_newfac$df<-0
+    cols<-colnames(attr(vals$saved_data[[input$editfac]],"factors"))
+    lbin<-lapply(cols,function(x){uiOutput(paste("newcolfac",x))})
+    res<-div(style="height:200px;overflow-y: scroll;overflow-x: scroll",
+        checkboxGroupInput("select_factor", "Factors:", 
+                           choiceValues =cols, 
+                           choiceNames = lbin,
+                           selected = cols))
+    bag_newfac$df<-1
+    res
+  })
+  observeEvent(input$editfac,{
+  bag_newfac$df<-0
+})
+  observe({
+    req(bag_newfac$df==1)
+    factors<-attr(vals$saved_data[[input$editfac]],"factors")
+    req(length(factors)>0)
+    cols<-colnames(factors)
+    req(length(input$select_factor)>0)
+    lapply(cols,input=input,function(x,input){
+      output[[paste("newcolfac",x)]]<-renderUI({
+        div(class="cutfacs_breaks_form0",
+            if(x%in%input$select_factor){
+              textInput(paste("newcolfac",x, sep="_"), NULL, value=x,width="200px")
+            }else{ div(x,style="color:red; text-decoration: line-through;")
+              
+            })
+      })
+    })
+    bag_newfac$df<-2
+  })
+  observe({
+    req(bag_newfac$df==2)
+    req(length(input$select_factor)>0)
+    factors<-attr(vals$saved_data[[input$editfac]],"factors")
+    if(any(input$select_factor%in%colnames(factors))){
+      try({
+        
+        newfac<-factors[input$select_factor]
+        colnames(newfac)<-do.call(c,lapply(paste("newcolfac",colnames(newfac),sep="_"), function (x) input[[x]]))
+        vals$edifac<-newfac
+        
+      }, silent=T)
+    }
+    bag_newfac$df==0
+  })
+  observeEvent(input$editfac_go,{
+    attr(vals$saved_data[[input$editfac]],"factors")<-vals$edifac
+    shinyjs::reset("edifac_inps")
+    bag_newfac$df<-0
+    vals$cur_data<-input$editfac
+    removeModal()
+  })
+  observeEvent(input$editfac_end,{
+    bag_newfac$df<-0
+    removeModal()
+  })
+
+  observeEvent(input$dcogs5,{
     showModal(
-      remove_factors()  
+      edit_factors()  
     )
   })
   observeEvent(input$dcogs6,{
+    showModal(
+      edit_data()  
+    )
+  })
+
+  
+  
+  bag_newdat<-reactiveValues(df=0)
+  output$editdat_datalist<-renderUI({
+    
+    div(
+      inline(pickerInput("editdata","Datalist:",choices=names(vals$saved_data), width="200px")),
+      inline(pickerInput("editattr","Atribute:",choices=c("Factors","Numeric"), width="200px"))
+    )
+  })
+  edit_data<- reactive({
+    modalDialog(size="m",easyClose = T,
+                title="Edit data:",
+                footer = uiOutput("editdat_btns"),
+                div(id="edidat_inps",
+                    uiOutput("editdat_datalist"),
+                    uiOutput("editdat_cols")
+                )
+                
+    )
+  })
+  output$editdat_btns<-renderUI({
+    div(
+      actionButton("editdat_go","Confirm"),
+      actionButton("editdat_end","Cancel")
+    )
+  })
+  output$editdat_cols<-renderUI({
+    req(input$editdata)
+    bag_newdat$df<-0
+    data<-vals$saved_data[[input$editdata]]
+    data<-switch(input$editattr,
+                 'Numeric'=data,
+                 "Factors"=attr(data,"factors"))
+    
+    
+    cols<-colnames(data)
+    lbin<-lapply(cols,function(x){uiOutput(paste("newcoldat",x))})
+    res<-div(style="height:200px;overflow-y: scroll;overflow-x: scroll",
+             checkboxGroupInput("select_dattor", "data:", 
+                                choiceValues =cols, 
+                                choiceNames = lbin,
+                                selected = cols))
+    bag_newdat$df<-1
+    res
+  })
+  observeEvent(input$editdata,{
+    bag_newdat$df<-0
+  })
+  observe({
+    req(bag_newdat$df==1)
+    data<-vals$saved_data[[input$editdata]]
+    data<-switch(input$editattr,
+                 'Numeric'=data,
+                 "Factors"=attr(data,"factors"))
+    req(length(data)>0)
+    cols<-colnames(data)
+    req(length(input$select_dattor)>0)
+    lapply(cols,input=input,function(x,input){
+      output[[paste("newcoldat",x)]]<-renderUI({
+        div(class="cutfacs_breaks_form0",
+            if(x%in%input$select_dattor){
+              textInput(paste("newcoldat",x, sep="_"), NULL, value=x,width="200px")
+            }else{ div(x,style="color:red; text-decoration: line-through;")
+              
+            })
+      })
+    })
+    bag_newdat$df<-2
+  })
+  observe({
+    req(bag_newdat$df==2)
+    req(length(input$select_dattor)>0)
+    data<-vals$saved_data[[input$editdata]]
+    data<-switch(input$editattr,
+                 'Numeric'=data,
+                 "Factors"=attr(data,"factors"))
+    if(any(input$select_dattor%in%colnames(data))){
+      try({
+        
+        newdat<-data[input$select_dattor]
+        colnames(newdat)<-do.call(c,lapply(paste("newcoldat",colnames(newdat),sep="_"), function (x) input[[x]]))
+        vals$edidat<-newdat
+        
+        
+      },silent =T)
+    }
+
+  })
+  observeEvent(input$editdat_go,{
+    bag_newdat$df<-0
+    newdf<-vals$edidat
+    data<-vals$saved_data[[input$editdata]]
+    
+    if(input$editattr=="Factors"){
+      attr(vals$saved_data[[input$editdata]],"factors")<-newdf
+    } else{
+      newdf<-data_migrate(data,newdf,"new")
+      vals$saved_data[[input$editdata]]<-newdf
+    }
+    
+
+    shinyjs::reset("edidat_inps")
+    bag_newdat$df<-0
+    vals$cur_data<-input$editdata
+    removeModal()
+  })
+  observeEvent(input$editdat_end,{
+    bag_newdat$df<-0
+    removeModal()
+  })
+  
+  
+  
+  
+  
+  observeEvent(input$dfcogs3,{
+    showModal(
+      edit_factors()  
+    )
+  })
+  observeEvent(input$dcogs7,{
     showModal(
       modalDialog(size="s",easyClose = T,
                   title=strong("Are you sure?"),
@@ -2969,11 +3171,17 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   observeEvent(input$dcogs1,{
     showModal(
       modalDialog(size="m",easyClose = T,footer =NULL,
-                  title="Rename",
+                  title="Rename Datalist",
                   div(
-                    span(
-                      inline(textInput("dcogs1_rename", div("Datalist:",em(input$data_bank, style="color: SeaGreen")),placeholder = "New name", width="200px")),
-                      bsButton("dcogs1_rename_go","Rename"), modalButton("Dismiss")
+                    div(
+                      span(
+                        inline(
+                          pickerInput("rename_datalist","Datalist:",choices=names(vals$saved_data), width="200px")
+                        ),
+                        inline(textInput("dcogs1_rename", NULL,
+                                         placeholder = "New name", width="200px")),
+                        bsButton("dcogs1_rename_go","Rename"), modalButton("Dismiss")
+                      )
                     )
                   )
       )
@@ -3075,45 +3283,58 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   observeEvent(input$dcogs1_rename_go,{
     req(input$dcogs1_rename!="")
-    names(vals$saved_data)[which(names(vals$saved_data)==input$data_bank)]<-input$dcogs1_rename
+    names(vals$saved_data)[which(names(vals$saved_data)==input$rename_datalist)]<-input$dcogs1_rename
     vals$cur_data<-input$dcogs1_rename
     removeModal()
+  })
+
+  observeEvent(input$import_from_data,{
+    vals$cur_import_from_data<-input$import_from_data
+  })
+  observeEvent(input$import_from_attr,{
+    vals$cur_import_from_attr<-input$import_from_attr
+  })
+  
+
+  observeEvent(input$import_to_attr,{
+    vals$cur_import_to_attr<-input$import_to_attr
   })
 
   
   observeEvent(input$dcogs2,{
     showModal(
-      modalDialog(size="m",easyClose = T,footer =NULL,
-                  div(style="background-color:#E8E8E8; border: 1px solid SeaGreen",
-                      div(strong("Merge Data-Attribute from"),"(select two at least)",strong(":")),
-                      div(style="overflow-y: scroll;height: 150px",
-                          checkboxGroupInput("merge_datalist_in", NULL,choices=names(vals$saved_data))
+      modalDialog(size="m",easyClose = T,footer =uiOutput("merge_button"),
+                  title="Merge Datalists",
+                  div(div(class="cogs_in",
+                      div(id="merge_datalist",
+                        div(style="overflow-y: scroll;height: 150px",
+                            checkboxGroupInput("merge_datalist_in", NULL,choices=names(vals$saved_data))
+                        )
+                  
+                        
+                      )
                       ),
-                      uiOutput("merge_button")
-                  )
+                      div(checkboxInput("rm_dup", "Remove duplicated columns", T)))
       )
     )
   })
   output$import_from<-renderUI({
     
     div(
-  
       div(
         strong(inline(div("Datalist:", style="width: 70px"))),
         inline(
-          
           div(
            div(strong( "From:")),
-            div(pickerInput("import_from_data", NULL, choices=names(vals$saved_data)[names(vals$saved_data)!=input$import_to_data],width="200px")
-            )
-          )
-        )
+            div(pickerInput("import_from_data", NULL, choices=names(vals$saved_data),width="200px", selected=vals$cur_import_from_data))
+     )
+   )
         
       ),
       div(
 
         div(inline(div(strong("Attribute:"), style="width: 70px")),
-          inline(pickerInput("import_from_attr", NULL, choices=c("Factor-Attribute","Data-Attribute"), width="200px"))
+          inline(pickerInput("import_from_attr", NULL, choices=c("Factor-Attribute","Numeric-Attribute"), width="200px", selected=vals$cur_import_from_attr))
         ),
         uiOutput("import_var")
       )
@@ -3129,20 +3350,221 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
         div(pickerInput("import_to_data", NULL, choices=names(vals$saved_data),selected=vals$cur_data, width="200px"))
         
       ),
+      div(pickerInput("import_to_attr", NULL, choices=c("Numeric-Attribute","Factor-Attribute"), width="200px", selected=vals$cur_import_to_attr)),
       div(
-        pickerInput("import_to_attr", NULL, choices=c("Factor-Attribute","Data-Attribute"), width="200px")
-        
+       uiOutput('factonum_opt')
       )
-      
+    )
+  })
+  
+## Arrumar factor to factor
+## 
+## 
+
+  output$factonum_opt<-renderUI({
+    req(input$import_from_attr=="Factor-Attribute"&input$import_to_attr=="Numeric-Attribute")
+  
+    div(
+      div(span(strong("Convertion type:"))),
+      radioButtons("hand_facs",NULL,
+                  choiceValues = list("Binary","Ordinal"),selected="Ordinal",
+                  choiceNames = list(
+                    div("Binary",span(id="conv_bin",icon("fas fa-question-circle"))),
+                    div("Integer",span(id="conv_ord",icon("fas fa-question-circle")))
+                  ),
+                  width="300px"),
+      bsTooltip("conv_bin","Creates a single binary column per factor level,with 1 indicating the class of that particular observation", placement = "right",options =list(style="width: 600px")),
+      bsTooltip("conv_ord","Creates a single column using numeric (integer) representation (values) of the factor levels", placement = "right")
     )
   })
  
+
+
+  
+
+  output$toorder_in<-renderUI({
+    #input<-readRDS("input.rds")
+    #vals<-readRDS("vals.rds")
+    #input$importvar<-input$importvar[1:2]
+    data<-getconvert_datavars()[[1]]
+    vars<-getconvert_datavars()[[2]]
+    l1<-lapply(seq_along(vars), function(x) {
+      inline(div(div(
+        if(isTRUE(vals$cutfacs)) {div("Cut:",class="cutfacs_breaks_form",
+            inline(textInput(paste0("cutfacs_breaks_",x),NULL,value =nlevels(data[[vars[[x]]]]),width="60px")),width="60px"
+        )} else {
+          div("levels:",class="cutfacs_breaks")
+        },style="width: 100px;height: 25px; background: #c7d3d4ff; margin: 0px; padding: 0px"),
+        uiOutput(paste0('facord_outl',x))
+        
+      ))
+    })
+    l2<-lapply(vars,function(x) uiOutput(paste0("facinteger",x)))
+    l2<-lapply(l2, function (x) inline(div(x, style="margin-top")))
+    l3<-mapply(list, l2,l1,vars, SIMPLIFY=FALSE)
+    l4<-lapply(l3,function(x)
+      inline(div(div(class="cutfacs_breaks_form0",inline(textInput(paste0("newcol",x[[3]],sep="_"),NULL,value=x[[3]], width="150px"))),
+                 div(inline(div(
+                   div("Value",style="height: 28px;width: 50px; background: #c7d3d4ff; margin: 0px; padding: 0px"),x[[1]])),x[[2]]), class='align_top'))
+    )
+    new_style<-function(...,class='align_top'){
+      return(div(...,class=class))
+    }
+    
+    div(class='align_top',id="rank_levels",
+        l4
+        )
+  })
+  
+  observeEvent(input$import_from_attr,{
+    if(input$import_from_attr=="Factor-Attribute"& input$import_to_attr=="Factor-Attribute")
+    vals$cutfacs<-F
+  })
+  cutdata<-reactive({
+    req(input$import_from_attr)
+    req(input$import_to_attr)
+    cuts<-NULL
+    if(input$import_from_attr=="Numeric-Attribute" & input$import_to_attr=="Factor-Attribute"){
+      vars<-getconvert_datavars()[[2]]
+      cuts<-lapply(seq_along(vars), function(x)    input[[paste0("cutfacs_breaks_",x)]])}
+    cuts
+  })
+  
+  observeEvent(list(input$next_import,cutdata()), {
+    req(input$import_from_attr)
+    req(length(input$importvar)>0)
+    req(input$import_from_attr)
+    #req(input$import_from_attr=="Numeric-Attribute" & input$import_to_attr=="Numeric-Attribute")
+    #req(input$import_to_attr=="Factor-Attribute")
+    if(input$import_from_attr=="Factor-Attribute" & input$import_to_attr=="Numeric-Attribute" ){
+      #req(input$hand_facs=="Ordinal")
+    }
+    data<-getconvert_datavars()[[1]]
+    vars<-getconvert_datavars()[[2]]
+    req(input$importvar %in% colnames(data))
+
+
+    if(input$import_from_attr=="Numeric-Attribute" & input$import_to_attr=="Factor-Attribute" )
+      {
+      if(isTRUE(vals$cutfacs)){
+        req(sum(unlist(lapply(seq_along(vars), function(x)    length(input[[paste0("cutfacs_breaks_",x)]])>0)))==length(vars))
+        cuts<-lapply(seq_along(vars), function(x)    input[[paste0("cutfacs_breaks_",x)]])
+        l1<-mapply(list,as.list(data[input$importvar]),cuts,SIMPLIFY = F)
+        data<-do.call(data.frame,lapply(l1, function (x) cut(as.numeric(as.character(x[[1]])),as.numeric(x[[2]]))))
+      }
+      lapply(seq_along(vars),function(x){
+        output[[paste0('facord_outl',x)]]<-renderUI({
+          div(style="margin-top: 3px",
+              rank_list(
+                text = NULL,
+                labels = lapply(as.list(levels(data[input$importvar][[x]])), function(xx) div(xx,inline(div(class='cutfacs_breaks_form2',textInput(paste("ordrank_label",x,xx,sep="_"),NULL,xx, width= "95px"))))),
+                input_id = paste("rank_lev",x,sep="_"),
+                css_id=paste("rankid_lev",x,sep="_"),
+                class="rankfactors"
+              )
+          )
+        })
+      })
+      
+      lapply(vars,function(x) {
+        output[[paste0("facinteger",x)]]<-renderUI({
+          lapply(1:nlevels(data[,x]),function(x) div(x, class="rank_col"))
+        })
+      })
+    }
+    if(input$import_from_attr=="Factor-Attribute" & input$import_to_attr=="Factor-Attribute" ) 
+      {
+      lapply(seq_along(vars),function(x){
+        output[[paste0('facord_outl',x)]]<-renderUI({
+          div(style="margin-top: 3px",
+              rank_list(
+                text = NULL,
+                labels = lapply(as.list(levels(data[input$importvar][[x]])), function(xx) div(xx,inline(div(class='cutfacs_breaks_form2',textInput(paste("ordrank_label",x,xx,sep="_"),NULL,xx, width= "95px"))))),
+                input_id = paste("rank_lev",x,sep="_"),
+                css_id=paste("rankid_lev",x,sep="_"),
+                class="rankfactors"
+              )
+          )
+        })
+      })
+    
+      lapply(vars,function(x) {
+        output[[paste0("facinteger",x)]]<-renderUI({
+          lapply(1:nlevels(data[,x]),function(x) div(x, class="rank_col"))
+        })
+      })
+      }
+    
+    if(input$import_from_attr=="Factor-Attribute" & input$import_to_attr=="Numeric-Attribute" )
+      {
+      
+      lapply(seq_along(vars),function(x){
+        output[[paste0('facord_outl',x)]]<-renderUI({
+          div(style="margin-top: 3px",
+              rank_list(
+                text = NULL,
+                labels = levels(data[input$importvar][[x]]),
+                input_id = paste("rank_lev",x,sep="_"),
+                css_id=paste("rankid_lev",x,sep="_"),
+                class="rankfactors2"
+              )
+          )
+        })
+      })
+     
+      lapply(vars,function(x) {
+        output[[paste0("facinteger",x)]]<-renderUI({
+          lapply(1:nlevels(data[,x]),function(xx) div(textInput(paste0("facvalue",x,xx), NULL,value=xx,width="50px"), class="cutfacs_breaks_form"))
+        })
+      })
+    }
+    
+    
+    
+    #lapply(input$importvar, function(x) textInput("label"))
+    
+    
+    if(input$import_from_attr=="Factor-Attribute" & input$import_to_attr=="Factor-Attribute") {
+      
+    }
+  
+   
+  })
+
+  getconvert_datavars<-reactive({
+    req(input$import_from_attr)
+    req(input$importvar)
+    req(input$import_from_attr)
+    if(input$import_from_attr=="Factor-Attribute"){
+      data<- attr(vals$saved_data[[input$import_from_data]],"factors")
+      if(any(unlist(lapply(data,function(x) !is.factor(x))))){
+        pic<-which(unlist(lapply(data,function(x) !is.factor(x))))
+        data[pic]<-do.call(data.frame,lapply(data[pic],function(x) as.factor(x)))
+      }
+      
+    } else{
+      data<-vals$saved_data[[input$import_from_data]] 
+      
+    }
+    if(input$import_from_attr=="Numeric-Attribute" & input$import_to_attr=="Factor-Attribute"){
+      res<-do.call(data.frame,lapply(data,function(x) as.factor(x)))
+      rownames(res)<-rownames(data)
+      data<-res
+    }
+    
+    vars<-as.list(input$importvar)
+    
+    return(list(data,vars))
+  })
+
+  
+
   import_npage <- 2
   import_rv <- reactiveValues(page_imp = 1)
   import_diag0<-reactive({
     tags$div(id="import_dialog",
       modalDialog(size="m",easyClose = T,
-                  title="Copy variables",
+                  title="Exchange Factor/Variables",
                   footer = div( inline(uiOutput("import_btn_cancel")),
                                 inline(uiOutput("import_btn_prev")),
                                 
@@ -3153,35 +3575,340 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       )
     )
   })
+
+  output$copy_transfer<-renderUI({
+    cond<-input$import_from_data==input$import_to_data & input$import_from_attr==input$import_to_attr
+    req(length(cond)>0)
+    choices<-if(cond){
+      radioButtons("copy_transfer","Action","Copy",inline=T, selected="Copy")} else{
+      radioButtons("copy_transfer","Action", c("Copy","Move"),inline=T, selected=vals$cur_copy_transfer)
+     }
+  
+  })
+  observeEvent(input$copy_transfer,{
+    vals$cur_copy_transfer<-input$copy_transfer
+  })
+ 
   output$import_page_imps<-renderUI({
-  div(
-    splitLayout(class = "page_imp",
-                id = 'step1',
-                uiOutput("import_from"),
-                uiOutput("import_to"))    ,
+  div(id='import_inputs',
+    div(class = "page_imp",
+        id = 'step1',
+      uiOutput("copy_transfer"),
+      splitLayout(
+                  uiOutput("import_from"),
+                  uiOutput("import_to"))
+    )    ,
     hidden(
       div(class = "page_imp",id = 'step2',
-          uiOutput("import_factor_yes")))
+          uiOutput("import_factor_yes"),
+          div(
+       
+            uiOutput("ordinal_page"),
+            uiOutput("binary_page")
+          )))
   )  
   })
+
+  output$ordinal_page<-renderUI({
+    if(input$import_from_attr=="Factor-Attribute" & input$import_to_attr=="Numeric-Attribute"){
+      req(input$hand_facs=="Ordinal")
+    }
+    if(input$import_from_attr=="Numeric-Attribute"){
+      req(input$import_to_attr=="Factor-Attribute")
+    }
+   div( uiOutput("teste"),
+    div(
+      inline(
+        div(style="overflow-y: scroll;height: 250px; border: 1px solid gray; width: 400px",
+            uiOutput("cutfac"),
+            div(
+              div("Drag and drop the levels (green blocks) to define their values",style='white-space: normal;'),
+              div(uiOutput("toorder_in"),style="font-size: 11px;"),
+             
+              
+            )
+            )
+      )
+    ))
+    
+  })
+  output$cutfac<-renderUI({
+    req(input$import_from_attr=="Numeric-Attribute")
+    div(checkboxInput("cutfacs","Cut", T))
+  })
+  cutfacs<-reactiveValues(df=F)
+  observeEvent(input$cutfacs,{
+    vals$cutfacs<-input$cutfacs
+  })
+
+  output$binary_page<-renderUI({
+    data<-vals$saved_data[[input$import_from_data]]
+    if(input$import_from_attr=="Factor-Attribute"){
+      req(input$import_to_attr=="Numeric-Attribute")
+      req(input$hand_facs=="Binary")
+      factors<-attr(data,"factors")[,input$importvar,drop=F]
+      cols<-colnames(getclassmat(factors))
+    }
+    if(input$import_from_attr=="Numeric-Attribute"){
+      req(input$import_to_attr=="Numeric-Attribute")
+      cols<-colnames(data[,input$importvar,drop=F])[]
+    }
+
+    lbin<-lapply(cols,function(x){
+      inline(
+        div(style="width: 150px",
+            div(class="cutfacs_breaks_form0",textInput(paste("newbin",x, sep="_"), NULL, value=x)))
+      )
+    })
+
+
+    
+    div(style="height:200px;overflow-y: scroll;overflow-x: scroll",
+        h5(strong("New columns")),
+        lbin)
+  })
+
+ 
+
+  ordlabels<-reactive({
+    data<-getconvert_datavars()[[1]]
+    vars<-getconvert_datavars()[[2]]
+    if(input$import_from_attr=="Numeric-Attribute" & input$import_to_attr=="Factor-Attribute"){
+      if(isTRUE(vals$cutfacs)){
+        req(sum(unlist(lapply(seq_along(vars), function(x)    length(input[[paste0("cutfacs_breaks_",x)]])>0)))==length(vars))
+        cuts<-lapply(seq_along(vars), function(x)    input[[paste0("cutfacs_breaks_",x)]])
+        l1<-mapply(list,as.list(data[input$importvar]),cuts,SIMPLIFY = F)
+        data<-do.call(data.frame,lapply(l1, function (x) cut(as.numeric(as.character(x[[1]])),as.numeric(x[[2]]))))
+      }
+    }
+ 
+
+    l2<-lapply(seq_along(vars), function (x)
+      lapply( as.list(levels(data[input$importvar][[x]])),function(xx){
+        c("ordrank_label",x,xx)
+      })
+      
+    )
+    res_labels<-lapply(l2,input=input,function(x,input) unlist(lapply(x, function(xx){
+      input[[paste0(xx, collapse = "_")]]
+    })))
+    res_labels
+  })
+  ordvalues<-reactive({
+    data<-getconvert_datavars()[[1]]
+    vars<-getconvert_datavars()[[2]]
+    if(input$import_from_attr=="Numeric-Attribute" & input$import_to_attr=="Factor-Attribute"){
+      if(isTRUE(vals$cutfacs)) {
+        req(sum(unlist(lapply(seq_along(vars), function(x)    length(input[[paste0("cutfacs_breaks_",x)]])>0)))==length(vars))
+        cuts<-lapply(seq_along(vars), function(x)    input[[paste0("cutfacs_breaks_",x)]])
+        l1<-mapply(list,as.list(data[input$importvar]),cuts,SIMPLIFY = F)
+        data<-do.call(data.frame,lapply(l1, function (x) cut(as.numeric(as.character(x[[1]])),as.numeric(x[[2]]))))
+      } 
+    }
+    
+    l2<-lapply(vars, function (x)
+      lapply(1:nlevels(data[,x]),function(xx){
+        c("facvalue",x,xx)
+      })
+      
+    )
+    res_values<-lapply(l2,input=input,function(x,input) unlist(lapply(x, function(xx){input[[paste0(xx, collapse = "")]]})))
+    
+  })
+  observeEvent(input$final_import,{
+    new<-final_import()
+    
+  
+    #
+    #input<-readRDS("input.rds")
+    # vals<-readRDS("vals.rds")
+    #new<-readRDS("new.rds")
+    
+    df_to<-if(input$import_to_attr=="Numeric-Attribute"){vals$saved_data[[input$import_to_data]]} else{attr(vals$saved_data[[input$import_to_data]],'factors')}
+    if(input$import_to_attr=="Numeric-Attribute"){
+      new<-data_migrate(df_to,new,"new")
+      vals$saved_data[[input$import_to_data]]<-new
+    }  else{
+      attr(vals$saved_data[[input$import_to_data]],"factors")<-new
+    }
+    
+    if(input$copy_transfer=="Move"){
+      if(input$import_from_attr=="Factor-Attribute"){
+        attr(vals$saved_data[[input$import_from_data]],"factors")[,input$importvar]<-NULL
+      } else{
+        vals$saved_data[[input$import_from_data]][,input$importvar]<-NULL
+      }
+    }
+    vals$cur_data<-input$import_to_data
+    removeModal()
+    shinyjs::reset('import_inputs')
+  })
+  final_import<-reactive({
+    #
+
+    
+   data<-getconvert_datavars()[[1]]
+   vars<-getconvert_datavars()[[2]]
+
+   res_labels<-ordlabels()
+
+   #input<-readRDS("input.rds")
+   #vals<-readRDS("vals.rds")
+   #data<-readRDS("data.rds")
+  # vars<-readRDS("vars.rds")
+  #res_labels<-readRDS("res_labels.rds")
+   if(input$import_from_attr=="Numeric-Attribute" & input$import_to_attr=="Factor-Attribute"){
+     if(isTRUE(vals$cutfacs)) {
+       req(sum(unlist(lapply(seq_along(vars), function(x)    length(input[[paste0("cutfacs_breaks_",x)]])>0)))==length(vars))
+       cuts<-lapply(seq_along(vars), function(x)    input[[paste0("cutfacs_breaks_",x)]])
+       l1<-mapply(list,as.list(data[input$importvar]),cuts,SIMPLIFY = F)
+       df<-do.call(data.frame,lapply(l1, function (x) cut(as.numeric(as.character(x[[1]])),as.numeric(x[[2]]))))
+       rownames(df)<-rownames(data)
+       data<-df
+     }
+   }
+   
+   
+     df_to<-if(input$import_to_attr=="Numeric-Attribute"){vals$saved_data[[input$import_to_data]]} else{attr(vals$saved_data[[input$import_to_data]],'factors')}
+
+    if(input$import_from_attr=="Numeric-Attribute"){
+      newvars<-data[input$importvar]
+      if(input$import_to_attr=="Numeric-Attribute"){
+        new<-df_to
+        str(new)
+        newv<-as.list(newvars[rownames(df_to),])
+        names(newv)<-do.call(c,lapply(paste("newbin",names(newv),sep="_"), function (x) input[[x]]))
+        new[names(newv)]<-newv
+       
+      }
+      
+      if(input$import_to_attr=="Factor-Attribute"){
+       
+        new<-df_to
+        l1<-as.list(newvars[rownames(df_to),input$importvar,drop=F])
+        l2<-lapply(seq_along(vars), function(x) {input[[paste0("rank_lev_",x,collapse="_")]]})
+  
+        l3<-mapply(list, l1,l2,res_labels, SIMPLIFY=FALSE)
+     
+        #newvars<-do.call(data.frame,lapply(l3,function(x) factor(x[[1]], levels=x[[2]])))
+        l4<-lapply(l3,input=input,function(x, input) {
+          res<-factor(x[[1]], levels=x[[2]], labels=x[[3]])
+          if(anyNA(x[[1]])){
+            res<-addNA(res)
+          }
+          res
+        })
+        names(l4)<-do.call(c,lapply(paste0('newcol',input$importvar,sep="_"), function (x) input[[x]]))
+        new[names(l4)]<-l4
+     }
+
+    }
+  
+    
+    if(input$import_from_attr=="Factor-Attribute"){
+      newvars<-data[input$importvar]
+      if(any(unlist(lapply(newvars,function(x) !is.factor(x))))){
+        pic<-which(unlist(lapply(newvars,function(x) !is.factor(x))))
+        newvars[pic]<-do.call(data.frame,lapply(newvars[pic],function(x) as.factor(x)))
+      }
+      if(input$import_from_attr=="Factor-Attribute"){
+        if(input$import_to_attr=="Numeric-Attribute"){
+          if(input$hand_facs=="Binary"){
+            newv<-getclassmat(data[,input$importvar,drop=F])
+            rownames(newv)<-rownames(data)
+            names<-paste("newbin",colnames(newv),sep="_")
+            colnames(newv)<-do.call(c,lapply(paste("newbin",colnames(newv),sep="_"), function (x) input[[x]]))
+            newvars<-newv
+            new<-df_to
+            new[,colnames(newv)]<-newv[rownames(df_to),]
+            
+            
+            
+          } 
+          if(input$hand_facs=="Ordinal"){
+        
+            
+            new<-df_to
+            res_values<-ordvalues()
+            
+            l1<-as.list(newvars[rownames(df_to),input$importvar,drop=F])
+            l2<-lapply(seq_along(vars), function(x) {input[[paste0("rank_lev_",x,collapse="_")]]})
+            #lvalue<-lapply(seq_along(vars), function(x) {input[[paste0("facvalue",x)]]})
+            
+            
+            l3<-mapply(list, l1,l2,res_values, SIMPLIFY=FALSE)
+            
+            #x<-l3[[1]]
+            #newvars<-do.call(data.frame,lapply(l3,function(x) factor(x[[1]], levels=x[[2]])))
+            l4<-lapply(l3,input=input,function(x, input) {
+              res<-as.numeric(as.character(factor(x[[1]], levels=x[[2]], labels=x[[3]])))
+              
+              res
+            })
+            names(l4)<-do.call(c,lapply(paste0('newcol',input$importvar,sep="_"), function (x) input[[x]]))
+    
+            new[names(l4)]<-l4
+            
+          }
+          
+        }
+      }
+    
+      if(input$import_to_attr=="Factor-Attribute"){
+        new<-df_to
+        l1<-as.list(newvars[rownames(df_to),input$importvar,drop=F])
+        l2<-lapply(seq_along(vars), function(x) {input[[paste0("rank_lev_",x,collapse="_")]]})
+        l3<-mapply(list, l1,l2,res_labels, SIMPLIFY=FALSE)
+        #newvars<-do.call(data.frame,lapply(l3,function(x) factor(x[[1]], levels=x[[2]])))
+        l4<-lapply(l3,input=input,function(x, input) {
+          res<-factor(x[[1]], levels=x[[2]], labels=x[[3]])
+          if(anyNA(x[[1]])){
+            res<-addNA(res)
+          }
+          res
+        })
+        names(l4)<-do.call(c,lapply(paste0('newcol',input$importvar,sep="_"), function (x) input[[x]]))
+        new[names(l4)]<-l4
+        
+
+      }
+
+    }
+new
+   # removeModal()
+    
+  })
+
+  
+
   output$import_btn_prev<-renderUI({
     req(import_rv$page_imp!=1)
-    actionButton("prev_import", "< Previous")
+    bsButton("prev_import", "< Previous", class="button_change")
   })
   output$import_btn_cancel<-renderUI({
     req(import_rv$page_imp==1)
-    actionButton("cancel_import", "Cancel")
+    bsButton("cancel_import", "Cancel", class="button_change")
   })
   output$import_btn_end<-renderUI({
     req(import_rv$page_imp==import_npage)
-    actionButton("final_import", "Confirm >")
+    bsButton("final_import", "Confirm >", class="button_change")
   })
   
   output$import_btn_next<-renderUI({
     req(import_rv$page_imp<import_npage)
-    req(length(input$importvar)>=1)
-    actionButton("next_import", "Next >")
+    #req(length(input$importvar)>=1)
+    dis<-if(length(input$importvar)>=1){F} else{ T}
+
+    div(
+      div(next_title=if(isTRUE(dis)){"Select at least one variable/factor"} else{ NULL},
+          bsButton("next_import", "Next >", class="button_change", disabled = dis),
+          
+      )
+    )
   })
+  
+  
+  
   observe({
     toggleState(id = "prev_import", condition = import_rv$page_imp > 1)
     toggleState(id = "page_imp1", condition = import_rv$page_imp > 1)
@@ -3232,13 +3959,10 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
           inline(
             div(
               id="dfcogs",
-              div(class="dfcogs0",span(icon("fas fa-cog"),style="padding-left: 6px")),
+              div(id="dcogs0",class="dcogs0",span(icon("fas fa-cog"),style="padding-left: 7px")),
               div(class='dflinks_all',
                   div(class="dflinks",
-                      actionLink("dfcogs1","Rename Factor")
-                  ),
-                  div(class="dflinks",
-                      actionLink("dfcogs3","Remove Factors")
+                      actionLink("dfcogs3","Edit Factors")
                   ),
                   
                   div(class="dflinks",
@@ -3267,80 +3991,43 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   
 
   output$import_factor_yes<-renderUI({
-    req(input$import_from_data)
-    req(input$import_from_attr)
-    column(12,
-      
-      div(strong("Action:"),style="text-align: top; heigth: 300px",
-          em(
-            "Copy", inline(div(style="max-width: 200px; color: SeaGreen; background: Gainsboro",paste0(input$importvar,collapse="; "))),
-            if(input$import_from_attr=="Data-Attribute") {
-              if( input$import_to_attr=="Factor-Attribute")
-                span("(as factor)")
-            } else{
-              if( input$import_to_attr=="Data-Attribute"){
-                span("(as numeric)")
-              }
-            }, "in",strong(input$import_to_data)
-            
-          ), uiOutput("import_tip")),
-   
+    action<-span(strong("Action:"),input$copy_transfer)
+    vars<- inline(div(style="max-width: 200px; color: SeaGreen; background: Gainsboro",em(paste0(input$importvar,collapse="; "))))
+    sub<-NULL
+    sub<- if(input$import_from_attr=="Numeric-Attribute"){
+      if(input$import_to_attr=="Numeric-Attribute"){} else {
+        span("(as factor)")
+        }
+    }
+    sub<- if(input$import_from_attr=="Factor-Attribute"){
+      if(input$import_to_attr=="Numeric-Attribute"){
+        if(input$hand_facs=="Binary"){
+          "(as binary columns)"
+        } else{
+          "(as value-factor-levels)"
+        }
+      } 
+    }   
+    from_to<-span("from",strong(input$import_from_data), "to",strong(input$import_to_data))
+    div(
+      div(
+        action,
+        vars,
+        span(sub, style="color:  #05668D;"),
+        from_to
+      )
      
-      
-      
+        
     )
   })
   
-  output$import_tip<-renderUI({
-    if(input$import_to_attr=="Factor-Attribute"){
-      if(input$import_from_attr=="Data-Attribute"){
-        div(
-          span(strong("Tip:",style="color: Seagreen"),"You can later edit the labels and levels in the",span("Edit factors", style="color: #05668D")," menu.")
-        )
-      } else{ NULL}
-    } else{
-      if(input$import_from_attr=="Factor-Attribute"){
-        div(
-          span(strong("Wanining:",style="color: red"),"Factor to Numeric convertion will return the underlying numeric (integer) representation, which is often meaningless as it may not correspond to the factor levels. Use the",span("Edit factors", style="color: #05668D"),"menu for a more precise convertion")
-        )
-      } else{ NULL}
-    }
-    
-    
-  })
-  observeEvent(input$final_import,{
-    
-    data<-vals$saved_data[[input$import_from_data]]
-    if(input$import_from_attr=="Factor-Attribute"){
-      df_from<-attr(data,"factors")
-      newvars<-df_from[input$importvar]
-    } else{
-      df_from<-data
-      newvars<-df_from[input$importvar]
-    }
-    
-    df_old<-vals$saved_data[[input$import_to_data]]
-    if(input$import_to_attr=="Factor-Attribute"){
-      if(input$import_from_attr=="Data-Attribute"){
-        newvars<-apply(newvars,2,as.factor)
-      }
-      df_old<-attr(df_old,"factors")
-      new<-merge(df_old,newvars, by=0, all=T)
-      attr(vals$saved_data[[input$import_to_data]],"factors")<-new
-
-    } else{
-     if(input$import_from_attr=="Factor-Attribute"){
-       newvars<-apply(newvars,2,as.numeric)
-     }
   
-      new<-merge(df_old,newvars, by=0, all=T)
-      new<-data_migrate(df_old,new,"new")
-      attr(new,"transf")<-NULL
-      vals$saved_data[[input$import_to_data]]<-new
-    }
-    
-    removeModal()
-  })
+
+  
+  
+
+
+
   output$import_var<-renderUI({
     req(input$import_from_data)
     data<-vals$saved_data[[input$import_from_data]]
@@ -3352,8 +4039,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       choices<- colnames(data)
     }
     div(style="overflow-x: scroll;height:180px;overflow-y: scroll",
-      div(strong(title),"(select at least one)"),
-      checkboxGroupInput("importvar", NULL, choices=choices, width="150px")
+      div(strong(title)),
+      checkboxGroupInput("importvar", NULL, choices=choices,width="150px")
     )
     
   })
@@ -3854,17 +4541,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     module_ui_downcenter("downcenter")
     mod_downcenter <- callModule(module_server_downcenter, "downcenter",  vals=vals)
   })
-  observeEvent(input$delete_factor_yes,{
-    facs<- attr(vals$saved_data[[input$data_bank]],"factors")
-    vals$cur_partsom<-"None"
-    updatePickerInput(session,"som_test_pick","None")
-    facs[input$remove_factor]<-NULL
-    
-    attr(vals$saved_data[[input$data_bank]],"factors")<-facs
-    removeModal()
-    updateRadioGroupButtons(session,"view_datalist", selected="extra_shape")
-    
-  })
+
   output$x1_factors = {DT::renderDataTable(attr(getdata_bank(),"factors"),options = list(pageLength = 20, info = FALSE,lengthMenu = list(c(20, -1), c( "20","All")), autoWidth=T), rownames = TRUE,class ='cell-border compact stripe')}
   observeEvent(input$delete_coords,{
     showModal(
@@ -4054,10 +4731,12 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   getdata_bank<-reactive({
     req(input$data_bank)
-    
-    vals$saved_data[[input$data_bank]]
-    
-    
+    req(length(vals$saved_data)>0)
+    if(is.data.frame(data_cogs$df)){
+      data_cogs$df 
+    } else{vals$saved_data[[input$data_bank]]
+      
+    }
   })
   
   
@@ -4161,8 +4840,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     switch(vals$hand_save,
            "Save new som in" = {savesom()},
            "Save changes"= {  savechanges_comb()},
-           "Include binary columns in the Data-Attribute"=  {savebinary()},
-           "Include ordinal variables in the Data-Attribute"=  {saveordinal()},
+           "Include binary columns in the Numeric-Attribute"=  {savebinary()},
+           "Include ordinal variables in the Numeric-Attribute"=  {saveordinal()},
            "Save Clusters"= {saveclusters()},
            "Create data list from aggregation results"= {saveagg()},
            "Add an Extra-Layer-Attribute to the Datalist"=addlayer(),
@@ -4253,6 +4932,24 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     paste0(name0," (",bag,")")
     
   })
+  
+  
+  bag_merge<-reactive({
+    bag<-1
+    name0<-paste(input$merge_datalist_in, collapse="_")
+    name1<-paste0(name0," (",bag,")")
+    if(name1%in%names(vals$saved_maps))
+    {
+      repeat{
+        bag<-bag+1
+        name1<-paste0(name0," (",bag,")")
+        if(!name1%in%names(vals$saved_maps)) break
+      }
+    }
+    paste0(name0," (",bag,")")
+    
+  })
+  
   bag_agg<-reactive({
     bag<-1
     name0<-'Datalist_agg'
@@ -4292,29 +4989,48 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   
   mergedata<-reactive({
+    
     to_merge<-vals$saved_data[input$merge_datalist_in]
-    to_merge<-readRDS("to_merge.rds")
-    pic<-which.max(unlist(lapply(to_merge, function(x) nrow(x))))
-    data1<-to_merge[[pic]]
-    newdata<-  do.call("merge", c(to_merge, 
-                                  by = 0, all = TRUE))[-1]
-    colnames(newdata)<- unlist(lapply(to_merge, colnames))
+    to_merge_fac<-lapply(vals$saved_data[input$merge_datalist_in],function(x) attr(x,"factors"))
     
+    mx <- which.max(do.call(c,lapply(to_merge,nrow)))
+    l1<-unlist(lapply(to_merge,function(x) as.list(x[rownames(to_merge[[mx]] ),])),
+               recursive = F)
+    newdata<-do.call(data.frame,l1)
+    rownames(newdata)<-rownames(to_merge[[mx]])
+    colnames(newdata)<-c(do.call(c,lapply(to_merge,colnames)))
+    if(isTRUE(input$rm_dup)){
+      if(any(duplicated(colnames(newdata)))){
+        dup<-which(duplicated(colnames(newdata)))
+        keep<-which.max(do.call(c,lapply(lapply(newdata[dup],na.omit),length)))
+        fall<-dup[-keep]
+        newdata<-newdata[colnames(newdata)[-fall]]
+      }
+    }
     
-    to_merge_fac<-lapply(to_merge, function (x) attr(x,"factors"))
-    newfac<-do.call(cbind,to_merge_fac)
-    pic_fac<-which(duplicated(unlist(lapply(to_merge_fac, colnames)))==F)
-    newfac<- newfac[pic_fac]
-    colnames(newfac)<-unlist(lapply(to_merge_fac, colnames))[pic_fac]
+    mxfac <- which.max(do.call(c,lapply(to_merge_fac,nrow)))
+    lfac<-unlist(lapply(to_merge_fac,function(x) as.list(x[rownames(to_merge_fac[[mxfac]] ),])),recursive = F)
+    newfac<-do.call(data.frame,lfac)
+    rownames(newfac)<-rownames(to_merge_fac[[mx]])
+    colnames(newfac)<-c(do.call(c,lapply(to_merge_fac,colnames)))
+    if(isTRUE(input$rm_dup)){
+      if(any(duplicated(colnames(newfac)))){
+        dup<-which(duplicated(colnames(newfac)))
+        keep<-which.max(do.call(c,lapply(lapply(newfac[dup],na.omit),length)))
+        fall<-dup[-keep]
+        newfac<-newfac[colnames(newfac)[-fall]]
+      }
+    }
     
-    newdata<-data_migrate(data1,newdata,input$merge_newname)
+    newdata<-data_migrate(to_merge[[mx]],newdata,input$merge_newname)
     attr(newdata, "transf")=NULL
-    attr(newdata,"factors")<-newfac[rownames(data1),]
+    attr(newdata,"factors")<-newfac[rownames(newdata),]
     if(input$hand_save=="create"){
       vals$saved_data[[input$merge_newname]]<-newdata}
     else{
       vals$saved_data[[input$merge_over]]<-newdata
     }
+    
     
   })
   saveinterp<-reactive({
@@ -4577,7 +5293,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     div(
       h4("Create Datalist",
          popify(actionLink("uphelp0",tipify(icon("fas fa-question-circle"),"click for help")),"Data bank structure",as.character(paste0(
-           "Each Datalist in the Databank requires at least two files: the ",code("Data-Attribute")," (observations) and the ",code('Factor-Attribute'),". Optionally, the user can upload files containing spatial information (coordinates, base and layer shape). More information in the help icons on the label of each input."
+           "Each Datalist in the Databank requires at least two files: the ",code("Numeric-Attribute")," (observations) and the ",code('Factor-Attribute'),". Optionally, the user can upload files containing spatial information (coordinates, base and layer shape). More information in the help icons on the label of each input."
          )),trigger="hover", options=list(container="body"))),
       uiOutput("upload_input")
       
@@ -4650,7 +5366,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                               div(class='insert_form',
                                   div(id="insert_req",
                                       div(    style="color:  SeaGreen;",
-                                              div(strong("Data-Attribute:",style="color:  SeaGreen"),
+                                              div(strong("Numeric-Attribute:",style="color:  SeaGreen"),
                                                   popify(actionLink('uphelp', icon("fas fa-question-circle")),"Upload the observations",textupload(), trigger = "hover", placement ="right")),
                                               if(length(input$up_or_ex)>0){
                                                 if(input$up_or_ex=='upload') {
@@ -6380,7 +7096,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     p
   })
   map_raster<-reactive({
-    validate(need(input$choices_map=="Data-Attribute","This functionality is currently only available for Data-Attribute"))
+    validate(need(input$choices_map=="Numeric-Attribute","This functionality is currently only available for Numeric-Attribute"))
     
     p0<-p<-data_raster()
     
@@ -6487,13 +7203,13 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   getmap<-reactive({
     if(input$cmap=='discrete'){
-      if(input$choices_map=="Data-Attribute"){  p<-vals$map_data_disc}
+      if(input$choices_map=="Numeric-Attribute"){  p<-vals$map_data_disc}
       if(input$choices_map=="Factor-Attribute"){  p<-vals$map_fac_disc}
       
     }
     
     if(input$cmap=='interpolation') {
-      if(input$choices_map=="Data-Attribute"){  p<-vals$map_data_interp}
+      if(input$choices_map=="Numeric-Attribute"){  p<-vals$map_data_interp}
       if(input$choices_map=="Factor-Attribute"){  p<-vals$map_fac_interp}
     }
     
@@ -7115,17 +7831,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       showModal(transfmodal())
     })
     
-    transfmodal <- function() {
-      div(id="teste",
-          modalDialog(
-            texttransf(),
-            title = "Transformation",
-            footer = modalButton("close"),
-            size = "m",
-            easyClose = TRUE
-          )
-      )
-    }
+
     
     observeEvent(input$Remove, {
       showModal(removemodal())
@@ -8402,6 +9108,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   
   change_inputs<-reactive({
     list(
+      input$radio_cogs,
       input$data_upload,
       input$filter_data,
       input$cutlevel_obs,
@@ -8524,7 +9231,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     #attr(data,"transf")<-newattribs
     
     
-    validate(need(sum(rownames(factors_in)%in%rownames(data))>0,"Data-Attribute and Factors-Attribute must have conforming IDs (first column). Check these files and reload again;"))
+    validate(need(sum(rownames(factors_in)%in%rownames(data))>0,"Numeric-Attribute and Factors-Attribute must have conforming IDs (first column). Check these files and reload again;"))
     attr(data,"factors")<-factors_in
     attr(data,"coords")<-coords()[rownames(data),]
     attr(data,"base_shape")<-base_shape()
@@ -8575,7 +9282,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(input$last_btn!='tools_drop7'& input$last_btn!='tools_drop9' )
     # req(is.data.frame(data_cogs$df))
     req(isTRUE(last_cog()))
-    div(class="needed",
+    div(
         
         tags$div(class="track_change1",div(class="tools_content",
                                            tags$style(
@@ -8710,7 +9417,10 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(!is.na(input$radio_cogs))
     runjs(paste0("Shiny.setInputValue('last_btn', '",input$radio_cogs,"');"))
   })
+  
+  
   observeEvent(last_cog(),{
+    
     req(input$last_btn)
     req(length(input$radio_cogs)>0)
     if(isTRUE(last_cog())){
@@ -8718,26 +9428,89 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       shinyjs::show('tog_tools')
       shinyjs::show('change_head0')
       shinyjs::show('data_change')
-      addClass("upload_tools",'upload_tools1')
-      removeClass("upload_tools",'upload_tools')
+      #addClass("upload_tools",'upload_tools1')
+      #removeClass("upload_tools",'upload_tools')
     }
     if(!isTRUE(last_cog())) {
-      removeClass("upload_tools",'upload_tools1')
-      addClass("upload_tools",'upload_tools')
+      #removeClass("upload_tools",'upload_tools1')
+      #addClass("upload_tools",'upload_tools')
       removeClass("main_panel",'panel0')
       shinyjs::hide('tog_tools')
       shinyjs::hide('change_head0')
+      if(isFALSE(status_changes$df)){
+        showModal(
+          modalDialog(
+            easyClose = T,
+            div("The",input$data_upload,"has unsaved changes. Do you want to save these changes?"),
+            footer = div(
+              bsButton("savechanges_return","Return"),
+              bsButton("savechanges_cancel","Don't save"),
+              bsButton("savechanges_save","Save"),
+            )
+          )
+        )
+      } else{
+        data_cogs$df<-0
+      }
+ 
+      
+      updateRadioGroupButtons(session,"radio_cogs",selected=NA)
+      #runjs("Shiny.setInputValue('radio_cogs', NA);")
     }
     
   })
-  observeEvent(last_cog(),{
-    if(isFALSE(last_cog())){
-      runjs("Shiny.setInputValue('radio_cogs', NA);")
-      if(length(input$radio_cogs)>0){
-        updateRadioGroupButtons(session,'radio_cogs',selected = NA)
-        
-      }
+  
+  leave_changes<-reactive({
+   
+  })
+  
+observeEvent(input$savechanges_return,{
+  updateRadioGroupButtons(session,"radio_cogs",selected=last_btn$equal[1])
+  runjs(paste0("Shiny.setInputValue('radio_cogs', ",last_btn$equal[1],");"))
+  runjs(paste0("Shiny.setInputValue('last_btn', ",last_btn$equal[1],");"))
+  runjs(paste0("Shiny.setInputValue('cancel_save', 0);"))
+  removeModal()
+  
+})
+
+
+  
+  observeEvent(input$savechanges_save,{
+    vals$hand_save<-"Save changes"
+    vals$hand_save2<-NULL
+    vals$hand_save3<-NULL
+    removeClass('tools_drop8',"save_changes")
+    showModal(
+      hand_save_modal()
+    )
+  })
+  observeEvent(input$savechanges_cancel,{
+
+    data_cogs$df<-NULL
+    removeClass('tools_drop8',"save_changes")
+    shinyjs::reset("change_head")
+    removeModal()
+  })
+  
+  observeEvent(input$last_btn,{
+    req(isTRUE(last_cog()))
+    #updateRadioGroupButtons(session,"radio_cogs",selected=input$last_btn)
+  })
+  status_changes<-reactiveValues(df=F)
+  observe({
+    status_changes$df<-sum(vals$bagdata==c(T,T))==2
+  })
+  
+
+  getdata_upload0<-reactive({
+    if(is.data.frame(data_cogs$df)){
+      data_cogs$df 
+    } else{vals$saved_data[[input$data_upload0]]
+      
     }
+
+    
+    
   })
   observeEvent(list(input$radio_cogs,input$last_btn),{
     req(input$last_btn)
@@ -8756,17 +9529,19 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     # req(isTRUE(input$cogs_toggle))
     #req(length(vals$saved_data)>0)
     # req(input$data_upload)
-    choiceValues=list('tools_drop1',
+    choiceValues=list(
+     
+      'tools_drop1',
                       'tools_drop2',
                       'tools_drop3',
                       'tools_drop4',
                       'tools_drop5',
-                      'tools_drop6',
+                    
                       'tools_drop7',
                       'tools_drop8',
                       'tools_drop9')
     choiceNames=list(
-      
+   
       div(id="tools_drop1",class="needed",div(cogs_title="Filter observations",
                                               icon("fas fa-list"))),
       div(id="tools_drop2",class="needed",div(cogs_title="Filter variables",
@@ -8777,8 +9552,6 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                                               img(src=na_icon,height='14',width='14'))),
       div(id="tools_drop5",class="needed",div(cogs_title="Data split",
                                               img(src=split_icon,height='14',width='14'))),
-      div(id="tools_drop6",class="needed",div(cogs_title="Edit factors",
-                                              icon("fas fa-tags"))),
       div(id="tools_drop7",class="needed",div(cogs_title="Create palette",
                                               icon("fas fa-palette"))),
       div(id="tools_drop8",class="needed",div(cogs_title="Save Changes",
@@ -8790,14 +9563,17 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     req(input$tabs!="menu_intro")
     
     if(length(vals$saved_data)>0){
-      div( 
+      div(
+   
+        inline(div(id="datalist_cogs",    uiOutput("datalist_cogs"))),inline(div( 
         
         id="upload_tools",class='upload_tools',
         
         useShinyjs(),
-        tags$div(id="coog0",radioGroupButtons("radio_cogs",justified =T,selected=NA,status="radio_cogs",choiceValues =choiceValues,
-                                              choiceNames=choiceNames
+        div(tags$div(id="coog0",inline(radioGroupButtons("radio_cogs",justified =T,selected=NA,status="radio_cogs",choiceValues =choiceValues,
+                                                         choiceNames=choiceNames
         )))
+        ))))
     } else{
       div( 
         
@@ -8894,7 +9670,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   output$tool3<-renderUI({
     
     div(style=" height: 180px; margin-top: 10px",
-        tags$script(HTML(js_transf)),
+        tags$script(HTML(js_tip(mytips,"transf"))),
         
         id="tool3",class="tools_content",
         div(
@@ -8942,7 +9718,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       id="tool4",
       class="tools_content",
       div(id="tool4_2",
-          span("Target:", inline(pickerInput("na_targ",NULL, c("Data-Attribute","Factor-Attribute"), width="150px"))),
+          span("Target:", inline(pickerInput("na_targ",NULL, c("Numeric-Attribute","Factor-Attribute"), width="150px"))),
           uiOutput("tool4_2")
       )
     )
@@ -9073,221 +9849,18 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     }
     
   })
-  output$classmat_vars<-renderPrint({
-    colnames(getclassmat(attr(getdata_upload(),"factors")))
-  })
-  output$fac_levels<-renderUI({
-    data<-vals$saved_data[[input$data_upload]]
-    lev<-levels(attr(data,"factors")[,input$sel_ommitedfac])
-    fluidRow(
-      p(strong("Levels:"),length(lev)),
-      renderPrint({
-        lev
-      })
-    )
-    
-  })
-  output$conversion_options<-renderUI({
-    data<-vals$saved_data[[input$data_bank]]
-    div(
-      div(class="well3",
-          p(
-            radioButtons("convertion_type","Type:",choices=c("Numeric to Factor","Factor to Numeric"), inline=T)
-          )
-      ),
-      conditionalPanel("input.convertion_type=='Numeric to Factor'",{
-        
-        column(12,style="width: 750px",
-               column(6,style="overflow-x: scroll; height: 300px", checkboxGroupInput("vars_num","Select the variables:",choices=colnames(data),selected=NULL)),
-               column(6,style="overflow-x: scroll; height: 300px",
-                      inline(DT::dataTableOutput('numfac'))),
-               
-               
-               tags$style('#numfac td {padding: 3px;
-                     text-align: left;
-                     font-size:12px}'),
-               tags$style('#numfac th {padding: 3px;
-                     text-align: left;
-                     font-size:12px}')
-               
-               
-               
-        )
-        
-      })
-    )
-  })
-  output$numfac <- DT::renderDataTable({
-    req(length(input$vars_num)>0)
-    table<-vals$saved_data[[input$data_bank]][input$vars_num]
-    table<-do.call(cbind,lapply(table, function (x) as.factor(x)))
-    DT::datatable(table,
-                  options=list(
-                    rownames=T,
-                    info=FALSE,autoWidth=T,dom = 'lt',lengthMenu = list(c(20,-1),c( "20","All"))))
-    
-  }, rownames = TRUE,class ='compact cell-border')
+
+
+
+
+
+
+
   
-  output$conversion_tools<-renderUI({
-    data<-vals$saved_data[[input$data_bank]]
-    req(input$convertion_type=="Factor to Numeric")
-    div(
-      radioGroupButtons("hand_facs",NULL,
-                        choiceValues   = list("Binary","Ordinal"),choiceNames=list(span("Binary Tranformation",pophelp(NULL,"Creates a single binary column per factor level,with 1 indicating the class of that particular observation"),style="padding: 10px"),span("Ordinal Tranformation",pophelp(NULL,"Transform factors into ordinal variables"),style="padding: 10px"))),
-      conditionalPanel("input.hand_facs=='Binary'",{
-        div(
-          splitLayout(cellWidths = c('40%','40%',"20%"),
-                      column(12,style="height:200px;overflow-y: scroll;overflow-x: scroll",
-                             checkboxGroupInput("to_classmat","Select the factors:",choices=colnames(attr(data,"factors")))
-                      ),
-                      column(12,style="height:200px;overflow-y: scroll;overflow-x: scroll",
-                             uiOutput("binary_preview")),
-                      column(12,popify(actionButton("insert_classMat",div(strong('Include new variables'),style='white-space: normal;'),icon=icon("fas fa-arrow-right"),width="100px"),NULL,"Click to insert the new variables in the Data-Attribute"))
-                      
-                      
-          )
-          
-          #p("Any changes you make in this Panel affects the current Datalist,until you close the Panel"),
-          
-          
-          
-        )
-      }),
-      conditionalPanel("input.hand_facs=='Ordinal'",{
-        data<-vals$saved_data[[input$data_bank]]
-        div(
-          selectInput("to_ordinal","Select the factors:",choices=colnames(attr(data,"factors"))) ,
-          uiOutput("ordinal_out")
-          
-          #p("Any changes you make in this Panel affects the current Datalist,until you close the Panel"),
-          
-          
-          
-        )
-      })
-      
-      
-      
-    )
-  })
-  output$binary_preview<-renderUI({
-    data<-vals$saved_data[[input$data_bank]]
-    fluidRow(column(12,
-                    h5(strong("New binary variables:")),
-                    renderPrint({
-                      req(length(input$to_classmat)>0)
-                      colnames(getclassmat(attr(data,"factors")[,input$to_classmat,drop=F]))})))
-  })
-  output$toorder_in<-renderUI({
-    fluidRow(
-      rank_list(
-        text = "Drag the levels in any desired order",
-        labels = levels(attr(vals$saved_data[[input$data_bank]],"factors")[,input$to_ordinal]),
-        input_id = "rank_list_1",
-        class="custom-sortable"
-      ),
-      tags$style(
-        HTML("
-          .custom-sortable .rank-list-item {
-            height: 25px;
-          padding:5px;
-           background-color: #BDB;
-          border: 1px solid white;
-          }
-        ")
-      )
-    )
-  })
-  output$ordinal_out<-renderUI({
-    getordinal()
-  })
-  output$toorder_or<-renderUI({
-    res<-list()
-    for(i in 1:length(input$rank_list_1)){
-      res[[i]]<-div(actionButton(paste('ord',i),i,style=" height: 25px;padding:5px"))
-    }
-    res
-    
-    
-  })
-  output$toorder_out<-renderUI({
-    
-    column(12,
-           strong(paste("pre-saved:")),
-           fluidRow(
-             tags$style('#order_out td {padding: 3px;
-                     text-align: left;
-                     font-size:12px}'),
-             tags$style('#order_out th {padding: 3px;
-                     text-align: left;
-                     font-size:12px}'),
-             inline(
-               DT::dataTableOutput("order_out")
-             )
-           )
-           
-           
-    )
-  })
-  output$order_out<-DT::renderDataTable(data.frame(vals$new_facts),options = list(pageLength = 20,info = FALSE,lengthMenu = list(c(20,-1),c( "20","All")),autoWidth=T),rownames = TRUE,class ='cell-border compact stripe')
-  
-  getordinal_factors<-reactive({
-    data=attr(vals$saved_data[[input$data_bank]],"factors")
-    res<-data[,input$to_ordinal]
-    res<-factor(res,labels=input$rank_list_1,levels=input$rank_list_1)
-    res<-as.numeric(res)
-    res
-    
-  })
-  getlevels<-reactive({
-    req(input$to_ordinal)
-    data.frame(label=levels(attr(vals$saved_data[[input$data_upload]],"factors")[,input$to_ordinal]))
-  })
-  savebinary<-reactive({
-    data=vals$saved_data[[input$data_bank]]
-    factors<-attr(data,"factors")
-    factors[,input$to_classmat]<-NULL
-    temp<-cbind(data,getclassmat(attr(data,"factors")[,input$to_classmat,drop=F]))
-    temp<-data_migrate(data,temp,input$data_newname)
-    
-    if(input$hand_save=="create"){
-      vals$saved_data[[input$data_newname]]<-temp
-      vals$cur_data<-input$data_newname
-    } else{
-      vals$saved_data[[input$data_over]]<-temp
-      vals$cur_data<-input$data_over
-    }
-    vals$new_facts<-NULL
-    
-    
-    
-  })
-  saveordinal<-reactive({
-    data=vals$saved_data[[input$data_bank]]
-    factors<-attr(data,"factors")
-    
-    temp<-cbind(data,vals$new_facts)
-    temp<-data_migrate(data,temp,input$data_newname)
-    
-    if(input$hand_save=="create"){
-      vals$saved_data[[input$data_newname]]<-temp
-      vals$cur_data<-input$data_newname
-    } else{
-      vals$saved_data[[input$data_over]]<-temp
-      vals$cur_data<-input$data_over
-    }
-    vals$new_facts<-NULL
-    
-  })
+
+
   savechanges_comb<-reactive({
-    # saveRDS(reactiveValuesToList(vals),"vals.rds")
-    # saveRDS(reactiveValuesToList(input),"input.rds")
-    #saveRDS(reactiveValuesToList(data_cogs),"data_cogs.rds")
-    
-    # vals<-readRDS("input.rds")
-    #input<-readRDS("vals.rds")
-    # data_cogs<-readRDS("data_cogs.rds")
-    
+
     
     temp<-data_cogs$df
     data<-data_cogs$df
@@ -9300,90 +9873,17 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       temp<-data_migrate(data,temp,input$data_over)
       vals$saved_data[[input$data_over]]<-temp
       vals$cur_data<-input$data_over
+      
     }
     vals$new_facts<-NULL
     runjs("Shiny.setInputValue('last_btn', false);")
-  })
-  classmat_out<-reactive({
-    column(12,
-           p(icon("fas fa-exclamation-circle"),"factors transformed into class membership matrix"),
-           p(icon("fas fa-exclamation-circle"),"New variables created with class membership  indicated by '1'"),
-           verbatimTextOutput("classmat_vars"),
-           p(icon("fas fa-exclamation-circle"),"We advise using the scale option in the forward analyses"))
-  })
-  getordinal<-reactive({
-    column(12,style="overflow-y: scroll;height: 250px",
-           splitLayout(
-             cellWidths = c("30%","5%","40%","15%"),
-             column(12,
-                    p("Drag and drop the labels to define their levels and click",span("'",icon("fas fa-arrow-right"),"'")," to pre-save the variable",style='white-space: normal;'),
-                    splitLayout(  cellWidths = c("20%","80%"),
-                                  div(
-                                    style="margin-top:25px",
-                                    uiOutput("toorder_or")),
-                                  div(uiOutput("toorder_in"),style="font-size: 11px;")
-                                  #div(uiOutput("toorder_lev"),style="font-size: 11px")
-                    )),
-             popify(actionButton("create_ordinal",div(popify(icon("fas fa-arrow-right"),'Create new ordinal factor'),style='white-space: normal;')),NULL,"Create new ordinal factor"),
-             column(12,style="overflow: scroll; z-index: 1;",uiOutput("toorder_out")),
-             
-             popify(actionButton("insert_ordinal",div(strong('Include new variables'),style='white-space: normal;'),icon=icon("fas fa-arrow-right"),width="100px"),NULL,"Click to insert the new variables in the Data-Attribute")
-             
-           )
-    )
-  })
-  
-  observeEvent(input$dcogs4,{
-    
-    
-    showModal(
-      div(id="fac_convert",modalDialog(
-        div(style="background: white",
-            p(strong("Datalist:"),code(input$data_bank)),
-            div(style="margin: 5px",
-                uiOutput("conversion_options"),
-                uiOutput("conversion_tools")
-            )
-            
-            
-        ),
-        title="Numeric/Factor conversion",
-        size="xl",
-        easyClose = T,
-        footer=div(
-          bsButton("convert_num","Save", style="view_datalist"),modalButton("Dismiss"))
-        
-      ))
-    )
-    
-  })
-  observeEvent(input$convert_num,{
-    newnum<-data<-vals$saved_data[[input$data_bank]]
-    newfac<-data[,input$vars_num,drop=F]
-    newnum[,input$vars_num]<-NULL
-    attr(newnum,"factors")<-if(length(attr(data,"factors"))>0){
-      cbind(
-        attr(data,"factors"),newfac
-      )
-    } else{
-      newfac
-    }
-    vals$saved_data[[input$data_bank]]<-newnum
-    
+    status_changes$df<-c(T,T)
     
     
   })
-  observeEvent(input$create_ordinal,{
-    res<-getordinal_factors()
-    data=attr(vals$saved_data[[input$data_bank]],"factors")
-    if(is.null( vals$new_facts)){
-      res0<-data.frame(matrix(NA,nrow=nrow(data)))
-      colnames(res0)<-input$to_ordinal
-      rownames(res0)<-rownames(data)
-      vals$new_facts<-res0
-    }
-    vals$new_facts[input$to_ordinal]<-res
-  })
+
+
+
   observeEvent(input$data_bank,{
     data=vals$saved_data[[input$data_bank]]
     output$viewdata<-renderUI({
@@ -9393,7 +9893,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
         
         
         div(class="datalist_tools",
-            h5(strong("Data-Attribute"),
+            h5(strong("Numeric-Attribute"),
                inline(
                  div(
                    id="ddcogs",
@@ -9418,8 +9918,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
         if(length(attr(data,"data.factors"))>0){
           column(12,h5(
             p(strong("Wargning:",style="color: red"),
-              strong("Factor/character columns moved from the Data-Attribute to Factor-Attribute")),
-            p("A Data-Attribute can handle only numeric variables. Use the 'Edit factors' tool to explore and and convert factors to numeric variables")
+              strong("Factor/character columns moved from the Numeric-Attribute to Factor-Attribute")),
+            p("A Numeric-Attribute can handle only numeric variables. Use the 'Edit factors' tool to explore and and convert factors to numeric variables")
           ))
         },
         column(12,style=" background: white; padding: 0px",
@@ -9433,16 +9933,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
       
     })
   })
-  observeEvent(input$insert_ordinal,{
-    vals$hand_save<-"Include ordinal variables in the Data-Attribute"
-    showModal(
-      hand_save_modal()
-    )})
-  observeEvent(input$insert_classMat,{
-    vals$hand_save<-"Include binary columns in the Data-Attribute"
-    showModal(
-      hand_save_modal()
-    )})
+
   
   
   output$filterby_indobs<-renderUI({
@@ -9469,8 +9960,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   output$tool4_2<-renderUI({
     data<-vals$saved_data[[input$data_upload]]
     factors<-attr(data,"factors")
-    if(input$na_targ=="Data-Attribute"){
-      validate(need(anyNA(data),"No missing values in the Data-Attribute"))
+    if(input$na_targ=="Numeric-Attribute"){
+      validate(need(anyNA(data),"No missing values in the Numeric-Attribute"))
     }
     if(input$na_targ=="Factor-Attribute"){
       validate(need(anyNA(factors),"No missing values in the Factor-Attribute"))
@@ -9765,8 +10256,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     res<-switch (vals$hand_save,
                  "Save new som in" = textInput("model_newname", NULL,paste("Som", length(attr(getdata_som(),"som"))+1)),
                  "Save changes"= textInput("data_newname", NULL,bag_name()),
-                 "Include binary columns in the Data-Attribute"= textInput("data_newname", NULL,bag_name_new()),
-                 "Include ordinal variables in the Data-Attribute"= textInput("data_newname", NULL,bag_name_new()),
+                 "Include binary columns in the Numeric-Attribute"= textInput("data_newname", NULL,bag_name_new()),
+                 "Include ordinal variables in the Numeric-Attribute"= textInput("data_newname", NULL,bag_name_new()),
                  "Save Clusters"= textInput("hc_newname", NULL,bag_hc()),
                  "Create data list from aggregation results"= textInput("agg_newname", NULL,bag_agg()),
                  "Add an Extra-Layer-Attribute to the Datalist"=textInput("extra_layer_newname", NULL,bag_extralayer()),
@@ -9805,7 +10296,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                      
                      textInput("interps_newname", NULL,bag_mapname())
                    },
-                 "Merge Datalists"= textInput("merge_newname", NULL,paste("Datalist_merged", length(vals$saved_data)+1))
+                 "Merge Datalists"= textInput("merge_newname", NULL,bag_merge())
                  
                  
                  
@@ -9852,8 +10343,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                    }
                  },
                  'Save changes' = selectInput("data_over", NULL,choices=c(names(vals$saved_data)),selected=input$data_upload),
-                 'Include binary columns in the Data-Attribute' = selectInput("data_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
-                 'Include ordinal variables in the Data-Attribute' = selectInput("data_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
+                 'Include binary columns in the Numeric-Attribute' = selectInput("data_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
+                 'Include ordinal variables in the Numeric-Attribute' = selectInput("data_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
                  'Save Clusters' = selectInput("hc_over", NULL,choices=c(colnames(attr(getdata_hc(),"factors"))),selectize=T),
                  'Create data list from aggregation results' = selectInput("agg_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
                  'Save diversity results' = selectInput("div_over", NULL,choices=c(names(vals$saved_data)),selectize=T),
@@ -9994,7 +10485,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   observeEvent(input$go_na,{
     data<-data_cogs$df
     transf<-attr(data,"transf")
-    if(input$na_targ=="Data-Attribute"){
+    if(input$na_targ=="Numeric-Attribute"){
       data<-nadata(data=data,
                    na_method=input$na_method,
                    data_old=vals$saved_data[[input$data_upload]],
@@ -10104,15 +10595,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
     
   })
   ## menu_explore
-  getdata_upload0<-reactive({
-    if(isTRUE(last_cog())){
-      data_cogs$df
-    }else{
-      req(input$data_upload0)
-      vals$saved_data[[input$data_upload0]]
-      
-    }
-  })
+  ## 
+
   output$rda_X<-renderUI({
     pickerInput("rda_X",span("X Data", tiphelp("Response data")), choices=names(vals$saved_data)[-which(names(vals$saved_data)%in%input$data_upload0)])
   })
@@ -10195,7 +10679,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
                     column(12,
                            
                            p(strong("Aggregate:"),popify(a(icon("fas fa-question-circle")),
-                                                         "Aggregate","The process involves two stages. First, collate individual cases of the Data-Attribute together with a grouping variable (unselected factors). Second, perform which calculation you want on each group of cases (selected factors)", options=list(container="body"))),
+                                                         "Aggregate","The process involves two stages. First, collate individual cases of the Numeric-Attribute together with a grouping variable (unselected factors). Second, perform which calculation you want on each group of cases (selected factors)", options=list(container="body"))),
                            
                            p(em(input$data_upload0,"::","Factor-Attribute::", style="color: gray")),
                            checkboxGroupInput('fac_descs', NULL, choices=colnames(
@@ -10902,7 +11386,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   output$psummary <- renderPrint({
     data=getdata_upload0()
-    withProgress(message = "Calculating Data-Attribute summary ... Please, wait!",
+    withProgress(message = "Calculating Numeric-Attribute summary ... Please, wait!",
                  min = 1,
                  max = 13,
                  {
@@ -13630,7 +14114,7 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
            column(9,align = "center",
                   br(),
                   popify(actionButton("trainSOM", h4(icon("fas fa-braille"),"train SOM",
-                                                     icon("fas fa-arrow-circle-right")), style = "background: #05668D; color: white"),"TrainSOM","Train the Data-Attribute from the selected Datalist")),
+                                                     icon("fas fa-arrow-circle-right")), style = "background: #05668D; color: white"),"TrainSOM","Train the Numeric-Attribute from the selected Datalist")),
            column(3, align = "right", actionButton("resetsom", "reset")),
            
            column(12,
@@ -13706,15 +14190,8 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   })
   
   
-  
-  
-  
-  
-  #vals<-readRDS("vals2.rds")
-  
   cutsom.reactive<-reactive({
-    #saveRDS(reactiveValuesToList(input),"input.rds")
-    #saveRDS(reactiveValuesToList(vals),"vals2.rds")
+
     req(input$method.hc0)
     req(input$hcmodel_palette)
     m<-getmodel_hc()
@@ -14035,9 +14512,10 @@ tipify(span('Breakpoints'), "The break points computed", placement = "right")
   
   
   #mybooks_teste<-readRDS('vals.rds')
-  #for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
-  #updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
+ # for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
+ # updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
   
+  #runjs("Shiny.setInputValue('dcogs6', 1);")
   
   
 }

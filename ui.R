@@ -3,7 +3,7 @@ ui <- function(request){
   shinydashboardPlus::dashboardPage(
 
     skin = "blue",
-    shinydashboardPlus::dashboardHeader(),
+    shinydashboardPlus::dashboardHeader(controlbarIcon=NULL),
 
 
     dashboardSidebar(
@@ -16,8 +16,8 @@ functions = 'collapse'
       ),
 
 useShinyjs(),
-use_cicerone(),
-introjsUI(),
+#use_cicerone(),
+#introjsUI(),
 width = 160,
 
 sidebarMenu(   id = "tabs",

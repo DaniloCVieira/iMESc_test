@@ -1,12 +1,17 @@
 mytips<-paste0(do.call(paste0,args=list("'",lapply(transf_df,function(x) x$tooltip), sep="'")),collapse=",")
-js_transf <- paste("
+js_tip<-function(mytips,id){
+  paste0("
 var mytips = [",mytips,"];
-$('#transf').on('shown.bs.select', function() {
+$('#",id,"').on('shown.bs.select', function() {
   var $lis = $($(this).data('selectpicker').selectpicker.current.elements);
   $lis.each(function(i) {
     $(this).attr('title', mytips[i]);
   });
 });")
+}
+
+
+
 
 NestedMenu <- function(
     label, items, trigger = "left",
