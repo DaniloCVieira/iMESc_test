@@ -1,4 +1,4 @@
-rm(list=ls())
+#rm(list=ls())
 library('shiny')
 source('global.R')
 shinyApp(ui, server)

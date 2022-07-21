@@ -24,6 +24,7 @@ module_server_downcenter <- function (input, output, session,vals ){
            "rf_reg_predErrs"=data.frame(vals$rf_prederrors),
            "rf_class_predErrs"=data.frame(vals$rf_prederrors),
            "rf_cm"=data.frame(vals$rf_cm),
+           "rf_wilcox"=data.frame(vals$rf_treetest),
 
 
            "NB - training errors (observations)"=   data.frame(vals$nb_down_errors_train),
@@ -45,7 +46,7 @@ module_server_downcenter <- function (input, output, session,vals ){
     req(input$down_type=='.csv')
     splitLayout(
       column(12,
-             radioButtons("down_sep",strong("sep",tipify(icon("fas fa-question-circle"),"the field separator string. Values within each row of x are separated by this string.", options=list(container="body"))),
+             radioButtons(ns("down_sep"),strong("sep",tipify(icon("fas fa-question-circle"),"the field separator string. Values within each row of x are separated by this string.", options=list(container="body"))),
                           choiceValues =list(",",";"),
                           choiceNames =list(
                             "comma",
@@ -53,24 +54,42 @@ module_server_downcenter <- function (input, output, session,vals ){
                           )
              )),
       column(12,
-
-             conditionalPanel("input.down_sep==';'",{
-               radioButtons("down_dec",strong("dec",tipify(icon("fas fa-question-circle"), "the string to use for decimal points in columns", options=list(container="body"))),
-                            choiceValues =list(".",","),
-                            choiceNames=list(
-                              "dot","comma"))
-             }),
-             conditionalPanel("input.down_sep==','",{
-               column(12,
-                      radioButtons("down_dec",strong("dec",tipify(icon("fas fa-question-circle"), "the string to use for decimal points in columns", options=list(container="body"))),
-                                   choiceValues =list("."),
-                                   choiceNames=list("dot")
-                      ))
-             })
+             uiOutput(ns('down_sep_semi')) ,
+             
+             uiOutput(ns('down_sep_comma'))
+            
       )
 
     )
   })
+  
+  cur_down_dec<-reactiveValues(df=NULL)
+  observeEvent(input$down_dec,{
+    cur_down_dec$df<-input$down_dec
+  })
+  output$down_sep_semi<-renderUI({
+    req(input$down_sep==';')
+    radioButtons(ns("down_dec"),strong("dec",tipify(icon("fas fa-question-circle"), "the string to use for decimal points in columns", options=list(container="body"))),
+                 choiceValues =list(".",","),
+                 choiceNames=list(
+                   "dot","comma"), selected=cur_down_dec$df)
+    
+  })
+  
+  cur_down_dec<-reactiveValues(df=NULL)
+  observeEvent(input$down_dec,{
+    cur_down_dec$df<-input$down_dec
+  })
+  output$down_sep_comma<-renderUI({
+    req(input$down_sep==',')
+    column(12,
+           radioButtons(ns("down_dec"),strong("dec",tipify(icon("fas fa-question-circle"), "the string to use for decimal points in columns", options=list(container="body"))),
+                        choiceValues =list("."),
+                        choiceNames=list("dot")
+           ))
+    
+  })
+
   output$download_action <- {
     downloadHandler(
       filename = function() {

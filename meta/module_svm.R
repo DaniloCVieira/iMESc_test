@@ -1103,7 +1103,7 @@ module_server_svm <- function (input, output, session,vals,df_colors,newcolhabs 
       ))
       vals$hand_save3<-NULL
       module_ui_dc("datacreate")
-      mod_downcenter <- callModule(module_server_dc, "datacreate",  vals=vals,dataX=input$data_svmX)
+      mod_downcenter <- callModule(module_server_dc, input$data_svmX,  vals=vals,dataX=input$data_svmX)
 
     }
   })
@@ -1111,15 +1111,14 @@ module_server_svm <- function (input, output, session,vals,df_colors,newcolhabs 
     vals$hand_save<-"Create Datalist: SVM training errors -obs"
     vals$hand_save2<-NULL
     vals$hand_save3<-NULL
-    module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc, "datacreate",  vals=vals,dataX=input$data_svmX)
+    mod_downcenter <- callModule(module_server_dc, input$data_svmX,  vals=vals,dataX=input$data_svmX)
   })
   observeEvent(input$svm_create_predictions,{
     vals$hand_save<- "Create Datalist: SVM predictions"
     vals$hand_save2<-"Posterior probabilities will be saved as Data-Attribute, and final classifications as Factor-Attribute"
     vals$hand_save3<-NULL
     module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc, "datacreate",  vals=vals,dataX=input$data_svmX)
+    mod_downcenter <- callModule(module_server_dc, input$data_svmX,  vals=vals,dataX=input$data_svmX)
   })
 
 }

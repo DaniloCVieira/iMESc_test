@@ -100,7 +100,7 @@ get_knn<-function(k, newgrid,newy, coords,base_shape){
   return(list(my_rst=my_rst,my_rst0=my_rst0))
 
 }
-get_grid<-function(coords,limits,crs.info,res,base_shape){
+get_grid<-function(coords,limits,crs.info,res){
   newgrid<- as.data.frame(spsample(to_spatial(rbind(coords, limits), crs.info = crs.info), "regular", n=res))
   names(newgrid)       <- c("X", "Y")
   coordinates(newgrid) <- c("X", "Y")
@@ -150,6 +150,8 @@ Map_model<-function(data,get,coords,base_shape=NULL,layer_shape=NULL,res=20000, 
     mybreaks=geo$mybreaks
     as_factor<-is.factor(data[,get])
     newgrid<-get_grid(coords,limits,crs.info,res)
+    #grd<-st_make_grid(st_multipoint(as.matrix(rbind(coords, limits))),n=c(round(sqrt(res)),round(sqrt(res))))
+    #newgrid<-st_set_crs(grd,"+proj=longlat +datum=WGS84 +no_defs")
     interp_res<-if(isTRUE(as_factor)){
       get_knn(k, newgrid,newy, coords,base_shape0)
     } else {get_idw(idp, data, base_shape,base_shape_int,coords, newgrid,newy,crs.info,...) }

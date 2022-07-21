@@ -61,7 +61,9 @@ column(12,
 module_server_rf <- function (input, output, session,vals,df_colors,newcolhabs ){
   ns <- session$ns
 
-
+observeEvent(input$rf_tab,{
+  vals$rf_tab<-input$rf_tab
+})
 
   output$rf_inputs <- renderUI({
     if(is.null(vals$cur_data_rfY)){vals$cur_data_rfY<-1}
@@ -216,6 +218,11 @@ module_server_rf <- function (input, output, session,vals,df_colors,newcolhabs )
 
 
   })
+  observeEvent(input$predrf_tab,{
+    vals$rftab3<-input$predrf_tab
+  })
+
+  
   output$train_RF_button<-renderUI({
     if(input$rf_search=="user-defined" ){
       req(length(vals$mtry_pool)>0)
@@ -225,18 +232,30 @@ module_server_rf <- function (input, output, session,vals,df_colors,newcolhabs )
   })
   output$RF_predictions<-renderUI({
     column(12,style="background: white", uiOutput(ns("predictions_rf")),
-           tabsetPanel(id="predrf_tab",
+           tabsetPanel(id=ns("predrf_tab"), selected=vals$rftab3,
                        tabPanel(
-                         strong("3.1. Results"), value="predrf_tab01",
+                         strong("3.1. Results"), value="rftab3_1",
                          fluidRow(style="background: white",
                                   uiOutput(ns("predictions_rf_out")))),
                        tabPanel(
-                         strong("3.2. Errors"),
+                         strong("3.2. Tree predictions"), value="rftab3_2",
+                         tabsetPanel(
+                           tabPanel("3.2.1. Histograms",
+                             div(style="background: white",
+                                 inline(uiOutput(ns("rf_tree_show"))),
+                                 inline(uiOutput(ns("rf_tree_pred"))),
+                                 plotOutput(ns("summ_trees"), height = '700px'))
+                           ),
+                           tabPanel("3.2.2. wilcox.test",
+                                    uiOutput(ns('wilcox_rf')))
+                         )),
+                       tabPanel(
+                         strong("3.3. Errors"), value="rftab3_3",
                          fluidRow(style="background: white",
                                   uiOutput(ns("rf_errors")))
                        ),
                        tabPanel(
-                         strong("3.3. Confusion Matrix"), value="predrf_tab02",
+                         strong("3.4. Confusion Matrix"), value="rftab3_4",
                          fluidRow(style="background: white",
                                   uiOutput(ns("rf_metrics")))
                        )
@@ -244,6 +263,228 @@ module_server_rf <- function (input, output, session,vals,df_colors,newcolhabs )
     )
   })
 
+  get_wilcox<-eventReactive(input$wilcox_go,{
+# vals<-readRDS("vals2.rds")
+#input<-readRDS("input.rds")  
+#names(vals$saved_data)
+#input$predrf_newY_tree<-"meio_c2"
+ 
+#rfs<-attr(vals$saved_data[[input$predrf_new]],'rf')
+#m<-rfs[[6]][[1]]
+ #vals$RF_results<-m
+ #input$rf_reftest<-"Estacao"
+  
+#min_depth_frame <- min_depth_distribution(m$finalModel)
+
+
+    m<-vals$RF_results
+    var<-attr(m,"supervisor")
+    model_data<-vals$saved_data[[input$predrf_new]]
+    obs_data<-vals$saved_data[[input$predrf_newY_tree]]
+    if(input$rf_reftest=="rownames"){
+      ref1<-rownames(model_data)
+      ref2<-rownames(obs_data)
+      ref1<-ref2
+    } else{
+      
+      fac_c1<-attr(model_data,'factors')
+      ref1<-fac_c1[,input$rf_reftest]
+      fac_c2<-attr(obs_data,"factors")
+      ref2<-fac_c2[,input$rf_reftest]
+      levels(ref1)<-levels(ref2)
+      
+    }
+
+
+   
+    lo<-split(obs_data[var],ref2)
+    pred <- predict(m$finalModel,newdata = model_data, predict.all=T)$individual
+    pred_interval=0.05
+    pred.rf.int <- data.frame(
+      t(apply(pred, 1, function(x) {
+        c(quantile(x, c(pred_interval/2,   1-(pred_interval/2))))
+      }))
+    )
+    
+    
+    lpred<-split(pred,ref1)
+    lp<-split(pred.rf.int,ref1)
+    lop<-mapply(list, lp,lo,lpred,SIMPLIFY=FALSE)
+
+    x<-lop[[1]]
+    res<-do.call(rbind,lapply(lop,function(x){
+      interval<-x[[1]]
+      obs<-unlist(x[[2]])
+      cbind(x[[2]],do.call(rbind,lapply(obs, function(xx){
+
+        res<-if(isTRUE(between(xx,interval[[1]],interval[[2]] ))){"as expected"} else{
+          if(xx<=interval[[1]]){"lower"} else if(xx>=interval[[1]]){"higher"} else{"as expected"}
+        }
+        v1= xx
+        a<-x[[3]]
+        rest<-wilcox.test(a, y = NULL,
+                          alternative = "two.sided",
+                          mu = v1, paired = FALSE, exact = NULL, correct = TRUE,
+                          conf.int = T, conf.level = 0.95,
+                          tol.root = 1e-4)
+        
+        interval<-data.frame(interval)
+        interval$q_class<-res
+
+     
+        
+        statistic=rest$statistic[[1]]
+        p.value=rest$p.value[[1]]
+        null.value=rest$null.value[[1]]
+        alternative=rest$alternative[[1]]
+        w_conf1=rest$conf.int[[1]]
+        w_conf2=rest$conf.int[[2]]
+        estimate=rest$estimate[[1]]
+
+        wil_res<-data.frame(statistic,
+                            p.value,
+                            null.value,
+                            w_conf1,
+                            w_conf2,
+                            estimate)
+        sig= wil_res$p.value<0.05
+        conf2<-sort(c(w_conf1,w_conf2))
+        w_class<-if(isTRUE(between(xx,conf2[[1]],conf2[[2]] ))){"as expected"} else{
+          if(xx<=conf2[[1]]){"lower"} else if(xx>=conf2[[2]]){"higher"} else{"as expected"}
+        }
+
+        wil_res$sig<-sig
+        wil_res$w_class<-w_class
+        wil_res<-cbind(wil_res,interval)
+        wil_res
+      })))
+    }))
+    
+colnames(res)[c(10,11)]<-c("q0.025",'q0.975')
+    rownames(res)<-rownames(obs_data)
+    res$q_class<-factor(res$q_class, levels=c("lower","as expected","higher"), labels=c("lower","as expected","higher"))
+    res$w_class<-factor(res$w_class, levels=c("lower","as expected","higher"), labels=c("lower","as expected","higher"))
+    res$sig<-as.factor(res$sig)
+    vals$rf_treetest<-res
+    vals$rf_treetest
+  })
+  observeEvent(input$predrf_newY_tree,{
+    vals$predrf_newY_tree<-input$predrf_newY_tree
+  })
+
+  output$wilcox_rf<-renderUI({
+   validate(need(input$rfpred_which=='Datalist',"This feature currently does not support predictions from the partition"))
+
+    sidebarLayout(
+      sidebarPanel(
+        uiOutput(ns("wilcox_side"))
+      ),
+      mainPanel(style="background: white",
+                div(style="margin-top: 15px",
+                    
+                    tags$style(
+                      paste(paste0("#",ns('rf_trees_out')),"td {
+                    padding-left: 4px;
+                    padding-right: 4px;
+                    padding-top: 2px;
+                    padding-bottom: 2px;
+                     text-align: left;
+                     font-size:12px}")
+                    ),
+                    tags$style(
+                      paste0("#",ns('rf_trees_out')),"th {
+                padding-left: 4px;
+                    padding-right: 4px;
+                    padding-top: 2px;
+                    padding-bottom: 2px;
+                     text-align: left;
+                     font-size:12px}"
+                    ),
+
+                inline(
+                  DT::dataTableOutput(ns("rf_trees_out"))
+                )
+                )
+      )
+    )
+  })
+  output$pick_rfobs<-renderUI({
+    sup_test<-attr(vals$RF_results,"supervisor")
+    supname<-paste0("+ Observed Y [",sup_test,"]")
+    div(
+      span(supname,tipify(icon("fas fa-question-circle"),"Data containing observed values to be compared with predicted values"),
+           pickerInput(ns("predrf_newY_tree"),
+                       NULL,names(vals$saved_data[getobsRF()]), width="150px",selected=vals$predrf_newY_tree
+           ))
+    )
+  })
+  output$wilcox_side<-renderUI({
+ 
+    div(
+      uiOutput(ns("pick_rfobs")),
+      uiOutput(ns("predrf_newY_ref")),
+      div(actionButton(ns('wilcox_go'),"Run Wilcox.test")),
+      div(actionLink(ns('wilcox_gdownp'),"Download table")),
+      div( actionLink(ns('wilcox_gcreate'),"Create Datalist"))
+      
+      
+    )
+  })
+  observeEvent(input$wilcox_gcreate,{
+    
+    vals$hand_save<-"wilcox_create"
+    vals$hand_save2<-NULL
+    vals$hand_save3<-NULL
+    mod_downcenter <- callModule(module_server_dc, input$predrf_newY_tree,  vals=vals,dataX=input$predrf_newY_tree)
+    
+  })
+  observeEvent(input$wilcox_gdownp,{
+    
+    vals$hand_down<-"rf_wilcox"
+    module_ui_downcenter("downcenter")
+    mod_downcenter <- callModule(module_server_downcenter, "downcenter",  vals=vals)
+    
+  })
+
+  output$rf_trees_out<-DT::renderDataTable({
+    table<-get_wilcox()
+    DT::datatable(table, options=list(pageLength = 20, info = FALSE,lengthMenu = list(c(20, -1), c( "20","All")), autoWidth=T,dom = 'lt'))
+    
+  })
+  
+  output$rf_tree_show<-renderUI({
+    numericInput(ns("nhist_tree"),"show", 25, width = "100px")
+  })
+  output$rf_tree_pred<-renderUI({
+    req(input$nhist_tree)
+    req(vals$RF_results$modelType=="Regression")
+    
+    data=t(predall_rf()$individual)
+    d=1:ncol(data)
+    res<-split(d, ceiling(seq_along(d)/input$nhist_tree))
+    options_num<-lapply(res,function (x) range(x))
+    options_show=as.vector(do.call(c,lapply(options_num, function(x) paste(x[1], x[2], sep = "-"))))
+    
+    div(
+      inline(pickerInput(ns('splitdata_trees'),"Observations:", choices=options_show, width="200px")),
+      actionButton(ns('downp_summ_trees'),tipify(icon("fas fa-download"), "Download Plot"), style="button_active")
+    )
+  })
+  
+  output$summ_trees<-renderPlot({
+    req(input$nhist_tree)
+    data=t(predall_rf()$individual)
+    d=1:ncol(data)
+    res<-split(d, ceiling(seq_along(d)/input$nhist_tree))
+    options_num<-lapply(res,function (x) range(x))
+    options_show=as.vector(do.call(c,lapply(options_num, function(x) paste(x[1], x[2], sep = "-"))))
+    options_num_sel<-options_num[[which(options_show==input$splitdata_trees)]]
+    
+    
+    data<-data[,options_num_sel[1]:options_num_sel[2], drop=F]
+    str_numerics(data)
+    vals$vartrees<-recordPlot()
+  })
   observeEvent(input$rftab2,{
     vals$cur_rftab2<-input$rftab2
   })
@@ -352,7 +593,7 @@ module_server_rf <- function (input, output, session,vals,df_colors,newcolhabs )
   })
 
   observeEvent(input$rftab2_3,{
-    vals$cur_rftab2_3<-input$rftab2_3
+    vals$rftab2_3<-input$rftab2_3
   })
 
   output$Confusion_RF<-renderPrint({
@@ -365,10 +606,10 @@ module_server_rf <- function (input, output, session,vals,df_colors,newcolhabs )
     res
     })
   output$RFexp<-renderUI({
-    if(is.null(vals$cur_rftab2_3)){vals$cur_rftab2_3<-"rftab2_3_1"}
+    if(is.null(vals$rftab2_3)){vals$rftab2_3<-"rftab2_3_1"}
     div(
         tabsetPanel(
-          id=ns('rftab2_3'),selected =vals$cur_rftab2_3,
+          id=ns('rftab2_3'),selected =vals$rftab2_3,
           tabPanel(value="rftab2_3_1",
             span("2.3.1. Measures"),
             div(
@@ -1148,13 +1389,106 @@ req(input$rf_useinter)
     vals$cur_testdata_rf<-input$testdata_rf
   })
   output$rf_results_menu<-renderUI({
-    if(is.null(vals$cur_rf_models)){vals$cur_rf_models<-1}
-    div(pickerInput(ns("rf_models"),strong("rf results:", tiphelp("Random Forest Results. Click to select rf results saved in the Training Datalist (X).")), choices= c(names(attr(vals$saved_data[[input$data_rfX]],"rf"))), width="200px", selected = vals$cur_rf_models)
+    div(pickerInput(ns("rf_models"),strong("rf results:", tiphelp("Random Forest Results. Click to select rf results saved in the Training Datalist (X).")), choices= c(names(attr(vals$saved_data[[input$data_rfX]],"rf"))), width="300px", selected = vals$cur_rf_models)
     )
   })
   observeEvent(input$rf_models,{
     vals$cur_rf_models<-input$rf_models
   })
+  
+  observeEvent(input$trainRF,{
+     req(input$rf_type)
+    t<-try({
+      envi<-envi_o<-getdata_rfX()
+      sup<-sup_o<-get_supervisor()
+      
+      if(input$rf_test_partition!="None"){
+        parts<-get_parts_rf()
+        train<-parts$train
+        test<-parts$test
+        envi<-getdata_rfX()[names(train),]
+        sup<-get_supervisor()[names(train),, drop=F]
+      }
+      
+      
+      if (input$rf_type == 'Classification') {
+        sup[1] <- as.factor(sup[, 1])
+      }
+      seed<-if (!is.na(input$seedrf)) { input$seedrf} else{
+        NULL
+      }
+      
+      
+      
+      join <- na.omit(cbind(sup, envi[rownames(sup), ,drop=F]))
+      envi <- join[-1]
+      somC <- join[1]
+      if(input$rf_search=="user-defined"){
+        rf_search<-"grid"
+        validate(need(length(vals$mtry_pool)>0,"Requires at least one mtry value"))
+        tuneGrid=data.frame(mtry=vals$mtry_pool)
+      } else{
+        rf_search<-input$rf_search
+        tuneGrid=NULL
+      }
+      withProgress(message = "Running rf the time taken will depend on the random forest tuning",
+                   min = 1,
+                   max = 1,
+                   {
+                     RF = wrapRF(
+                       envi,
+                       data.frame(somC),
+                       supervisor = "clusters",
+                       prev.idw = F,
+                       seed = seed,
+                       ntree = input$ntree,
+                       
+                       trainControl.args = list(
+                         method = input$res_method,
+                         number = input$cvrf,
+                         repeats = input$repeatsrf,
+                         p=input$pleaverf/100,
+                         savePredictions = "final",
+                         search=rf_search
+                       ),
+                       tuneLength=input$tuneLength,
+                       tuneGrid=tuneGrid
+                     )
+                     attr(RF,"test_partition")<-paste("Test data:",input$rf_test_partition,"::",input$testdata_rf)
+                     attr(RF,"Y")<-paste(input$data_rfY,"::",input$rf_sup)
+                     attr(RF,"Datalist")<-paste(input$data_rfX)
+                  
+                     if(input$rf_test_partition!="None"){
+                       attr(RF,'test')<-data.frame(envi_o[test,])
+                       attr(RF,"sup_test")<-sup_o[test,]
+                     } else{ attr(RF,'test')<-c("None")}
+                     
+                     attr(RF,"supervisor")<-input$rf_sup
+                     vals$cur_rftab2<-"rftab2_1"
+                     updateTabsetPanel(session,"rf_tab","rf_tab2")
+                     updateTabsetPanel(session,"rftab2","rftab2_1")
+                     vals$rf_unsaved<-RF
+                     
+                   })
+      attr(vals$saved_data[[input$data_rfX]],"rf")[['new rf (unsaved)']]<-vals$rf_unsaved
+      vals$cur_rf_models<-"new rf (unsaved)"
+      
+      beep(10)
+      
+    })
+    
+    if("try-error" %in% class(t)){
+      output$rf_war<-renderUI({
+        column(12,em(style="color: gray",
+                     "Error in training the RF model. Check if the number of observations in X and Y are compatible"
+        ))
+      })
+      
+    } else{
+      output$rf_war<-NULL
+    }
+  })
+  
   observeEvent(input$data_rfY,{
     vals$cur_data_rfY<-input$data_rfY
   })
@@ -1294,21 +1628,25 @@ req(input$rf_useinter)
     observed
 
   })
+  observeEvent(input$predrf_newY,{
+    vals$predrf_newY<-input$predrf_newY
+  })
   output$predrf_newY_out<-renderUI({
     req(input$rfpred_which=='Datalist')
     sup_test<-attr(vals$RF_results,"supervisor")
     supname<-paste0("+ Observed Y [",sup_test,"]")
     span(supname,tipify(icon("fas fa-question-circle"),"Data containing observed values to be compared with predicted values"),
       pickerInput(ns("predrf_newY"),
-                NULL,names(vals$saved_data[getobsRF()]), width="150px",
+                NULL,names(vals$saved_data[getobsRF()]), width="150px",selected=vals$predrf_newY
     ))
   })
-  observeEvent(input$predrf_newY,
-               vals$predrf_newY<-input$predrf_newY)
+  observeEvent(input$predrf_newY_tree,
+               vals$predrf_newY_tree<-input$predrf_newY_tree)
   output$RF_prederrors_side<-renderUI({
 
     fluidRow( class="map_control_style",style="color: #05668D",
               uiOutput(ns("predrf_newY_out")),
+   
               div(
                 span(
                   "+ Round:",
@@ -1336,7 +1674,22 @@ req(input$rf_useinter)
 
   })
 
+  
+
+  output$predrf_newY_ref<-renderUI({
+
+    factors<-attr(vals$saved_data[[input$predrf_newY_tree]],"factors")
+    choices=c('rownames',colnames(factors))
+    div(
+      span("+ ref",pickerInput(ns('rf_reftest'),NULL,choices, width="100px", selected=vals$rf_reftest))
+      
+    )})
+  
+  observeEvent(input$rf_reftest,{
+    vals$rf_reftest<-input$rf_reftest
+  })
   rf_prederrors<-reactive({
+    
     pred<-predall_rf()
     obs<-RF_observed()
     req(length(pred)>0)
@@ -1483,9 +1836,7 @@ req(input$rf_useinter)
 
   output$predrf_new_out<-renderUI({
     req(input$rfpred_which =='Datalist')
-    div(
-      selectInput(ns("predrf_new"),"Datalist",names(vals$saved_data[getnewdataRF()]))
-    )
+    div(selectInput(ns("predrf_new"),"Datalist",names(vals$saved_data[getnewdataRF()]), selected=vals$predrf_new))
   })
 
   observeEvent(input$predrf_new,{
@@ -1500,7 +1851,7 @@ req(input$rf_useinter)
   output$rf_pred_type<-renderUI({
     if(length(attr(vals$RF_results,'test'))==1){
       radioButtons(ns("rfpred_which"),"New data (X):",choices=c("Datalist"),inline=T)
-    } else{ radioButtons(ns("rfpred_which"),"New data (X):",choices=c("Partition","Datalist"), inline=T)}
+    } else{ radioButtons(ns("rfpred_which"),"New data (X):",choices=c("Partition","Datalist"), inline=T, selected = vals$rfpred_which)}
   })
 
 
@@ -1749,97 +2100,7 @@ req(input$rf_useinter)
 
 
 
-  observeEvent(input$trainRF,{
-    req(input$rf_type)
-    t<-try({
-      envi<-envi_o<-getdata_rfX()
-      sup<-sup_o<-get_supervisor()
 
-      if(input$rf_test_partition!="None"){
-        parts<-get_parts_rf()
-        train<-parts$train
-        test<-parts$test
-        envi<-getdata_rfX()[names(train),]
-        sup<-get_supervisor()[names(train),, drop=F]
-      }
-
-
-      if (input$rf_type == 'Classification') {
-        sup[1] <- as.factor(sup[, 1])
-      }
-      seed<-if (!is.na(input$seedrf)) { input$seedrf} else{
-        NULL
-      }
-
-
-
-      join <- na.omit(cbind(sup, envi[rownames(sup), ,drop=F]))
-      envi <- join[-1]
-      somC <- join[1]
-      if(input$rf_search=="user-defined"){
-        rf_search<-"grid"
-        validate(need(length(vals$mtry_pool)>0,"Requires at least one mtry value"))
-        tuneGrid=data.frame(mtry=vals$mtry_pool)
-      } else{
-        rf_search<-input$rf_search
-        tuneGrid=NULL
-      }
-      withProgress(message = "Running rf the time taken will depend on the random forest tuning",
-                   min = 1,
-                   max = 1,
-                   {
-                     RF = wrapRF(
-                       envi,
-                       data.frame(somC),
-                       supervisor = "clusters",
-                       prev.idw = F,
-                       seed = seed,
-                       ntree = input$ntree,
-
-                       trainControl.args = list(
-                         method = input$res_method,
-                         number = input$cvrf,
-                         repeats = input$repeatsrf,
-                         p=input$pleaverf/100,
-                         savePredictions = "final",
-                         search=rf_search
-                       ),
-                       tuneLength=input$tuneLength,
-                       tuneGrid=tuneGrid
-                     )
-                     attr(RF,"test_partition")<-paste("Test data:",input$rf_test_partition,"::",input$testdata_rf)
-                     attr(RF,"Y")<-paste(input$data_rfY,"::",input$rf_sup)
-                     attr(RF,"Datalist")<-paste(input$data_rfX)
-
-                     vals$rf_unsaved<-RF
-                     if(input$rf_test_partition!="None"){
-                       attr(vals$rf_unsaved,'test')<-envi_o[test,]
-                       attr(vals$rf_unsaved,"sup_test")<-sup_o[test,]
-                     } else{ attr(vals$rf_unsaved,'test')<-c("None")}
-                     vals$bag_rf<-T
-                     attr(vals$rf_unsaved,"supervisor")<-input$rf_sup
-                     vals$cur_rftab2<-"rftab2_1"
-                     updateTabsetPanel(session,"rf_tab","rf_tab2")
-                     updateTabsetPanel(session,"rftab2","rftab2_1")
-                   })
-      attr(vals$saved_data[[input$data_rfX]],"rf")[['new rf (unsaved)']]<-vals$rf_unsaved
-      vals$cur_rf_models<-"new rf (unsaved)"
-      vals$bag_rf<-T
-      beep(10)
-
-    })
-
-    if("try-error" %in% class(t)){
-      output$rf_war<-renderUI({
-        column(12,em(style="color: gray",
-                     "Error in training the RF model. Check if the number of observations in X and Y are compatible"
-        ))
-      })
-
-    } else{
-      output$rf_war<-NULL
-    }
-  })
   observe({
     req(input$rf_models)
     if(input$rf_models=="new rf (unsaved)"){
@@ -1920,8 +2181,8 @@ req(input$rf_useinter)
     vals$hand_save2<-column(12,fluidRow(em(input$data_rfX, style="color:gray"),strong("::"), em("RF-Attribute", style="color:gray"),strong("::")
     ))
     vals$hand_save3<-NULL
-    module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc, "datacreate",  vals=vals,dataX=input$data_rfX)
+
+    mod_downcenter <- callModule(module_server_dc, input$data_rfX,  vals=vals,dataX=input$data_rfX)
   })
 
 
@@ -1970,36 +2231,34 @@ req(input$rf_useinter)
     vals$hand_save<-"Create Datalist: RF frequent interactions"
     vals$hand_save2<-NULL
     vals$hand_save3<-NULL
-    module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc, "datacreate",  vals=vals,dataX=input$data_rfX)
+
+    mod_downcenter <- callModule(module_server_dc, input$data_rfX,  vals=vals,dataX=input$data_rfX)
   })
   observeEvent(input$create_rf,{
     vals$hand_save<-"Create Datalist: RF top variables"
     vals$hand_save2<-NULL
     vals$hand_save3<-NULL
-    module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc, "datacreate",  vals=vals,dataX=input$data_rfX)
+
+    mod_downcenter <- callModule(module_server_dc, input$data_rfX,  vals=vals,dataX=input$data_rfX)
   })
   observeEvent(input$create_rfreg,{
     vals$hand_save<-"Create Datalist: RF prediction errors"
     vals$hand_save2<-NULL
     vals$hand_save3<-NULL
-    module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc, "datacreate",  vals=vals,dataX=input$data_rfX)
+ 
+    mod_downcenter <- callModule(module_server_dc, input$data_rfX,  vals=vals,dataX=input$data_rfX)
   })
   observeEvent(input$create_rfreg_pred,{
     vals$hand_save<-"Create Datalist: RF predictions"
     vals$hand_save2<-NULL
     vals$hand_save3<-NULL
-    module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc, "datacreate",  vals=vals,dataX=input$data_rfX)
+    mod_downcenter <- callModule(module_server_dc, input$data_rfX,  vals=vals,dataX=input$data_rfX)
   })
   observeEvent(input$create_rfreg_errorinter,{
     vals$hand_save<-"Create Datalist: RF training errors"
     vals$hand_save2<-NULL
     vals$hand_save3<-NULL
-    module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc, "datacreate",  vals=vals,dataX=input$data_rfX)
+    mod_downcenter <- callModule(module_server_dc, input$data_rfX,  vals=vals,dataX=input$data_rfX)
   })
 
 

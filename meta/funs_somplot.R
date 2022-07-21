@@ -307,10 +307,12 @@ pchanges<-function(m)
   m$errorsom$neu.uti<-  sum(weights==0)/nrow(m$grid$pts)
 
   errossom<-round(unlist(m$errorsom),3)
-m<-readRDS("m.rds")
 
-colnames(m$changes)<-c("Data","Factors")
-plot(m,"changes", keepMargins = TRUE, tyle="l")
+
+if(ncol(m$changes)==2){
+  colnames(m$changes)<-c("Data","Factors")
+}
+plot(m,"changes", keepMargins = TRUE)
   #legend("bottoml", legend=c(paste("Quantization:",errossom[1]),paste("Topographic:",errossom[3]),paste("Explain_var:",errossom[2])), bty='n',cex=.7)
   pchanges <- recordPlot()
   on.exit(par(opar),add=TRUE,after=FALSE)

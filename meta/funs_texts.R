@@ -428,8 +428,10 @@ data_migrate<-function(data,newdata, newname){
     attr(newdata, "transf")=attr(data, "transf")
     attr(newdata, "nobs_ori")=attr(data, "nobs_ori")
     attr(newdata, "nvar_ori")=attr(data, "nvar_ori")
-
-
+    attr(newdata, "rf")=attr(data, "rf")
+    attr(newdata, "nb")=attr(data, "nb")
+    attr(newdata, "svm")=attr(data, "svm")
+    attr(newdata, "som")=attr(data, "som")
     return(newdata)
   }
 }
@@ -1693,6 +1695,45 @@ str_numerics<-function(numerics)
 
 }
 
+str_numerics2<-function(numerics,obs=NULL)
+{
+  
+  par(mar=c(0,0,0,0), cex=2)
+  m<-matrix(1:(ncol(numerics)*3), ncol=3)
+  m=m+3
+  m<-rbind(1:3, m)
+  layout(m, widths = c(.2,.35,.35))
+  opar<-par(no.readonly=TRUE)
+  plot.new()
+  text(.5,.5,"Variable")
+  plot.new()
+  text(  seq(0.1,0.9, length.out=6),.5,c('Min.','1st Qu.','Median','Mean','3rd Qu. ',' Max.'))
+  plot.new()
+  text(.5,.5,"Histogram")
+  
+  for(i in 1: ncol(numerics))
+  {
+    plot.new()
+    text(.5,.5,colnames(numerics)[i])
+  }
+  for(i in 1: ncol(numerics))
+  {
+    plot.new()
+    text(  seq(0.1,0.9, length.out=6),.5,round(summary(numerics[,i]),3))
+  }
+  
+  for(i in 1: ncol(numerics))
+  {
+    
+    hist(numerics[,i], ann=F, axes=F)
+    if(!is.null(obs)){
+      abline(v=obs, color= 'red')
+    }
+  }
+  
+  
+  
+}
 getclassmat<-function(data.factors)
 {
   res<-lapply(data.factors,classvec2classmat)

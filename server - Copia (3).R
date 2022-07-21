@@ -20,7 +20,8 @@ server <- function(input, output, session) {
     palette1<-base64enc::dataURI(file = paste0('meta/palette',i,".png"),
                                  mime = "image/png")
     dfcolors$img[i]<- sprintf(paste0(
-      tags$div(img(src = palette1, height = '20',width = '90'), style="margin: 0px;padding: 0px") ))}
+      img(src = palette1, height = '20',width = '70',
+          style="margin-top:-40px;margin-bottom:-40px;margin-left:-20px;margin-right:-20px;") ))}
   
   
   
@@ -6695,9 +6696,10 @@ new
     req(input$method.hc0)
     req(input$disthc)
     req(input$hcdata_palette)
+    req(input$usesuggK)
     somC <-
       cutdata2(getdata_hc(),
-               input$customKdata,
+               picK(),
                method.hc = input$method.hc0,
                dist = input$disthc, input$hcdata_palette,
                newcolhabs=vals$newcolhabs)
@@ -6705,22 +6707,34 @@ new
   })
   phc <- reactive({
     req(input$model_or_data)
+    req(input$usesuggK)
     req(input$method.hc0)
+    
+    
     if (input$model_or_data == "som codebook") {
+      if(input$usesuggK=="suggested"){
+        req(input$suggsKmodel)
+      }
       somC <- cutsom.reactive()
     } else if (input$model_or_data == "data") {
+      if(input$usesuggK=="suggested"){
+        req(input$suggsKdata)
+      }
       somC <- cutdata.reactive()
     }
+    
     somC
+    
   })
   getmodel_hc <- reactive({
     req(input$som_hc)
     attr(getdata_hc(),"som")[[as.character(input$som_hc)]]
   })
-  output$cut_dendogram <- renderUI({
+  output$phc <- renderUI({
     
     
     fluidRow(
+      column(12,actionButton('downp_hcut',icon("fas fa-image"),icon("fas fa-download"), style="button_active")),
       column(12,plotOutput("hc_dend")
       )
     )
@@ -6730,11 +6744,11 @@ new
   output$hc_dend<-renderPlot({
     req(input$model_or_data)
     req(input$method.hc0)
-    suppressWarnings( hc_plot(phc(),labels=pclus_factors()))
+    suppressWarnings( hc_plot(phc()))
   })
   pclus_factors<- reactive({
     if (length(input$pclus_factors)>0) {
-      as.factor(attr(getdata_hc(),"factors")[rownames(getdata_hc()), input$pclus_factors])
+      as.factor(attr(getdata_hc(),"factors")[, input$pclus_factors])
     } else{NULL}
   })
   output$pclus_code<-renderPlot({
@@ -6747,7 +6761,7 @@ new
       labels.ind = pclus_factors(),
       pch=as.numeric(input$pclus_symbol),
       points=bmu_clus_points(),
-      bg_palette=input$hcdata_palette,
+      bg_palette=input$hcmodel_palette,
       ncol=input$ncol_pclus,
       insetx=input$insertx_pclus,
       insety=input$inserty_pclus,
@@ -7441,7 +7455,14 @@ new
     
   })
   
-
+  output$pclus_tools<-renderUI({
+    column(12,
+           fluidRow(
+             popify(bsButton("downp_pclus", span(icon("fas fa-download"),icon("fas fa-image")),style  = "button_active", type="action"),NULL,"Download plot",
+                    options=list(container="body"))
+           )
+    )
+  })
   output$pop_pcorr<-renderUI({
     fluidRow(class="map_control_style",style="color: #05668D",
              div(
@@ -7581,9 +7602,7 @@ new
     )
   })
   output$pop_pclus<-renderUI({
-    req(input$hc_results=='bmu_tab')
-    div(class="map_control_style",style="color: #05668D",
-        div(style="margin-top: 15px",     strong("Codebook plot:"),
+    fluidRow(class="map_control_style",style="color: #05668D",
              div(span("+ Display:",inline(
                radioButtons(
                  "dot_label_clus", NULL, choices = c("labels", "symbols"), inline=T, width="100px")
@@ -7598,7 +7617,7 @@ new
                       "Symbol colors. Choose a gradient to color observations by a factor"
                )
              ))),
-      
+             uiOutput("pclus_fac_control"),
              div(span(
                "+ size",inline(
                  tipify(numericInput("pclus_symbol_size",NULL,value = 1,min = 0.1,max = 3,step = .1, width="75px"),"symbol size")
@@ -7620,7 +7639,7 @@ new
              
              uiOutput('pclus_legcontrol')
              
-    ))
+    )
     
     
     
@@ -7689,8 +7708,12 @@ new
   })
   output$pclus_control <- renderUI({
     column(12,
+           p(strong(h4("Codebook clusters"))),
            uiOutput("pclus_tools"),
-           plotOutput("pclus_code")
+           sidebarLayout(
+             sidebarPanel(uiOutput("pop_pclus")),
+             mainPanel( plotOutput("pclus_code"))
+           )
     )
     
   })
@@ -7702,20 +7725,18 @@ new
     {span("+ Labels",
           inline(
             tipify(pickerInput("bmu_factors",NULL,
-                               choices = c(colnames(attr(getdata_som(),"factors"))), selected=vals$cur_bmu_factors, width="150px"),"color observations by factor")
+                               choices = c(colnames(attr(getdata_som(),"factors"))), selected=vals$cur_bmu_factors, width="75px"),"color observations by factor")
           )
     )
     }})
   output$pclus_fac_control<-renderUI({
-    if(input$hc_results!='Hcut'){
-      col<-getcolhabs(vals$newcolhabs,input$pclus_facpalette,2)
-      req(input$dot_label_clus == 'labels'|col[1]!=col[2])
-    } else{
-      req(input$model_or_data=='data')
-    }
+    col<-getcolhabs(vals$newcolhabs,input$pclus_facpalette,2)
+    
+    
+    req(input$dot_label_clus == 'labels'|col[1]!=col[2])
     span("+ Labels:", inline(
       pickerInput("pclus_factors",NULL,
-                  choices = c(colnames(attr(getdata_hc(),"factors"))), width="150px")
+                  choices = c(colnames(attr(getdata_hc(),"factors"))), width="75px")
     ))
     
     
@@ -8521,38 +8542,175 @@ new
                  })
     
   })
-
-  picK <- reactive({input$customKdata})
-  observeEvent(input$customK,
-               vals$saved_kcustom <- isolate(input$customK))
-  output$customKdata <- renderUI({
-    if(is.null(vals$saved_khc)){vals$saved_khc=2 }
-    k<-vals$saved_khc
-    div(div("+ Number of clusters: ", inline(numericInput("customKdata",
-                                                          NULL,
-                                                          value = k,
-                                                          step = 1, width = "100px")))      )
+  suggsKmodel <- reactive({
+    selectInput(
+      "suggsKmodel",
+      strong("suggested K"),
+      selectize=T,
+      choices = c(
+        paste(
+          vals$saved_kmodelWSS,
+          attr(vals$saved_kmodelWSS, "suggmethod")
+        ),
+        
+        paste(
+          vals$saved_kmodelvotes,
+          attr(vals$saved_kmodelvotes, "suggmethod")
+        )
+      )
+    )
+  })
+  output$suggsKmodel <- renderUI({
+    suggsKmodel()
+  })
+  picK <- reactive({
+    req(input$usesuggK)
+    req(input$model_or_data)
+    
+    
+    if (input$usesuggK == "suggested")
+    {
+      
+      
+      if (length(input$suggsKmodel) > 0 | length(input$suggsKdata) > 0) {
+        if (input$model_or_data == "data") {
+          req(input$suggsKdata)
+          as.numeric(gsub("([0-9]+).*$", "\\1", input$suggsKdata))
+        } else if (input$model_or_data == "som codebook") {
+          req(input$suggsKmodel)
+          as.numeric(gsub("([0-9]+).*$", "\\1", input$suggsKmodel))
+        }
+        
+      }
+    } else  if (input$usesuggK == "user-defined") {
+      if (input$model_or_data == "data") {
+        req(input$customKdata)
+        as.numeric(input$customKdata)
+      } else if (input$model_or_data == "som codebook") {
+        req(input$customKmodel)
+        as.numeric(input$customKmodel)
+      }
+      
+      
+      
+    }
     
   })
-
-
-  output$hcut_inputs <- renderUI({
-    div(class="map_control_style",style="color: #05668D",
-        div(
-          div(uiOutput('customKdata')),
-          div(
-            "+ Palette:",
-            pickerInput(inputId = "hcdata_palette",
-                        label = NULL,
-                        choices = vals$colors_img$val,
-                        choicesOpt=list(content=vals$colors_img$img),
-                        width="100px"))
-        ),
-        uiOutput("pclus_fac_control"),
-     
-     
-      div(uiOutput("hc_data_input")),
-     
+  suggsKdata <- reactive({
+    selectInput(
+      "suggsKdata",
+      strong("suggested K"),
+      selectize=T,
+      choices = c(
+        paste(vals$saved_kdataWSS, attr(vals$saved_kdataWSS, "suggmethod")),
+        
+        paste(
+          vals$saved_kdatavotes,
+          attr(vals$saved_kdatavotes, "suggmethod")
+        )
+      )
+    )
+  })
+  observeEvent(input$customK,
+               vals$saved_kcustom <- isolate(input$customK))
+  
+  output$suggsKdata <- renderUI({
+    suggsKdata()
+  })
+  output$customKdata <- renderUI({
+    numericInput("customKdata",
+                 "Number of clusters",
+                 value = 2,
+                 step = 1)
+    
+    
+  })
+  output$customKmodel <- renderUI({
+    numericInput("customKmodel",
+                 "Number of clusters",
+                 value = 2,
+                 step = 1)
+  })
+  usesuggK <- reactive({
+    if (length(vals$saved_kdataWSS) > 0 |
+        length(vals$saved_kmodelWSS) > 0 | length(vals$saved_kmodelvotes) > 0) {
+      radioButtons("usesuggK",
+                   "Cluster type",
+                   c("user-defined", "suggested"),
+                   selected = "suggested")
+    } else {
+      radioButtons("usesuggK",
+                   "Cluster type",
+                   c("user-defined"),
+                   selected = "user-defined")
+    }
+    
+    
+    
+  })
+  output$usesuggK <- renderUI({
+    usesuggK()
+  })
+  output$suggestedK <- renderUI({
+    column(
+      12,
+      splitLayout(
+        column(12,uiOutput('usesuggK')),
+        
+        fluidRow(
+          conditionalPanel("input.model_or_data=='data'",{
+            splitLayout(
+              column(12,
+                     conditionalPanel("input.usesuggK=='user-defined'",{
+                       uiOutput("customKdata")
+                     }),
+                     
+                     conditionalPanel(
+                       "input.usesuggK=='suggested'",
+                       uiOutput("suggsKdata")
+                     )
+              ),
+              column(12,
+                     p(strong("Palette", style="color: #0D47A1")),
+                     pickerInput(inputId = "hcdata_palette",
+                                 label = NULL,
+                                 choices = vals$colors_img$val,
+                                 choicesOpt = list(content = vals$colors_img$img)))
+              
+            )
+            
+          }),
+          
+          conditionalPanel(
+            "input.model_or_data=='som codebook'",  {
+              splitLayout(
+                column(12,
+                       conditionalPanel("input.usesuggK=='user-defined'",{
+                         uiOutput("customKmodel")
+                       }),
+                       conditionalPanel(
+                         "input.usesuggK=='suggested'",
+                         uiOutput("suggsKmodel")
+                       )
+                ),
+                column(12,
+                       p(strong("Palette", style="color: #0D47A1")),
+                       pickerInput(inputId = "hcmodel_palette",
+                                   label = NULL,
+                                   choices = vals$colors_img$val,
+                                   choicesOpt = list(content = vals$colors_img$img),
+                                   options=list(container="body")
+                       ))
+              )
+              
+            }
+          )
+        ),cellWidths = c("40%","60%")
+        
+        
+      )
+      
+      
     )
   })
   
@@ -8562,8 +8720,8 @@ new
     {
       res <- WSSdata()
       bp <- smw_bp(res, ws = input$w_data_WSS)
-      attr(bp, "suggmethod") <- c(NULL)
-      vals$saved_khc <- isolate(bp)
+      attr(bp, "suggmethod") <- c("(WSS)")
+      vals$saved_kdataWSS <- isolate(bp)
       bp
     } else {
       NULL
@@ -8574,8 +8732,8 @@ new
     {
       res <- WSSmodel()
       bp <- smw_bp(res, ws = input$w_model_WSS)
-      attr(bp, "suggmethod") <- c(NULL)
-      vals$saved_khc <- isolate(bp)
+      attr(bp, "suggmethod") <- c("(WSS)")
+      vals$saved_kmodelWSS <- isolate(bp)
       bp
       
     } else {
@@ -8644,11 +8802,13 @@ new
     K_WSS_model()
   })
   output$clustering_panel <- renderUI({
-    div(
-      uiOutput("hc_control"),
-      br(),
-      uiOutput("hc_panels")
-    )
+    fluidRow(column(12,
+                    column(
+                      12,
+                      uiOutput("hc_control")
+                    ),
+                    br(),
+                    uiOutput("hc_panels")))
   })
   output$hc_panels<-renderUI({
     #req(input$model_or_data)
@@ -8660,47 +8820,30 @@ new
                                   column(12,uiOutput("Dendrogram"))),
                          
                          tabPanel(
-                           strong("2. Scree Plot"),
+                           strong("2. Clustering Tools"),
                            value = "hc_tab2",
-                           uiOutput('screeplot_control')
-                         ),
-                         tabPanel(strong('3. Cut Dendogram'),value="hc_tab3",
-                           sidebarLayout(
-                             sidebarPanel(
-                               div(class="map_control_style",style="color: #05668D",
-                                 
-                                 uiOutput("hcut_inputs"),
-                                 uiOutput("pop_pclus"),
-                                 uiOutput("downp_hcut_btn"),
-                                 uiOutput("downp_pclus_btn")
-                               )
-                             ),
-                             mainPanel(
-                               tabsetPanel(id = "hc_results",
-                                           
-                                           tabPanel(
-                                             "3.1. Hcut",value ="Hcut",
-                                             column(12,  style = "background: Snow;",
-                                                    uiOutput("cut_dendogram"))
-                                           ))
-                               
-                               
-                               
+                           div(style = "background: white", tabsetPanel(
+                             tabPanel(
+                               strong("Scree plot"),value="hc_tab2_1",
+                               column(12, style = "background: white",
+                                      uiOutput('screeplot_control'))
                              )
-                           )
-                   )
+                           ))
+                         ),
+                         tabPanel(
+                           strong('3. Clustering results'),value="hc_tab3",
+                           uiOutput("suggestedK"),
+                           tabsetPanel(id = "hc_results",
+                                       
+                                       tabPanel(
+                                         "3.1. Hcut",value ="Hcut",
+                                         column(12,  style = "background: Snow;",
+                                                uiOutput("phc"))
+                                       ))
+                           
+                         )
              ))
   })
-  
-  output$downp_hcut_btn<-renderUI({
-    req(input$hc_results=='Hcut')
-    actionLink('downp_hcut',"+ Download plot")
-  })
-  output$downp_pclus_btn<-renderUI({
-    req(input$hc_results=='bmu_tab')
-    actionLink("downp_pclus", "+ Download plot")
-  })
-  
   Tabs_HC <- reactive({
     if (anyNA(getdata_hc())) {
       column(
@@ -8763,41 +8906,33 @@ new
   output$screeplot_control <- renderUI(screeplot_control())
   output$hc_control <- renderUI({
     req(length(vals$saved_data)>0)
-    div(
-      class="well3",div(class="align_top2",
-                         span(
-                           inline(
-                             div(style="height: 85px;vertical-align: text-top",uiOutput("choicesHC"))
-                           ),
-                           inline(
-                             div(style="height: 85px;vertical-align: text-top",
-                                 inline(uiOutput("data_hc")),
-                                 
-                                 inline(conditionalPanel("input.model_or_data=='som codebook'",
-                                                  {
-                                                    uiOutput("somHC")
-                                                  })),
-                                 
-                                 inline(conditionalPanel("input.model_or_data=='data'",
-                                                  uiOutput("disthc")
-                                                  
-                                 ))
-                                 ,
-                                 
-                                 inline(pickerInput(
-                                   "method.hc0",
-                                   "Method:",
-                                   choices = c("ward.D2", "ward.D", "single", "complete", "average"), width="110px"
-                                 ))
-                                 
-                                 
-                             )
-                           )
-                           
-                         )
-                         ,uiOutput("saveHC")
-                         
-      )
+    column(12,
+           div(
+             uiOutput("choicesHC"),
+             uiOutput("data_hc"),
+             inline(
+               div(
+                 conditionalPanel("input.model_or_data=='som codebook'",
+                                  {
+                                    inline(uiOutput("somHC"))
+                                  }),
+                 
+                 conditionalPanel("input.model_or_data=='data'",
+                                  iline(uiOutput("disthc"))
+                                  
+                 )
+               )
+             ),
+             
+             pickerInput(
+               "method.hc0",
+               "method.hc",
+               choices = c("ward.D2", "ward.D", "single", "complete", "average"), selectize=T
+             )
+             
+           )
+           ,uiOutput("saveHC")
+           
     )
     
     
@@ -8805,16 +8940,14 @@ new
     
   })
   output$data_hc<-renderUI({
-    tags$div(style="margin: 0px; padding: 0px",
-      pickerInput("data_hc",
-                  "Datalist::",
-                  choices =    names(vals$saved_data),
-                  width="250px", selected=vals$cur_data)
-    )
+    column(12,selectInput("data_hc",
+                          "Datalist::",
+                          choices =    names(vals$saved_data),
+                          selectize=T, selected=vals$cur_data))
   })
   output$choicesHC<-renderUI({
     
-    radioButtons("model_or_data", "Clustering target", choices  = choices_hc(), selected=c(choices_hc()[length(choices_hc())]), width="150px")
+    radioButtons("model_or_data", "Clustering target", choiceValues  = choices_hc(), selected=c(choices_hc()[length(choices_hc())]), width="200px",choiceNames =choices_hc2())
   })
   output$saveHC<-renderUI({
     req(input$data_hc)
@@ -8837,11 +8970,11 @@ new
   })
   output$somHC<-renderUI({
     
-    pickerInput(
+    selectInput(
       "som_hc",
-      "Som codebook:",
+      "som codebook:",
       choices = names(attr(getdata_hc(),"som")),
-      width="150px"
+      selectize=T
     )
   })
   observeEvent(input$tools_savehc,{
@@ -8855,11 +8988,11 @@ new
     }
   })
   output$disthc <- renderUI({
-    pickerInput(
+    selectInput(
       "disthc",
-      "Distance",
+      "distance",
       choices = c('bray', "euclidean", 'jaccard'),
-      width="120px"
+      selectize=T
     )
   })
   sc_rf_elbow <- reactive({
@@ -13397,25 +13530,16 @@ observeEvent(input$savechanges_return,{
     } else{
       names(attr(vals$saved_data[[input$data_som]],"som"))
     }
-    div(
-      div(
-        div(strong("Som results:", tiphelp("SOM results. Click to see SOM results saved in the selected Datalist")))
-      ),
-      pickerInput(
-        "som_models",
-       NULL,
-        choices=choices,
-        selected=vals$cur_train, width='150px')
-    )
+    pickerInput(
+      "som_models",
+      strong("Som results:", tiphelp("SOM results. Click to see SOM results saved in the selected Datalist")),
+      choices=choices,
+      selected=vals$cur_train, width='150px')
   })
   output$save_som<-renderUI({
     req(input$som_models=="new som (unsaved)")
     req(input$som_tab=="som_tab2"|input$som_tab=="som_tab3")
-    popify(
-      div(class="border_alert",
-        bsButton("tools_savesom", div(icon("fas fa-save")),style  = "animation: glowing 1000ms infinite;", type="action",value=FALSE)
-      )
-      , NULL, "Save the som model in the Datalist",
+    popify(bsButton("tools_savesom", div(icon("fas fa-save")),style  = "button_active", type="action",value=FALSE), NULL, "Save the som model in the Datalist",
     )
   })
   output$som_cur<-renderUI({
@@ -13430,20 +13554,20 @@ observeEvent(input$savechanges_return,{
     )
   })
   output$som_inputs<-renderUI({
-    div(style='choosechannel',
+    div(class='choosechannel',
         div(class="well3",
-            splitLayout(
-              div(
-                span(strong("X:"), inline(uiOutput("som_x")),
-                     inline(uiOutput("som_partition"))
-                ),
-                inline(uiOutput("som_models")),
-                inline(uiOutput('save_som'))
-              ),
-              div(inline(uiOutput("som_cur")))
+            span(strong("X:"), inline(uiOutput("som_x")),
+                 inline(uiOutput("som_partition"))
             )
         ),
-        uiOutput("som_datalist_y")    )
+        uiOutput("som_datalist_y"),
+        
+        
+        inline(uiOutput("som_models")),
+        inline(uiOutput('save_som')),
+        inline(uiOutput("som_cur"))
+        
+    )
   })
   observeEvent(input$data_som,{
     req(input$som_tab)
@@ -13457,8 +13581,6 @@ observeEvent(input$savechanges_return,{
       updateTabsetPanel(session,"som_tab",re$df)
     
   })
-  
-  
   
   
   observeEvent(input$som_tab,{
@@ -13489,7 +13611,7 @@ observeEvent(input$savechanges_return,{
   output$som_x<-renderUI({
     div(
       div("~ Training Datalist:"),
-      pickerInput('data_som',NULL,choices =names(vals$saved_data),width="250px", selected=vals$cur_data)
+      pickerInput('data_som',NULL,choices =names(vals$saved_data),width="150px", selected=vals$cur_data)
     )
   })
   output$som_y<-renderUI({
@@ -13500,7 +13622,7 @@ observeEvent(input$savechanges_return,{
       req(input$som_type=='Supervised')
       div(
         div("Y Attribute:"),
-        div( pickerInput("som_type2",NULL, choices=c("Numeric","Factors"), selected=vals$cur_som_type2, width="150px"))
+        div( pickerInput("som_type2",NULL, choices=c("Numeric","Factors"), selected=vals$cur_som_type2, width="100px"))
       )
     }
   })
@@ -13658,8 +13780,9 @@ observeEvent(input$savechanges_return,{
                                     column(12,actionButton('downp_pcounts',icon("fas fa-image"),icon("fas fa-download"), style="button_active")),
                                     column(12, plotOutput('pcounts')))),
                     tabPanel("3.4. Umatrix", value = "train_tab4",
-                             div("som_umatrix")
-                             ),
+                             column(12,style = "background: white;",
+                                    column(12,actionButton('downp_pmatrix',icon("fas fa-image"),icon("fas fa-download"), style="button_active")),
+                                    column(12, plotOutput('pUmatrix')))),
                     tabPanel("3.5. BMUs", value = "train_tab5",
                              uiOutput("pcorr_control")),
                     tabPanel("3.6. Property", value = "train_tab6",
@@ -13674,18 +13797,6 @@ observeEvent(input$savechanges_return,{
     )
   })
   
- # vals<-readRDS('vals.rds')
-  #m<-attr(vals$saved_data[[1]],'som')[[1]]
-  #factors<-attr(vals$saved_data[[1]],"factors")
-  #plot.kohonen(vals$saved_data[[1]])
-  
-  
-  output$som_umatrix<-renderUI({
-    column(12,style = "background: white;",
-      column(12,actionButton('downp_pmatrix',icon("fas fa-image"),icon("fas fa-download"), style="button_active")),
-      column(12, plotOutput('pUmatrix'))
-    )
-  })
   output$predsom_panel<-renderUI({
     validate(need(length(vals$som_results)>0,"No trained model in selected Datalist"))
     data=getdata_som()
@@ -14220,9 +14331,9 @@ observeEvent(input$savechanges_return,{
   cutsom.reactive<-reactive({
 
     req(input$method.hc0)
-    req(input$hcdata_palette)
+    req(input$hcmodel_palette)
     m<-getmodel_hc()
-    somC<-cutsom(m, input$customKdata, method.hc = input$method.hc0, palette=input$hcdata_palette,newcolhabs=vals$newcolhabs)
+    somC<-cutsom(m, 5, method.hc = input$method.hc0, palette=input$hcmodel_palette,newcolhabs=vals$newcolhabs)
     somC
   })
   bmu_factors_reac<-reactive({
@@ -14538,9 +14649,9 @@ observeEvent(input$savechanges_return,{
   ## DOWNLOAD FUNCTION
   
   
- # mybooks_teste<-readRDS('vals.rds')
-  #for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
-  #updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
+  mybooks_teste<-readRDS('vals.rds')
+  for (var in names(mybooks_teste)) {    vals[[var]] <- mybooks_teste[[var]]  }
+  updateTextInput(session, "tabs", value = mybooks_teste$cur_tab)
   
 # runjs("Shiny.setInputValue('dcogs8', 1);")
   

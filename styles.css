@@ -263,64 +263,7 @@ margin: 0px;
 display:inline-block;
 color: #0D47A1
 }
-.map_control_style .radio {
-border-radius: 0px 0px 0px 0px;
-border: 0px solid white;
-white-space: nowrap;
-margin: 0px;
-padding: 0;
-}
-.map_control_style .form-control {
-border-radius: 0px 0px 0px 0px;
-border: 1px solid #E8E8E8;
 
-white-space: nowrap;
-margin: 0px;
-display:inline-block;
-line-height: 0px;
-max-height: 20px;
-padding: 0;
-padding-left: 3px;
-background: white;
-}
-.map_control_style .btn {
-border-radius: 0px 0px 0px 0px;
-border: 1px solid #E8E8E8;
-
-background: white;
-white-space: nowrap;
-margin: 0px;
-display:inline-block;
-cursor: pointer;
-max-height: 20px;
-padding: 0;
-padding-left: 3px;
-}
-.map_control_style .checkbox{
-border-radius: 0px 0px 0px 0px;
-border: 0px solid white;
-margin: 0px;
-padding: 0;
-}
-.map_control_style .shiny-input-container .selectize-input {
-border-radius: 0px 0px 0px 0px;
-white-space: nowrap;
-margin: 0px;
-display:inline-block;
-max-height: 20px;
-padding: 0;
-padding-left: 1px;
-}
-.map_control_style .shiny-input-container{
-  border-radius: 0px 0px 0px 0px;
-  border: 0px solid white;
-white-space: nowrap;
-margin: 0px;
-display:inline-block;
-padding: 0;
-
-
-}
 .well2{
  min-height: 20px;
     padding-top:1px;
@@ -815,8 +758,10 @@ padding: 0px;
 margin: 0px;
 margin-bottom: 2px;
 }
-.align_top div { vertical-align: text-top;display: table; 
-
+.align_top div { vertical-align: text-top;display: table; }
+.align_top2 div { vertical-align: text-top;}
+.align_top2{
+  padding: 5px;
 }
 .rank_col{
 width: 50px;
@@ -943,6 +888,11 @@ border: none;
 
 }
 
+.border_alert{
+  animation: change_anim 1000ms infinite;
+  background: #f0eeeeff;
+  box-shadow: -12px 0 8px 0px transparent;
+}
 
 
 .track_change1{
@@ -1582,3 +1532,94 @@ max-height: 24px;
              min-height: 25px;
   max-height: 25px;
           }
+          
+          
+                
+                  .buck_rank_cols .bucket-list .bucket-list-horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+              .buck_rank_cols .bucket-list {
+    display: flex;
+}  
+.buck_rank_cols .rank-list-container {
+    flex: 1 0 200px;
+    background-color: transparent;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin: 5px;
+    display: flex;
+    flex-flow: column nowrap;
+}
+.buck_rank_cols .rank-list {
+    flex: 1 0 auto;
+    -webkit-border-radius: 3px;
+    border-radius: 5px;
+    background-color: white;
+    margin: 5px;
+    min-height: 25px;
+}
+.buck_rank_cols .rank-list-item {
+    border-radius: 0px;
+    display: block;
+          padding:5px;
+           background-color: #BDB;
+          border: 1px solid white;
+    overflow: hidden;
+}
+        
+        
+        
+        
+.map_control_style .radio {
+border-radius: 0px 0px 0px 0px;
+border: 0px solid white;
+white-space: nowrap;
+margin: 0px;
+padding: 0;
+}
+.map_control_style .form-control  {
+border-radius: 0px 0px 0px 0px;
+border: 1px solid #E8E8E8;
+
+white-space: nowrap;
+margin: 0px;
+display:inline-block;
+line-height: 0px;
+max-height: 20px;
+
+background: white;
+}
+.map_control_style div{
+
+border-radius: 0px 0px 0px 0px;
+border: 0px solid #E8E8E8;
+
+}
+.map_control_style .btn  {
+border-radius: 0px 0px 0px 0px;
+border: 1px solid #E8E8E8;
+margin: 0px;
+
+padding: 0;
+
+}
+.map_control_style .checkbox{
+border-radius: 0px 0px 0px 0px;
+border: 0px solid white;
+margin: 0px;
+padding: 0;
+}
+.map_control_style .shiny-input-container .selectize-input {}
+.map_control_style .shiny-input-container{
+  border-radius: 0px 0px 0px 0px;
+  border: 0px solid white;
+white-space: nowrap;
+margin: 0px;
+display:inline-block;
+padding: 0;
+margin-top: 1px;
+margin-bottom: 1px;
+
+
+}

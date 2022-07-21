@@ -1,14 +1,8 @@
 
-module_ui_dc<- function(id){
-  ns <- NS(id)
-
-
-}
-
-
-# Server
-module_server_dc <- function (input, output, session,vals, dataX ){
+module_server_dc <- function (input, output, session,vals,dataX ){
+  ns <- NS(dataX)
   ns <- session$ns
+  dataX<-vals$cur_data
   data_overwritte<-reactiveValues(df=F)
   data_store<-reactiveValues(df=F)
   newname<-reactiveValues(df=0)
@@ -23,8 +17,10 @@ module_server_dc <- function (input, output, session,vals, dataX ){
 
   output$data_over<-renderUI({
     data_overwritte$df<-F
+    choices<-c(names(vals$saved_data))
     req(input$hand_save=="over")
-    res<-selectInput(ns("over_datalist"), NULL,choices=c(names(vals$saved_data)))
+    if(vals$hand_save=='Save RF model in'){choices<-names(attr(vals$saved_data[[dataX]],'rf'))}
+    res<-selectInput(ns("over_datalist"), NULL,choices)
     data_overwritte$df<-T
     res
   })
@@ -44,14 +40,31 @@ module_server_dc <- function (input, output, session,vals, dataX ){
       "Create Datalist: NB predictions"={ name_nb_pred()},
       "Save SVM model in"= { name_save_svm()},
       "Create Datalist: SVM training errors -obs"={name_svm_train_errors()},
-      "Create Datalist: SVM predictions"={ name_svm_pred()}
+      "Create Datalist: SVM predictions"={ name_svm_pred()},
+      "wilcox_create"={name_wilcox_pred()}
 
 
 
     )})
 
 
-
+  name_wilcox_pred<-reactive({
+    
+    bag<-1
+    var<-attr(vals$RF_results,"supervisor")
+    name0<-paste("rf",var,"wilcox", sep="_")
+    name1<-paste(name0,bag)
+    if(name1%in%names(vals$saved_data))
+    {
+      repeat{
+        bag<-bag+1
+        name1<-paste(name0,bag)
+        if(!name1%in%names(vals$saved_data)) break
+      }
+    }
+    paste(name0,bag)
+    
+  })
   ## action functions
   observeEvent( input$data_confirm,{
     removeModal()
@@ -63,6 +76,8 @@ module_server_dc <- function (input, output, session,vals, dataX ){
       "Create Datalist: RF predictions"= {datalistrf_predicions()},
       "Create Datalist: RF training errors"= {datalistrferrors()},
       "Save RF model in"= {saverf()},
+      "wilcox_create"={wicox_create()},
+      
       "Save NB model in"= {savenb()},
       "Create Datalist: NB training errors -obs"=nb_create_training_errors(),
       "Create Datalist: NB predictions"={nb_create_pred()},
@@ -79,12 +94,12 @@ module_server_dc <- function (input, output, session,vals, dataX ){
 
   ## RF
   saverf<-reactive({
-    req(vals$cur_rf_models=='new rf (unsaved)')
+    #req(vals$cur_rf_models=='new rf (unsaved)')
     temp<-vals$RF_results
     if(input$hand_save=="create"){
       temp<-list(temp)
       names(temp)<-input$newdatalist
-      attr(vals$saved_data[[dataX]],"rf")[[input$newdatalist]]<-c(temp,attr(vals$saved_data[[dataX]],"rf")[[input$newdatalist]])
+      attr(vals$saved_data[[dataX]],"rf")[[input$newdatalist]]<-temp
       cur<-input$newdatalist
     } else{
       temp<-list(temp)
@@ -92,12 +107,18 @@ module_server_dc <- function (input, output, session,vals, dataX ){
       attr(vals$saved_data[[dataX]],"rf")[input$over_datalist]<-temp
       cur<-input$over_datalist
     }
-    attr(vals$saved_data[[dataX]],"rf")[['new rf (unsaved)']]<-NULL
-    vals$bag_rf<-F
     vals$cur_rf_models<-cur
-    vals$cur_rf<-cur
-
+    attr(vals$saved_data[[dataX]],"rf")[['new rf (unsaved)']]<-NULL
+    #vals$bag_rf<-F
+    #vals$cur_rf<-cur
+   
   })
+  
+  
+  
+
+  
+  
   savenb<-reactive({
     req(vals$cur_nb_models=='new nb (unsaved)')
     temp<-vals$nb_results
@@ -149,6 +170,32 @@ module_server_dc <- function (input, output, session,vals, dataX ){
       vals$cur_data<-input$over_datalist
     }
   })
+  wicox_create<-reactive({
+    m<-vals$RF_results
+    var<-attr(m,"supervisor")
+    temp<-vals$rf_treetest
+    datao<-vals$saved_data[[dataX]]
+    factors<-attr(temp,"factors")
+    
+    factors<-temp[c('w_class','sig','q_class')]
+    colnames(factors)<-paste(var,colnames(factors),sep="_")
+    temp[c('w_class','sig','q_class')]<-NULL
+
+    
+    
+    if(input$hand_save=="create") {
+      temp<-data_migrate(datao,temp,input$newdatalist)
+      attr(temp,"factors")<-factors
+      vals$saved_data[[input$newdatalist]]<-temp
+
+    } else{
+      temp<-data_migrate(datao,temp,input$over_datalist)
+      attr(temp,"factors")<-factors
+      vals$saved_data[[input$over_datalist]]<-temp
+
+    }
+      
+    })
   datalistrfinter<-reactive({
     a<-vals$rf_interactions_frame[1:vals$rfinter_k2,"variable"]
     b<-as.character(vals$rf_interactions_frame[1:vals$rfinter_k2,"root_variable"])
@@ -466,8 +513,9 @@ module_server_dc <- function (input, output, session,vals, dataX ){
 
    modalDialog(
      withSpinner(type=8,color="SeaGreen",uiOutput(ns("databank_storage"))),
-     title=strong('Databank storage',icon("fas fa-warehouse")),
+     title=strong(icon("fas fa-save"),'Save'),
      footer=column(12,
+                   uiOutput(ns('saverf_teste')),
                    fluidRow(tipify(bsButton(ns("preview_button"),icon("fas fa-eye"), block=F),"Preview"), modalButton(strong("cancel")),
                             inline(uiOutput(ns("save_confirm")))
                    )

@@ -1126,8 +1126,8 @@ output$confusion_nb2<-renderPrint({
       vals$hand_save2<-column(12,fluidRow(em(input$data_nbX,style="color:gray"),strong("::"),em("NB-Attribute",style="color:gray"),strong("::")
       ))
       vals$hand_save3<-NULL
-      module_ui_dc("datacreate")
-      mod_downcenter <- callModule(module_server_dc,"datacreate", vals=vals,dataX=input$data_nbX)
+
+      mod_downcenter <- callModule(module_server_dc,input$data_nbX, vals=vals,dataX=input$data_nbX)
 
       }
   })
@@ -1135,15 +1135,15 @@ output$confusion_nb2<-renderPrint({
     vals$hand_save<-"Create Datalist: NB training errors -obs"
     vals$hand_save2<-NULL
     vals$hand_save3<-NULL
-    module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc,"datacreate", vals=vals,dataX=input$data_nbX)
+
+    mod_downcenter <- callModule(module_server_dc,input$data_nbX, vals=vals,dataX=input$data_nbX)
   })
   observeEvent(input$nb_create_predictions,{
     vals$hand_save<- "Create Datalist: NB predictions"
     vals$hand_save2<-"Posterior probabilities will be saved as Data-Attribute,and final classifications as Factor-Attribute"
     vals$hand_save3<-NULL
-    module_ui_dc("datacreate")
-    mod_downcenter <- callModule(module_server_dc,"datacreate", vals=vals,dataX=input$data_nbX)
+
+    mod_downcenter <- callModule(module_server_dc,input$data_nbX, vals=vals,dataX=input$data_nbX)
   })
 
 

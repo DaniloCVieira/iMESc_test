@@ -4,7 +4,7 @@ match_col<-function(x,ref)
 }
 
 
-cutdata<-function(data,  method.hc="ward.D2", dist="bray", col=NULL)
+cutdata1<-function(data,  method.hc="ward.D2", dist="bray", col=NULL)
 {
   #validate(need(anyNA(data)==F, "The selected data contains missing values. Please remove them in Upload>Transform."))
   d<-vegdist(data, method=dist)
@@ -93,7 +93,7 @@ hc_plot<-function(somC, col=NULL)
   } else {colors_dend1="gray80" }
 
   labels_colors(dend1)<-colors_dend1
-  plot(dend1,main="Cluster Dendogram")
+  plot(dend1,main="Cluster Dendogram", ylab="Height")
 
   phc <- recordPlot()
   on.exit(par(opar),add=TRUE,after=FALSE)
